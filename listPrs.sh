@@ -56,4 +56,4 @@ else
     echo "We have not log file for ${day}. Try it in the log achive."
 fi
 
-echo "End."
+echo "End of $0."
