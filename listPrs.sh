@@ -10,7 +10,7 @@ usage()
     echo "Usage:"
     echo "$0 [ yest[erday] | -<days_before_today> ]"
     echo ""
-    echo "Without parameter is shows PRs tested today."
+    echo "Without parameter is shows today tested PRs."
     echo "With parameter it shows tested  PRs on that day (yesterday or n days ago)."
     echo ""
     echo "End."
