@@ -1,0 +1,16 @@
+*.log
+*.orig
+*.zip
+*.csv
+*.e4p
+PR-*
+*.pyc
+*.diff
+*.json
+*.dat
+install/
+.eric*
+old-*
+Remote/
+dev/
+
