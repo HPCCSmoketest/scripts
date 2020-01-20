@@ -45,7 +45,7 @@ fi
 
 logFileName="prp-${day}.log"
 
-echo "Today is: ${today}"
+echo "Today is: ${today} 8-}"
 echo ""
 
 if [[ -f ${logFileName} ]]
