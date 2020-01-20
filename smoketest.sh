@@ -26,7 +26,10 @@ Update()
         git pull
 
         cp *.sh ../
-        cp *.py ../
+        cp GistLogHandler.py ../
+        #cp ProcessPullRequests.py ../
+        cp showStatus.py ../
+        cp WatchDog.py ../
 
         echo "Update finished."
         popd
