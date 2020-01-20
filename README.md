@@ -1,2 +1,3 @@
 # scripts
-Smoketest system Python and Bash scripts
+Smoketest system: Python and Bash scripts
+
