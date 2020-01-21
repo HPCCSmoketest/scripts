@@ -11,36 +11,6 @@ SignalHandler()
     sudo kill ${pids}
 }
 
-Update()
-{
-    echo "Update start..."
-
-    if [ ! -d scripts ]
-    then
-       git clone https://github.com/HPCCSmoketest/scripts.git
-    fi
-
-    if [ -d scripts ]
-    then
-        pushd scripts
-        git pull
-
-        cp *.sh ../
-        cp GistLogHandler.py ../
-        #cp ProcessPullRequests.py ../
-        cp showStatus.py ../
-        cp WatchDog.py ../
-
-        echo "Update finished."
-        popd
-    else
-        echo "Update failed."
-    fi
-
-    echo "End."
-
-}
-
 logfile=prp-$(date +%Y-%m-%d).log
 exec >> ${logfile} 2>&1
 
@@ -92,8 +62,6 @@ else
     cat .ssh_auth_sock.var
     . ./.ssh_auth_sock.var
     env | grep SSH_AUTH_SOCK
-
-    Update
 
     echo "Start ProcessPullRequest.py..."
     unbuffer ./ProcessPullRequests.py
