@@ -342,6 +342,7 @@ BUILD_TIME=$(( $(date +%s) - $TIME_STAMP ))
 WritePlainLog "Build end ($(date +%Y-%m-%d_%H-%M-%S) $BUILD_TIME sec )" "$logFile"
 TIME_STAMP=$(date +%s)
 
+WriteMilestone "Package generation" "$logFile"
 CMD="make -j ${NUMBER_OF_BUILD_THREADS} package"
 WritePlainLog "cmd: ${CMD}" "$logFile"
 ${CMD} >> $logFile 2>&1
