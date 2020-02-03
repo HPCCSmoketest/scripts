@@ -703,25 +703,33 @@ then
             #comp=${lastSubdir##my}
             corename=${core##*/}; 
             comp=$( echo $corename | tr '_.' ' ' | awk '{print $2 }' ); 
-            compnamepart=$( find hpcc/opt/HPCCSystems/bin/ -iname "$comp*" -type f -print); 
+            compnamepart=$( find /opt/HPCCSystems/bin/ -iname "$comp*" -type f -print); 
             compname=${compnamepart##*/}
             WritePlainLog "corename: ${corename}, comp: ${comp}, compnamepart: ${compnamepart}, component name: ${compname}" "$logFile"
             components+=compname
-            gdb --batch --quiet -ex "set interactive-mode off" -ex "echo \nBacktrace for all threads\n==========================" -ex "thread apply all bt" -ex "echo \n Registers:\n==========================\n" -ex "info reg" -ex "echo \n Disas:\n==========================\n" -ex "disas" -ex "quit" "$PR_ROOT/$TARGET_DIR/opt/HPCCSystems/bin/${compname}" $core > $core.trace 2>&1
-
+            WritePlainLog "componenet:/opt/HPCCSystems/bin/${compname} core: $core" "$logFile"
+            res=$( sudo gdb --batch --quiet -ex "set interactive-mode off" -ex "echo \nBacktrace for all threads\n==========================" -ex "thread apply all bt" -ex "echo \n Registers:\n==========================\n" -ex "info reg" -ex "echo \n Disas:\n==========================\n" -ex "disas" -ex "quit" "/opt/HPCCSystems/bin/${compname}" $core | sudo tee $core.trace 2>&1 )
+            sudo chmode 0777 $core*
+            WritePlainLog "Trace: $core.trace  generated\n gdb res: ${res}" "$logFile"
+            WritePlainLog "Files: $( sudo ls -l $core* ) " "$logfile"
             #sudo zip ${HPCC_CORE_ARCHIVE} $c >> ${HPCC_CORE_ARCHIVE}.log
         done
 
         # Add core files to ZIP
-        for core in ${cores[@]:0:$numberOfCoresTobeArchive}; do echo $core; done | zip ${HPCC_CORE_ARCHIVE} -@ >> ${HPCC_CORE_ARCHIVE}.log
+        for core in ${cores[@]:0:$numberOfCoresTobeArchive}; do echo $core; done | sudo zip ${HPCC_CORE_ARCHIVE} -@ >> ${HPCC_CORE_ARCHIVE}.log
         
         # Addd binaries
-        for comp in ${componenets[@]}; do echo "$PR_ROOT/$TARGET_DIR/opt/HPCCSystems/bin/${comp}"; done | zip ${HPCC_CORE_ARCHIVE} -@ >> ${HPCC_CORE_ARCHIVE}.log
+        for comp in ${componenets[@]}; do echo "/opt/HPCCSystems/bin/${comp}"; done | sudo zip ${HPCC_CORE_ARCHIVE} -@ >> ${HPCC_CORE_ARCHIVE}.log
         
         # Add trace files to ZIP
-        find $PR_ROOT/$TARGET_DIR/var/lib/HPCCSystems/ -iname '*.trace' -type f -print | zip ${HPCC_CORE_ARCHIVE} -@ >> ${HPCC_CORE_ARCHIVE}.log
+        WritePlainLog "List trace files" "$logFile"
+        res=$( sudo find /var/lib/HPCCSystems/ -iname '*.trace' -type f -print 2>&1 )
+        WritePlainLog "res: ${res}" "$logFile"
         
-        find $PR_ROOT/$TARGET_DIR/var/lib/HPCCSystems/ -iname '*.trace' -type f -print -exec cp '{}' $PR_ROOT/. \;
+        sudo find /var/lib/HPCCSystems/ -iname '*.trace' -type f -print -exec sudo cp '{}' $PR_ROOT/. \;
+
+        sudo find /var/lib/HPCCSystems/ -iname '*.trace' -type f -print | sudo zip ${HPCC_CORE_ARCHIVE} -@ >> ${HPCC_CORE_ARCHIVE}.log
+        
 
         echo 'Done.' >> ${HPCC_CORE_ARCHIVE}.log
         WritePlainLog "Done." "$logFile"
