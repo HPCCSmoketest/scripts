@@ -30,7 +30,7 @@ trap SignalHandler SIGKILL
 #export enableShallowClone=0
 #export removeMasterAtExit=0
 #export testOnlyOnePR=0
-export AVERAGE_SESSION_TIME=0.5 # hours
+#export AVERAGE_SESSION_TIME=0.5 # hours
 
 pids=$( ps aux | grep '[p]ython ./ProcessPullRequests.py' | awk '{print $2}' )
 echo "Pids: ${pids}"
