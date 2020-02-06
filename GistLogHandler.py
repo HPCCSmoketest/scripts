@@ -143,7 +143,8 @@ class GistLogHandler(object):
     def cloneGist(self):
         # git clone https://gist.github.com/<dist_id>.git ./gists
         #cmd = 'git clone https://gist.github.com/'+ self.id +'.git ' + self.distDir
-        cmd = 'git clone git@gist.github.com:'+ self.id +'.git ' + self.distDir
+        #cmd = 'git clone git@gist.github.com:'+ self.id +'.git ' + self.distDir
+        cmd = 'git clone https://' + self.token + '@gist.github.com/'+ self.id +'.git ' + self.distDir
         tryCount = 5
         while (True):
             result = self.execCmd(cmd)
@@ -171,7 +172,8 @@ class GistLogHandler(object):
         # git remote set-url origin https://gist.github.com/HPCCSmoketest/<gist_id>
         #cmd = 'git remote set-url origin  https://gist.github.com/HPCCSmoketest/'+ self.id
         # https://gist.github.com/3b01b4185f6919e4f47ff66a06ad8588.git
-        cmd = 'git remote set-url origin  git@gist.github.com:'+ self.id + '.git'
+        #cmd = 'git remote set-url origin  git@gist.github.com:'+ self.id + '.git'
+        cmd = 'git remote set-url origin  https://' + self.token + '@gist.github.com/HPCCSmoketest/'+ self.id
         result = self.execCmd(cmd)
         #print("\tresult:"+result + "\n")
         

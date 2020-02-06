@@ -1125,7 +1125,7 @@ def CatchUpMaster():
             
             # Set up upstream!!!!
             print("\tgit remote add upstream git@github.com:hpcc-systems/HPCC-Platform.git")
-            myProc = subprocess.Popen(["git remote add upstream git@github.com:hpcc-systems/HPCC-Platform.git"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            myProc = subprocess.Popen(["git remote add upstream https://" + gitHubToken + "@github.com/hpcc-systems/HPCC-Platform.git"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             result = formatResult(myProc)
     
             # Set up origin
@@ -1134,7 +1134,7 @@ def CatchUpMaster():
             result = formatResult(myProc)
             
             print("\tgit remote add origin git@github.com:HPCCSmoketest/HPCC-Platform")
-            myProc = subprocess.Popen(["git remote add origin git@github.com:HPCCSmoketest/HPCC-Platform"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            myProc = subprocess.Popen(["git remote add origin https://" + gitHubToken + "@github.com/HPCCSmoketest/HPCC-Platform"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             result = formatResult(myProc)
             
             # Somehow the clone doesn't crate all branches (candidates) and it can cause problem for PRs on older base branch
@@ -1151,7 +1151,7 @@ def CatchUpMaster():
             os.chdir('HPCC-Platform')
             
             # Set up upstream!!!!
-            myProc = subprocess.Popen(["git remote add upstream git@github.com:hpcc-systems/HPCC-Platform.git"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            myProc = subprocess.Popen(["git remote add upstream https://" + gitHubToken + "@github.com/hpcc-systems/HPCC-Platform.git"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             result = formatResult(myProc)
                     
             myProc = subprocess.Popen(["git checkout master"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
@@ -1987,7 +1987,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             # git remote add upstream git@github.com:hpcc-systems/HPCC-Platform.git
             print("\tAdd upstream")
             resultFile.write("\tAdd upstream\n")
-            myProc = subprocess.Popen(["git remote add upstream git@github.com:hpcc-systems/HPCC-Platform.git"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            myProc = subprocess.Popen(["git remote add upstream https://" + gitHubToken + "@github.com/hpcc-systems/HPCC-Platform.git"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             result = formatResult(myProc, resultFile)
             #resultFile.write("\tresult:"+result+"\n")
 

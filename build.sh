@@ -742,7 +742,7 @@ then
         #echo " " >>${HPCC_CORE_ARCHIVE}.log
     fi
 
-    WritePlainLog "Store trace file(s) from ${TEST_LOG_DIR} into the relatted ZAP file " "$logFile"
+    WritePlainLog "Store trace file(s) from ${TEST_LOG_DIR} into the related ZAP file " "$logFile"
     pushd ${PR_ROOT}/HPCCSystems-regression/log 
 
     res=$( find . -iname 'W20*.trace' -type f -print | tr -d './' | tr '-' ' ' | awk {'print $1"-"$2'} | while read myid; do  find ../zap/ -iname 'ZAPReport_'"$myid"'_*.zip' -type f -print  | while read zap; do echo "id:${myid}, zap:$zap"; zip -u $zap $myid*.trace; done ; done; )
