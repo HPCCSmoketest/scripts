@@ -81,14 +81,22 @@ else
     # Remove archived PRs older than 180 days from OldPrs directory to avoid
     # "No free disk space left" error
 
-    echo "Remove archived PRs older than 180 days from OldPrs directory"
-    echo "Before:"
+    echo "Manage Smoketest directory size"
+    echo "Current:"
     df -h .
     echo " "
     du -ksch OldPrs
     echo "---------------------------------"
 
-    find OldPrs -maxdepth 1 -mtime +180 -type d -print -exec rm -rf '{}' \;
+    if [[ -z "${MAX_CLOSED_PR_KEEPING_DAYS}" ]]
+    then
+        maxDays=30
+    else
+        maxDays=${MAX_CLOSED_PR_KEEPING_DAYS}
+    fi
+    echo "Remove all closed PRs older than ${maxDays})
+    
+    find OldPrs -maxdepth 1 -mtime +$maxDays -type d -print -exec rm -rf '{}' \;
     echo "---------------------------------"
 
     echo "After:"
@@ -97,7 +105,5 @@ else
     du -ksch OldPrs
 
     echo "Done."
-
-
 fi
 
