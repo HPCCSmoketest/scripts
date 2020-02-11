@@ -94,7 +94,7 @@ else
     else
         maxDays=${MAX_CLOSED_PR_KEEPING_DAYS}
     fi
-    echo "Remove all closed PRs older than ${maxDays})
+    echo "Remove all closed PRs older than ${maxDays})"
     
     find OldPrs -maxdepth 1 -mtime +$maxDays -type d -print -exec rm -rf '{}' \;
     echo "---------------------------------"
