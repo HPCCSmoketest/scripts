@@ -40,6 +40,7 @@ echo "At $(date "+%Y-%m-%d %H:%M:%S") " >> ${logfile} 2>&1
 if [ -n "${pids}" ]
 then
     echo "It is running. (${pids})"
+    echo "It is still running. (pid ${pids})" | mailx -s "Smoketest status" attila.vamos@gmail.com
 else
     echo "It isn't running."
     echo "Start it."
@@ -88,6 +89,13 @@ else
     du -ksch OldPrs
     echo "---------------------------------"
 
+    # Find and remove 'build' and ' HPCC-Platfrom' directories
+    find PR-*/ -maxdepth 1 -iname 'build' -type d -print -exec rm -rf '{}' \;
+    find PR-*/ -maxdepth 1 -iname 'HPCC-Platform' -type d -print -exec rm -rf '{}' \;
+    
+    find OldPrs/PR-*/ -maxdepth 1 -iname 'build' -type d -print -exec rm -rf '{}' \;
+    find OldPrs/PR-*/ -maxdepth 1 -iname 'HPCC-Platform' -type d -print -exec rm -rf '{}' \;
+    
     if [[ -z "${MAX_CLOSED_PR_KEEPING_DAYS}" ]]
     then
         maxDays=30
