@@ -40,7 +40,7 @@ echo "At $(date "+%Y-%m-%d %H:%M:%S") " >> ${logfile} 2>&1
 if [ -n "${pids}" ]
 then
     echo "It is running. (${pids})"
-    echo "It is still running. (pid ${pids})" | mailx -s "Smoketest status" attila.vamos@gmail.com
+    echo "It is still running (pid: ${pids}) on $(hostname)." | mailx -s "Smoketest status" attila.vamos@gmail.com
 else
     echo "It isn't running."
     echo "Start it."
@@ -52,32 +52,36 @@ else
 
     ulimit -a
 
+    # Using GitHub token the agent magic doesn't necessary 
     # Update agent pid
     # get the latest ssh-* directory name
-    agentdir=$( sudo ls -td1 /tmp/ssh-* | head -n 1 );
+    #agentdir=$( sudo ls -td1 /tmp/ssh-* | head -n 1 );
 
     # position independet way to get agent.xxxxx value
-    agentPid=$( ls -l ${agentdir} | grep 'agent' | sed -n "s/^.*\(agent.[0-9].*\)/\1/p" )
+    #agentPid=$( ls -l ${agentdir} | grep 'agent' | sed -n "s/^.*\(agent.[0-9].*\)/\1/p" )
 
-    printf "export SSH_AUTH_SOCK=%s/%s\n" ${agentdir} $agentPid > .ssh_auth_sock.var
-    cat .ssh_auth_sock.var
-    . ./.ssh_auth_sock.var
-    env | grep SSH_AUTH_SOCK
+    #printf "export SSH_AUTH_SOCK=%s/%s\n" ${agentdir} $agentPid > .ssh_auth_sock.var
+    #cat .ssh_auth_sock.var
+    #. ./.ssh_auth_sock.var
+    #env | grep SSH_AUTH_SOCK
 
     echo "Start ProcessPullRequest.py..."
     unbuffer ./ProcessPullRequests.py
     
+    echo "Smoketest finished."
+    
+    # Using GitHub token the agent magic doesn't necessary
     # Remove old agent(s)
-    echo "Smoketest finished. Remove old security agents"
-    sudo find /tmp/ -iname 'ssh-*' -type d | egrep -v "$agentdir" | while read oldAgentDir
-    do 
-        oldAgentPid=$( ls -l ${oldAgentDir} | grep 'agent' | sed -n "s/^.*agent.\([0-9].*\)/\1/p" ); 
-        oldAgentPid=$(( $oldAgentPid + 1 ))
-        printf "Kill old agent (%s) and remove it's directory (%s)\n" $oldAgentPid $oldAgentDir
-        sudo kill -9 $oldAgentPid
-        sudo rm -rf $oldAgentDir
-    done
-    echo "Done."
+    #echo "Remove old security agents"
+    #sudo find /tmp/ -iname 'ssh-*' -type d | egrep -v "$agentdir" | while read oldAgentDir
+    #do 
+    #    oldAgentPid=$( ls -l ${oldAgentDir} | grep 'agent' | sed -n "s/^.*agent.\([0-9].*\)/\1/p" ); 
+    #    oldAgentPid=$(( $oldAgentPid + 1 ))
+    #    printf "Kill old agent (%s) and remove it's directory (%s)\n" $oldAgentPid $oldAgentDir
+    #    sudo kill -9 $oldAgentPid
+    #    sudo rm -rf $oldAgentDir
+    #done
+    #echo "Done."
 
     # Remove archived PRs older than 180 days from OldPrs directory to avoid
     # "No free disk space left" error
