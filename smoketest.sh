@@ -133,7 +133,8 @@ echo " "
 du -ksch OldPrs
 echo "---------------------------------"
 
-# Find and remove 'build' and ' HPCC-Platfrom' directories
+echo "Find and remove 'build' and ' HPCC-Platfrom' directories"
+
 find PR-*/ -maxdepth 1 -iname 'build' -type d -print -exec rm -rf '{}' \;
 find PR-*/ -maxdepth 1 -iname 'HPCC-Platform' -type d -print -exec rm -rf '{}' \;
 
@@ -149,6 +150,7 @@ fi
 echo "Remove all closed PRs older than ${maxDays} days."
 
 find OldPrs -maxdepth 1 -mtime +$maxDays -type d -print -exec rm -rf '{}' \;
+
 echo "---------------------------------"
 
 echo "After:"

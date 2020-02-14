@@ -1084,12 +1084,13 @@ def CleanUpClosedPulls(knownPullRequests, smoketestHome):
 def formatResult(proc, resultFile = None, echo = True):
     (stdout, stderr) = proc.communicate()
     retcode = proc.wait()
-    #stdout = proc.stdout.read().rstrip('\n').replace('\n','\n\t\t')
+ 
     if len(stdout) == 0:
         stdout = 'None'
-    #stderr = proc.stderr.read().rstrip('\n').replace('\n','\n\t\t')
+    
     if len(stderr) == 0:
         stderr = 'None'
+        
     result = "returncode: " + str(retcode) + "\n\t\tstdout: " + stdout + "\n\t\tstderr: " + stderr
     
     if not 'remote upstream already exists' in result:
