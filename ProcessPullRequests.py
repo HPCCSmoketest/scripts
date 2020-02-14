@@ -715,7 +715,7 @@ def GetOpenPulls(knownPullRequests):
         prs[prid]['cmd'] = 'git pull -ff --no-edit upstream pull/'+str(prid)+'/head:'+repr(pr['head']['ref'])+'-smoketest'
 
         # On some version of git there is not "--no-edit" parameter like in OBT-011 system
-        #prs[prid]['cmd'] = 'git pull -ff  upstream pull/'+str(prid)+'/head:'+repr(pr['head']['ref'])+'-smoketest'
+        prs[prid]['cmd2'] = 'git pull -ff  upstream pull/'+str(prid)+'/head:'+repr(pr['head']['ref'])+'-smoketest'
         
         prs[prid]['addComment'] = {}
         prs[prid]['addComment']['cmd'] = 'curl -H "Content-Type: application/json" '\
@@ -1082,14 +1082,14 @@ def CleanUpClosedPulls(knownPullRequests, smoketestHome):
         print(str(newlyClosedPrs) +" PR(s) are closed and moved to OldPrs directory")
 
 def formatResult(proc, resultFile = None, echo = True):
-    retcode = str(proc.returncode)
+    retcode = proc.wait()
     stdout = proc.stdout.read().rstrip('\n').replace('\n','\n\t\t')
     if len(stdout) == 0:
         stdout = 'None'
     stderr = proc.stderr.read().rstrip('\n').replace('\n','\n\t\t')
     if len(stderr) == 0:
         stderr = 'None'
-    result = "returncode: " + retcode + "\n\t\tstdout: " + stdout + "\n\t\tstderr: " + stderr
+    result = "returncode: " + str(retcode) + "\n\t\tstdout: " + stdout + "\n\t\tstderr: " + stderr
     
     if not 'remote upstream already exists' in result:
         if len(result) > 0 and echo:
@@ -1103,7 +1103,7 @@ def formatResult(proc, resultFile = None, echo = True):
         except:
             pass
             
-    return result
+    return (result, retcode)
     
 def CatchUpMaster():
     print("Catch up master")
@@ -2005,18 +2005,28 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             resultFile.write("\tPull\n")
             resultFile.write("\t"+prs[prid]['cmd']+"\n")
             myProc = subprocess.Popen(prs[prid]['cmd'],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc, resultFile)
-            #resultFile.write("\tresult:"+result+"\n")
-
-            # Status
-            print("\tgit status")
-            resultFile.write("\tgit status\n")
-            myProc = subprocess.Popen("git status",  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc, resultFile)
+            (result, retcode) = formatResult(myProc, resultFile)
+            if retcode != 0:
+                if 'unknown option' in result:
+                    print("\tThere was a problem with prevoius command, try an alternative one")
+                    print("\t"+prs[prid]['cmd2'])
+                    myProc = subprocess.Popen(prs[prid]['cmd2'],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                    (result, retcode) = formatResult(myProc, resultFile)
+                
+            if retcode != 0:
+                noBuildReason = "Error in git command, should skip build and test."
+            else:    
+                # Status
+                print("\tgit status")
+                resultFile.write("\tgit status\n")
+                myProc = subprocess.Popen("git status",  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                result = formatResult(myProc, resultFile)
+                noBuildReason = ""
             
-            if 'Unmerged paths:' in result:
+            if ('Unmerged paths:' in result) or (retcode != 0):
                 # There is some conflict on this branch, I think it is better to skip build and test
-                noBuildReason = "Conflicting files, should skip build and test."
+                if noBuildReason  == "":
+                    noBuildReason = "Conflicting files, should skip build and test."
                 print(noBuildReason)
                 # TO-DO Should find out how to handle this situation
                 isBuild = False
@@ -2267,7 +2277,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
         
         os.chdir(smoketestHome)
         
-        if isBuild and testOnlyOnePR:
+        if testOnlyOnePR:
             print("It was one PR build attempt.")
             break;
     if (testPrNo != str(0)) and not isSelectedPrOpen:
