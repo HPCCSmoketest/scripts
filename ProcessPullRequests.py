@@ -2077,7 +2077,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 zipCmd="zip -m %s -r HPCCSystems-regression/*" % (regressionZipFileName)
                 print("\t%s" % (zipCmd))
                 resultFile.write("\t%s" % (zipCmd))
-                myProc = subprocess.Popen([ zipCmd ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                myProc = subprocess.Popen([ zipCmd ],  shell=True,  bufsize=-1,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                 try:
                     #result = formatResult(myProc, resultFile,  noEcho)
                     result = formatResult(myProc, open(regressionZipFileName+'.log',  'w'), noEcho)
