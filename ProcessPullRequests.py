@@ -118,7 +118,10 @@ gitHubToken=None
 
 if 'inux' in sysId:
     myProc = subprocess.Popen(["gcc --version | head -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-    sysId += '\n GCC:' + myProc.stdout.read().rstrip('\n')
+    sysId += '\n GCC: ' + myProc.stdout.read().rstrip('\n')
+    myProc = subprocess.Popen(["hostname"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    sysId += '\n Host: ' + myProc.stdout.read().rstrip('\n')
+    
 
 failEmoji=':x:'
 passEmoji=':white_check_mark:'
@@ -1121,28 +1124,28 @@ def CatchUpMaster():
                 myProc = subprocess.Popen(["git clone --depth 100 https://github.com/HPCC-Systems/HPCC-Platform.git"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             else:
                 myProc = subprocess.Popen(["git clone https://github.com/HPCC-Systems/HPCC-Platform.git"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc)
+            formatResult(myProc)
             
             os.chdir('HPCC-Platform')
             
             # Set up upstream!!!!
             print("\tgit remote add upstream git@github.com:hpcc-systems/HPCC-Platform.git")
             myProc = subprocess.Popen(["git remote add upstream https://" + gitHubToken + "@github.com/hpcc-systems/HPCC-Platform.git"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc)
+            formatResult(myProc)
     
             # Set up origin
             print("\tgit remote remove origin")
             myProc = subprocess.Popen(["git remote remove origin"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc)
+            formatResult(myProc)
             
             print("\tgit remote add origin git@github.com:HPCCSmoketest/HPCC-Platform")
             myProc = subprocess.Popen(["git remote add origin https://" + gitHubToken + "@github.com/HPCCSmoketest/HPCC-Platform"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc)
+            formatResult(myProc)
             
             # Somehow the clone doesn't crate all branches (candidates) and it can cause problem for PRs on older base branch
             print("\tgit fetch upstream")
             myProc = subprocess.Popen(["git fetch upstream"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc)
+            formatResult(myProc)
             
             #Add these
             # git config --global user.name "HPCCSmoketest"
@@ -1154,18 +1157,18 @@ def CatchUpMaster():
             
             # Set up upstream!!!!
             myProc = subprocess.Popen(["git remote add upstream https://" + gitHubToken + "@github.com/hpcc-systems/HPCC-Platform.git"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc)
+            formatResult(myProc)
                     
             myProc = subprocess.Popen(["git checkout master"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc)
+            formatResult(myProc)
     
             print("\tgit fetch upstream")
             myProc = subprocess.Popen(["git fetch upstream"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc)
+            formatResult(myProc)
     
             print("\tgit merge --ff-only upstream/master")
             myProc = subprocess.Popen(["git merge --ff-only upstream/master"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc)
+            formatResult(myProc)
             
             # Smoketest has no right to push
             # print("\tgit push origin master")
@@ -1177,12 +1180,12 @@ def CatchUpMaster():
         
         print("\tgit submodule update --init --recursive")
         myProc = subprocess.Popen(["git submodule update --init --recursive"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-        result = formatResult(myProc)        
+        formatResult(myProc)        
         
         # Record master branch info
         print("\tgit log -1 ")
         myProc = subprocess.Popen(["git log -1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-        result = formatResult(myProc)
+        formatResult(myProc)
         # branchDate=$( git log -1 | grep '^Date' ) 
         # branchCrc=$( git log -1 | grep '^commit' )
         
@@ -2389,7 +2392,7 @@ class MessageId(object):
                 self.resultFile.write("\tcmd:"+cmd + "\n")
                 
             myProc = subprocess.Popen(cmd,  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc)
+            (result, retcode) = formatResult(myProc)
             if self.resultFile != None:
                 self.resultFile.write("\tresult"+result + "\n")
         
@@ -2415,7 +2418,7 @@ def uploadGitHubComment(addCommentCmd,  resultFile = None):
 #                    result = myProc.stdout.read() + myProc.stderr.read()
 #                    print("\t"+result)
 #                    resultFile.write("\tresult:"+result+"\n")
-        result = formatResult(myProc)
+        (result, retcode) = formatResult(myProc)
         resultFileWrite("\tresult:"+result+"\n")
 
         if 'created_at' in result:
@@ -2458,6 +2461,7 @@ def handler(signum, frame=None):
 
     elif signum == signal.SIGKILL:
         msg +=", SIGKILL"
+        msg +="\nDone\nDone, exit.\n"
 
     elif signum == signal.SIGINT:
         msg += ", SIGINT (Ctrl+C)"
@@ -2760,6 +2764,8 @@ if __name__ == '__main__':
                 print '-'*60
                 traceback.print_exc(file=sys.stdout)
                 print '-'*60
+                # To ensure we will go back to the Smokatest directory
+                os.chdir(smoketestHome)
 
         endScriptTimestamp = time.time()
         print("End:"+time.asctime())
