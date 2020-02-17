@@ -195,7 +195,7 @@ do
     WriteLog "cmd:${cmd}" "$WUTOOLTEST_EXECUTION_LOG_FILE"
     echo "target:${testTargets[$index]}" >> $WUTOOLTEST_RESULT_FILE
     result=$( ${cmd} 2>&1 )
-    IS_NOT_TIMEOUT=$( echo "$result" | egrep -ic "ok|run|timing|terminate")
+    IS_NOT_TIMEOUT=$( echo "$result" | egrep -ic "ok |run|timing|terminate")
     WriteLog "IS_NOT_TIMEOUT: ${IS_NOT_TIMEOUT}" "$WUTOOLTEST_EXECUTION_LOG_FILE"
     if [[ $IS_NOT_TIMEOUT -ge 1 ]]
     then
