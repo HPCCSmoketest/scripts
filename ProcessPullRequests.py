@@ -1440,7 +1440,7 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
             msg += tempRes.replace('"','').replace('u\'',  '').replace('\'','')
             allPassed = False
             continue;
-        elif (buildFailed or not eclWatchBuildOk) and not result.startswith('[sudo]'):
+        elif (buildFailed or not eclWatchBuildOk) and not (result.startswith('[sudo]') or result.startswith('sudo')):
             print("\t\t"+result)
             tempRes = result
             msg += tempRes.replace('"','').replace('u\'',  '').replace('\'','')
@@ -1483,8 +1483,11 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                 #buildFailed=False
                 eclWatchBuildOk=True
             continue   
+        elif result.startswith('Milestone:Build'):
+#            eclWatchBuild = False
+            pass
             
-        elif result.startswith('Install HPCC Platform'):
+        elif result.startswith('Milestone:Install'):
             if eclWatchBuild:
                 eclWatchBuild = False
                 eclTableText = eclWatchTable.getTable()
@@ -1706,7 +1709,7 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
             #msg += result.replace('stopped',  'stopped,').replace('[32m','').replace('[33m','').replace('[0m', '\\n').replace('[31m', '\\n').replace("\\", "").replace('\<','<').replace('/>','>').replace('\xc2\xae','').replace('/*', '*').replace('*/', '*')
             allPassed = False
             continue
-        elif eclWatchBuild:
+        elif eclWatchBuild and not npmTest:
             if not result.startswith('---- '):
                 #print(", "+result)
                 result = result.replace('\n','').replace('\t','').replace('\\t','')
@@ -1723,17 +1726,17 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                     eclWatchTable.addItem(result)
                     continue
                     
-                eclWatchBuildError += result + '\n'
+                #eclWatchBuildError += result + '\n'
                     
             continue
                 
-        elif result.startswith('npm install'):
+        elif result.startswith('npm install start'):
             if not npmInstall:
                 npmInstall=True
+            continue
                 
-            else:
-                npmInstall=False
-            
+        elif result.startswith('npm install end'):
+            npmInstall=False
             continue
             
         elif npmInstall:
@@ -2650,7 +2653,7 @@ def doTest():
         testRes = processResult(result,  msg, '')
         
     elif testMode == 6:
-        buildLogFile = 'result-19-06-21-10-29-34.log'
+        buildLogFile = 'failedResult-20-02-18-12-45-59.log'
         pages = open(buildLogFile,  "r").readlines()
         result = ''.join(pages)
         result = result.replace('\t','')
