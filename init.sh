@@ -64,9 +64,9 @@ prId=${INSTANCE_NAME//PR-/}
 [[ $(date "+%-S") -ge 50 ]] && timeStep=1 || timeStep=1
 
 # For real
-#( crontab -l; echo $( date  -d "$today + $timeStep minute" "+%M %H %d %m") " * cd ~/smoketest; ./update.sh; export addGitComment=1; export runOnce=1; export keepFiles=0; export testOnlyOnePR=1; export testPrNo=$prId; export runFullRegression=1; export useQuickBuild=0; export skipDraftPr=0; export AVERAGE_SESSION_TIME=0.5; scl enable devtoolset-7 './smoketest.sh'" ) | crontab
+( crontab -l; echo $( date  -d "$today + $timeStep minute" "+%M %H %d %m") " * cd ~/smoketest; ./update.sh; export addGitComment=${ADD_GIT_COMMENT}; export runOnce=1; export keepFiles=0; export testOnlyOnePR=1; export testPrNo=$prId; export runFullRegression=1; export useQuickBuild=0; export skipDraftPr=0; export AVERAGE_SESSION_TIME=0.5; scl enable devtoolset-7 './smoketest.sh'" ) | crontab
 
 #For testing
-( crontab -l; echo $( date  -d "$today + $timeStep minute" "+%M %H %d %m") " * cd ~/smoketest; ./update.sh; cd $INSTANCE_NAME; echo 'Build: success' > build.summary; export addGitComment=${ADD_GIT_COMMENT} " ) | crontab
+#( crontab -l; echo $( date  -d "$today + $timeStep minute" "+%M %H %d %m") " * cd ~/smoketest; ./update.sh; cd $INSTANCE_NAME; echo 'Build: success' > build.summary; export addGitComment=${ADD_GIT_COMMENT} " ) | crontab
 
 

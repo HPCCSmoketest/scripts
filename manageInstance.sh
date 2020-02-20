@@ -4,9 +4,9 @@ PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
 
 INSTANCE_NAME="PR-12701"
-instanceType="t2.micro"
+#instanceType="t2.micro"
 #instanceType="m4.10xlarge"
-#instanceType="m4.16xlarge"
+instanceType="m4.16xlarge"
 instanceDiskVolumeSize=20
 
 DOCS_BUILD=0
