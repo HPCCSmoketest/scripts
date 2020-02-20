@@ -2330,11 +2330,11 @@ def consumerTask(prId, pr, cmd, testInfo):
 
     storeTestInfo(smoketestHome, testInfo)
     
-    # Generate fake build.summary for testing purpose only
-    buildSummaryFileName = smoketestHome + '/' + threading.current_thread().name + '/build.summary'
-    buildSummaryFile = open(buildSummaryFileName,  "wb")
-    buildSummaryFile.write('Build: success\n')
-    buildSummaryFile.close()
+#    # Generate fake build.summary for testing purpose only
+#    buildSummaryFileName = smoketestHome + '/' + threading.current_thread().name + '/build.summary'
+#    buildSummaryFile = open(buildSummaryFileName,  "wb")
+#    buildSummaryFile.write('Build: success\n')
+#    buildSummaryFile.close()
     
     print("[%s] finished." % (threading.current_thread().name))
     
@@ -2423,7 +2423,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
             testPrNo  = '0'
             isBuild = True
             
-            msg="Process of PR-%s, label: %s starts now.\\nThe reason of this test is: %s.\\nCommit ID: %s\\nEstimated completion time is ~%.1f hour(s)\\n%s" % ( str(prid), prs[prid]['label'], prs[prid]['reason'], prs[prid]['sha'], prs[prid]['sessionTime'], sysId.replace('\n', '\\n'))
+            msg="Process of PR-%s, label: %s starts now.\\nThe reason of this test is: %s.\\nCommit ID: %s\\nEstimated completion time is ~%.1f hour(s)\\nOS: %s" % ( str(prid), prs[prid]['label'], prs[prid]['reason'], prs[prid]['sha'], prs[prid]['sessionTime'], sysId.replace('\n', '\\n'))
             addCommentCmd = prs[prid]['addComment']['cmd'] +'\'{"body":"'+msg+'"}\' '+prs[prid]['addComment']['url']
             
             print("\tAdd comment to pull request")
@@ -2432,7 +2432,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
 #            resultFile.write(addCommentCmd+"\n")
 #            resultFile.write("------------------------------------------------------\n")
 #            if addGitComment:
-            uploadGitHubComment(addCommentCmd,  resultFile)
+            #uploadGitHubComment(addCommentCmd,  resultFile)
             
             msg = "%d/%d. " % ( prSequnceNumber, numOfPrToTest) + msg.replace('\\n',' ')
             print(msg)
@@ -3269,7 +3269,7 @@ if __name__ == '__main__':
             break
         else:
             if runOnce:
-                print("It was an one-off attempt, exit.\nFinish at "+ time.asctime())
+                print("It was an one-off attempt, exit.\n")
                 break
         
             checkStop()
@@ -3302,7 +3302,7 @@ if __name__ == '__main__':
     # 
     
     print("[%s] - Wait for all (%d) tasks finish..." % (threading.current_thread().name,  len(threads)))
-    for key in threads:
+    for key in sorted(threads):
         print('Wait for task %s to finish' % (threads[key]['thread'].name))
         while threads[key]['thread'].is_alive():
             time.sleep(1)
@@ -3311,7 +3311,9 @@ if __name__ == '__main__':
     print("All tasks are done")
         
     if stopSmoketest:
-        print("\nExternal stop request received, exit.\nFinish at "+ time.asctime() + "\n")    
-        
+        print("\nExternal stop request received, exit.\n")    
+    
+    print("Finish at "+ time.asctime())
+    
     cleanUp(smoketestHome)
     
