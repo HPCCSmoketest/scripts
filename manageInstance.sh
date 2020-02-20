@@ -3,15 +3,21 @@
 PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
 
-INSTANCE_NAME="PR-12701"
-#instanceType="t2.micro"
-#instanceType="m4.10xlarge"
-instanceType="m4.16xlarge"
-instanceDiskVolumeSize=20
-
 DOCS_BUILD=0
 SMOKETEST_HOME=
 ADD_GIT_COMMENT=0
+INSTANCE_NAME="PR-12701"
+
+DRY_RUN=''  #"-dryRun"
+if [[ -z ${DRY_RUN} ]]
+then
+    #instanceType="m4.10xlarge"
+    instanceType="m4.16xlarge"
+else
+    instanceType="t2.micro"
+fi
+
+instanceDiskVolumeSize=20
 
 while [ $# -gt 0 ]
 do
@@ -106,7 +112,7 @@ then
 
 
     echo "Upload init.sh"
-    rsync -va --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no" ./init.sh centos@${instancePublicIp}:/home/centos/
+    rsync -va --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no" ${SMOKETEST_HOME}/init.sh centos@${instancePublicIp}:/home/centos/
 
     echo "Set it to executable"
     ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no centos@${instancePublicIp} "chmod +x init.sh"
@@ -115,7 +121,7 @@ then
     ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no centos@${instancePublicIp} "ls -l"
 
     echo "Execute init.sh"
-    ssh -i ~/HPCC-Platform-Smoketest.pem centos@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT}"
+    ssh -i ~/HPCC-Platform-Smoketest.pem centos@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT} ${DRY_RUN}"
 
     echo "Check user directory"
     ssh -i ~/HPCC-Platform-Smoketest.pem centos@${instancePublicIp} "ls -l"
@@ -132,7 +138,13 @@ then
     echo "Check crontab"
     ssh -i ~/HPCC-Platform-Smoketest.pem centos@${instancePublicIp} "crontab -l"
 
-    INIT_WAIT=10s # 10m # minutes
+    if [[ -z $DRY_RUN ]]
+    then
+        INIT_WAIT=5m # minutes
+    else
+        INIT_WAIT=10s # 10sec
+    fi
+    
     echo $(date "+%y-%m-%d %H:%M:%S")": Wait ${INIT_WAIT} before start checking Smoketest state"
     sleep ${INIT_WAIT}
     smoketestRunning=1
@@ -149,6 +161,8 @@ then
     echo "Smoketest finished, compress and download result"
     ssh -i ~/HPCC-Platform-Smoketest.pem centos@${instancePublicIp} "zip -m ~/smoketest/${instanceName}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S') -r ~/smoketest/${instanceName}/HPCCSystems-regression/* > ~/smoketest/${instanceName}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1"
     rsync -va --timeout=60 --exclude=*.rpm --exclude=*.sh --exclude=*.py --exclude=*.txt -e "ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME} .
+    rsync -va --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no" centos@${instancePublicIp}:/home/centos/smoketest/SmoketestInfo.csv ${SMOKETEST_HOME}/SmoketestInfo-${INSTANCE_NAME}-$(date '+%y-%m-%d_%H-%M-%S').csv
+    rsync -va --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no" centos@${instancePublicIp}:/home/centos/smoketest/prp-$(date '+%Y-%m-%d').log ${SMOKETEST_HOME}/prp-$(date '+%Y-%m-%d')-${INSTANCE_NAME}-${instancePublicIp}.log
 
 fi
 
