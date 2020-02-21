@@ -87,7 +87,7 @@ WriteEnvInfo()
 
     if [[ $NUMBER_OF_CPUS -ge 20 ]]
     then
-        PARALLEL_QUERIES=$(( $NUMBER_OF_CPUS * 2 / 3 ))  #20 
+        PARALLEL_QUERIES=20 # $(( $NUMBER_OF_CPUS * 2 / 3 ))
     fi
     echo "Parallel queries: $PARALLEL_QUERIES"
     echo "Parallel queries: $PARALLEL_QUERIES" >> $logFile
