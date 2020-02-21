@@ -2448,7 +2448,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
                 # clone the HPCC-Platfrom directory into the smoketes-<PRID> directory
                 pass
                 
-            # Not necessary, because buildwil be happened on the AWS instance
+            # Not necessary, because build will be happened on the AWS instance
 #            print("\tcp -r HPCC-Platform %s" % (testDir))
 #            resultFile.write("\tcp -r HPCC-Platfrom %s\n" % (testDir))
 #            myProc = subprocess.Popen(["cp -fr ../HPCC-Platform ."],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)

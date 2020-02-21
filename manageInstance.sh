@@ -158,7 +158,15 @@ then
     echo "Check Smoketest"
     ssh -i ~/HPCC-Platform-Smoketest.pem centos@${instancePublicIp} "ls -l ~/smoketest/${INSTANCE_NAME}"
     
-    echo "Smoketest finished, compress and download result"
+    echo "Smoketest finished."
+    age=2 # minutes
+    echo "Archive previous test session logs and other files older than $age minutes."
+    timestamp=$(date "+%Y-%m-%d_%H-%M-%S")
+     # Move all *.log, *test*.summary, *.diff, *.txt and *.old files into a zip archive.
+    # TO-DO check if there any. e.g. for a new PR there is not any file to archive
+    find ${SMOKETEST_HOME}/${INSTANCE_NAME}/ -maxdepth 1 -mmin +$age -type f -iname '*.log' -o -iname '*test*.summary' -o -iname '*.diff' -o -iname '*.txt' -o -iname '*.old' | zip -m -u ${SMOKETEST_HOME}/${INSTANCE_NAME}/old-logs-${timestamp} -@
+
+    echo "Compress and download result"
     ssh -i ~/HPCC-Platform-Smoketest.pem centos@${instancePublicIp} "zip -m ~/smoketest/${instanceName}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S') -r ~/smoketest/${instanceName}/HPCCSystems-regression/* > ~/smoketest/${instanceName}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1"
     rsync -va --timeout=60 --exclude=*.rpm --exclude=*.sh --exclude=*.py --exclude=*.txt -e "ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME} ${SMOKETEST_HOME}/
     rsync -va --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no" centos@${instancePublicIp}:/home/centos/smoketest/SmoketestInfo.csv ${SMOKETEST_HOME}/${INSTANCE_NAME}/SmoketestInfo-${INSTANCE_NAME}-$(date '+%y-%m-%d_%H-%M-%S').csv
