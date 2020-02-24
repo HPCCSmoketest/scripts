@@ -636,7 +636,7 @@ def GetOpenPulls(knownPullRequests):
         #
         # This solution tries to get PR info with stanadard GitHub API. If the pullRequests.json file
         # doesn't have 'draft' attribute then use the experimental API (via Accept header) to get extended result
-        headers = ''
+        headers = '--header "Authorization: token ' +  gitHubToken + '"'
         myProc = subprocess.Popen(["wget -S " + headers + " -OpullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
         result = myProc.stdout.read() + myProc.stderr.read()
         pulls_data = open('pullRequests.json').read()
@@ -2021,7 +2021,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                     myProc = subprocess.Popen(prs[prid]['cmd2'],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                     (result, retcode) = formatResult(myProc, resultFile)
                 
-            if retcode != 0:
+            if (retcode != 0) and ('Merge conflict' not in result):
                 noBuildReason = "Error in git command, should skip build and test."
             else:    
                 # Status

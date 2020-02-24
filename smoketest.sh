@@ -32,7 +32,7 @@ CheckIfNoSessionIsRunning()
         echo "$(date "+%H:%M:%S") Wait for the current session is finished."
         if [[ $(( $checkCount % 12 )) -eq 0 ]]
         then
-            echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ProcessPullRequests session is still running on ${OBT_SYSTEM}!" | mailx -s "Overlapped ProcessPullRequests sessions on $(hostname)" attila.vamos@gmail.com
+            echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ProcessPullRequests session is still running on $(hostname)!" | mailx -s "Overlapped ProcessPullRequests sessions on $(hostname)" attila.vamos@gmail.com
         fi
         
         checkCount=$(( $checkCount + 1 ))
@@ -41,6 +41,8 @@ CheckIfNoSessionIsRunning()
         pids=$( ps aux | grep '[p]ython ./ProcessPullRequests.py' | awk '{print $2}' )
     done
 
+    echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ProcessPullRequests session finished after $checkCount checks on $(hostname)." | mailx -s "Overlapped ProcessPullRequests sessions on $(hostname)" attila.vamos@gmail.com
+    
     echo "ProcessPullRequests is finished after $checkCount checks."
     echo "---------------------------------------------------------"
     echo ""

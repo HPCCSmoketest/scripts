@@ -639,7 +639,7 @@ def GetOpenPulls(knownPullRequests):
         #
         # This solution tries to get PR info with stanadard GitHub API. If the pullRequests.json file
         # doesn't have 'draft' attribute then use the experimental API (via Accept header) to get extended result
-        headers = ''
+        headers = '--header "Authorization: token ' +  gitHubToken + '"'
         myProc = subprocess.Popen(["wget -S " + headers + " -OpullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
 
         # With curl
@@ -650,8 +650,8 @@ def GetOpenPulls(knownPullRequests):
         pulls_data = open('pullRequests.json').read()
         if '"draft":' not in pulls_data:
             print("Use an experimental GitHub api to determine draft pull requests")
-            headers   =" '--header=User-Agent: Mozilla/5.0 (Windows NT 6.0) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.97 Safari/537.11'"
-            headers +=" '--header=Accept:application/vnd.github.shadow-cat-preview'"
+            headers += " '--header=User-Agent: Mozilla/5.0 (Windows NT 6.0) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.97 Safari/537.11'"
+            headers += " '--header=Accept:application/vnd.github.shadow-cat-preview'"
             myProc = subprocess.Popen(["wget -S " + headers + " -OpullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             result = myProc.stdout.read() + myProc.stderr.read()
             # In the result tehre are  X-RateLimit-Limit: 60\n  X-RateLimit-Remaining: 41 
@@ -771,6 +771,7 @@ def GetOpenPulls(knownPullRequests):
             if testDir in knownPullRequests:
                 myPrint("Remove: " + testDir + " from knownPullRequests[]")
                 knownPullRequests.remove(testDir)
+                
         except:
             print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
             pass
@@ -860,7 +861,7 @@ def GetOpenPulls(knownPullRequests):
     
             # generates changed file list:
             # wget -O<PRID>.diff https://github.com/hpcc-systems/HPCC-Platform/pull/<PRID>.diff
-            myProc = subprocess.Popen(["wget --timeout=60 -O"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            myProc = subprocess.Popen(["wget --header 'Authorization: token " +  gitHubToken + "' --timeout=60 -O"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
 
             # with curl
             #headers = '-H "Authorization: token ' + gitHubToken +'" '
@@ -1056,6 +1057,12 @@ def CleanUpClosedPulls(knownPullRequests, smoketestHome):
     if 0 < len(knownPullRequests):
         # we have some closed PR
         for pullReqDir in knownPullRequests:
+            # Is this pull request under the testing (but, it is closed meanwhile, therefore not in open pull requests)
+            prIdStr=pullReqDir.replace('PR-', '')
+            if prIdStr in threads:
+                # Yes, skip it
+                continue
+                
             newlyClosedPrs +=1
             # to save disk space delete its HPCC-Platfrom and build directories.
             if os.path.exists(pullReqDir+"/HPCC-Platform") or os.path.exists(pullReqDir+"/build"):
@@ -2045,7 +2052,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                     myProc = subprocess.Popen(prs[prid]['cmd2'],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                     (result, retcode) = formatResult(myProc, resultFile)
                 
-            if retcode != 0:
+            if (retcode != 0) and ('Merge conflict' not in result):
                 noBuildReason = "Error in git command, should skip build and test."
             else:    
                 # Status
@@ -2329,7 +2336,6 @@ def consumerTask(prId, pr, cmd, testInfo):
     testInfo['runUnittests'] = str(prs[prId]['runUnittests'])
     testInfo['runWutoolTests'] = str(prs[prId]['runWutoolTests'])
     testInfo['buildEclWatch'] = str(prs[prId]['buildEclWatch'])
-    startTimestamp = time.time()
     
     # The task
     # Dumy for teting
@@ -2343,7 +2349,7 @@ def consumerTask(prId, pr, cmd, testInfo):
 #    print("[%s] result :%s." % (threading.current_thread().name, "<" + result + ">" ))
     
     # End game
-    elapsTime = str(time.time()-startTimestamp)
+    elapsTime = str(time.time()-testInfo['startTimestamp'])
     testInfo['elapsTime'] = str(elapsTime)
     testInfo['endTime'] = time.strftime("%y-%m-%d-%H-%M-%S")
     testInfo['runFullRegression'] = str(runFullRegression)
@@ -2459,11 +2465,11 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
             print("\ttitle: %s" % (prs[prid]['title']))
             print("\tuser : %s" % (prs[prid]['user']))
             print("\tsha  : %s" % (prs[prid]['sha']))
-            print("\tstart: %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
+            
             resultFile.write("%d/%d. Process PR-%s, label: %s\n" % ( prSequnceNumber, numOfPrToTest, str(prid), prs[prid]['label']))
             resultFile.write("\ttitle: %s\n" % (repr(prs[prid]['title'])))
             resultFile.write("\tsha  : %s\n" % (prs[prid]['sha']))
-            resultFile.write("\tStart: %s\n" % (time.strftime("%y-%m-%d %H:%M:%S")))
+            
             if not os.path.exists('HPCC-Platform'):
                 # clone the HPCC-Platfrom directory into the smoketes-<PRID> directory
                 pass
@@ -2583,29 +2589,21 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
             key = str(prid)
             if key in threads: 
                 if threads[key]['thread'].is_alive():
-                    print("--- %s is scheduled and active.)"  % (key))
+                    print("--- %s is scheduled and active. (started at: %s, elaps: %s))"  % (key, testInfo['startTime'],  str(time.time()-testInfo['startTimestamp']) ) )
                 else:
                     print("--- %s is scheduled but already finished. Remove"  % (key))
                     del threads[key]
             
             if not key in threads:
-
-                buildScript='manageInstance.sh'
-                    
-#                testInfo['codeBase'] =  prs[prid]['code_base']
-#                testInfo['docsBuild'] = str(prs[prid]['isDocsChanged'])
-#                testInfo['runUnittests'] = str(prs[prid]['runUnittests'])
-#                testInfo['runWutoolTests'] = str(prs[prid]['runWutoolTests'])
-#                testInfo['buildEclWatch'] = str(prs[prid]['buildEclWatch'])
+                print("\tstart: %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
+                resultFile.write("\tStart: %s\n" % (time.strftime("%y-%m-%d %H:%M:%S")))
+                testInfo['startTimestamp'] = time.time()    
+                # Schedule it
                 
-                # Build it
-                # ./ build.sh
                 print("\tSchedule PR-"+str(prid)+", label: "+prs[prid]['label'])
                 resultFile.write("\tSchedule PR-"+str(prid)+", label: "+prs[prid]['label']+"\n")
                 try:
-                    #resultFile.write("\tscl enable devtoolset-2 "+os.getcwd()+"/build.sh " + prs[prid]['regSuiteTests'] + "\n")
-                    #myProc = subprocess.Popen(["scl enable devtoolset-2 "+os.getcwd()+"/build.sh " + prs[prid]['regSuiteTests'] ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-                    
+                    buildScript='manageInstance.sh'
                     cmd  = smoketestHome + "/" + buildScript
                     cmd += " -instanceName='" + "PR-" + key + "'"
                     cmd += " -smoketestHome='" + smoketestHome + "'"
@@ -2619,19 +2617,18 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
 #                    cmd += " -enableStackTrace=" + str(prs[prid]['enableStackTrace'])
                     
                     resultFile.write("\t" + cmd + "\n")
-#                    myProc = subprocess.Popen([ cmd ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-#                    #myProc = subprocess.Popen(["./build.sh " + prs[prid]['regSuiteTests']  ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-#                    (myStdout,  myStderr) = myProc.communicate(input = myPassw)
-                    
-                    print("--- Scheduled, new (key:%s)"  % (key))
+                 
                     threads[key] =  prs[prid]
                     threads[key]['thread'] = threading.Thread(target=consumerTask, name="PR-" + key, args=(prid, prs[prid], cmd, testInfo))
                     threads[key]['thread'].daemon = True
                     threads[key]['thread'].start()
+                    print("--- Scheduled, new (key:%s)"  % (key))
 
                 except:
                     print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
                     pass
+                    
+                print("\tend  : %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
 #                #myStdout = myProc.stdout.read()
 #                #myStderr = myProc.stderr.read()
 #                result = myStdout
@@ -2648,8 +2645,6 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
 #            buildResultFile.write(result)
 #            buildResultFile.close()
 #            
-            print("\tend  : %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
-            
 #            #print("\t"+result)
 #            maxMsgLen = 4096
 #            maxLines = 60
@@ -3326,7 +3321,7 @@ if __name__ == '__main__':
         print('Wait for task %s to finish' % (threads[key]['thread'].name))
         while threads[key]['thread'].is_alive():
             time.sleep(1)
-#        print("%s finished" % (threads[key]['thread'].name))    
+        print("%s finished" % (threads[key]['thread'].name))    
     
     print("All tasks are done")
         

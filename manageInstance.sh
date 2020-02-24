@@ -11,8 +11,8 @@ INSTANCE_NAME="PR-12701"
 DRY_RUN=''  #"-dryRun"
 if [[ -z ${DRY_RUN} ]]
 then
-    #instanceType="m4.10xlarge"
-    instanceType="m4.16xlarge"
+    instanceType="m4.10xlarge"
+    #instanceType="m4.16xlarge"
 else
     instanceType="t2.micro"
 fi
