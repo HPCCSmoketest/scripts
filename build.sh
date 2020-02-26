@@ -409,7 +409,7 @@ then
         echo "Copy and use preconfigured environment.xml"
         sudo cp environment.xml $TARGET_DIR/etc/HPCCSystems/environment.xml
         echo "Rename it to prevent further use"
-        mv environment.xml environment.xml-used
+        mv environment.xml environment.xml-preconf
     
     else
         # TO-DO fix it
@@ -421,7 +421,7 @@ then
                  "$TARGET_DIR/etc/HPCCSystems/environment.xml" > temp.xml && sudo mv -f temp.xml "$TARGET_DIR/etc/HPCCSystems/environment.xml"
     fi
     
-    cp $TARGET_DIR/etc/HPCCSystems/environment.xml environment.xml 
+    cp $TARGET_DIR/etc/HPCCSystems/environment.xml environment.xml-used
     
     # We can have more than one Thor node and each has their onw slavesPerNode attribute
     WritePlainLog "Number of thor slaves (/thor node)  : $(sed -n 's/slavesPerNode="\(.*\)"/\1/p' $TARGET_DIR/etc/HPCCSystems/environment.xml | tr '\n' ',' | tr -d [:space:])" "$logFile"
