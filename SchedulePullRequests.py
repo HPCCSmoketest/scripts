@@ -772,6 +772,12 @@ def GetOpenPulls(knownPullRequests):
                 myPrint("Remove: " + testDir + " from knownPullRequests[]")
                 knownPullRequests.remove(testDir)
                 
+            key = str(prid)
+            if key in threads:
+                if not threads[key]['thread'].is_alive():
+                    print("--- %s is finished. Remove"  % (key))
+                    del threads[key]
+                    
         except:
             print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
             pass
@@ -2417,14 +2423,10 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
         #testDir = "smoketest-"+str(prid)
         testDir = prs[prid]['testDir']
         
-        testInfo = {}
-        testInfo['prid'] = str(prid)
-        
         # cd smoketest-<PRID>
         os.chdir(testDir)
         startTimestamp = time.time()
         curTime = time.strftime("%y-%m-%d-%H-%M-%S")
-        testInfo['startTime'] = curTime
         resultFileName= "scheduler-" + curTime + ".log"
         resultFile = open(resultFileName,  "w", 0)
         
@@ -2589,7 +2591,8 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
             key = str(prid)
             if key in threads: 
                 if threads[key]['thread'].is_alive():
-                    print("--- %s is scheduled and active. (started at: %s, elaps: %s))"  % (key, testInfo['startTime'],  str(time.time()-testInfo['startTimestamp']) ) )
+                    elaps = time.time()-threads[key]['startTimestamp']
+                    print("--- %s is scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['startTime'], elaps,  elaps / 60 ) )
                 else:
                     print("--- %s is scheduled but already finished. Remove"  % (key))
                     del threads[key]
@@ -2597,6 +2600,9 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
             if not key in threads:
                 print("\tstart: %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
                 resultFile.write("\tStart: %s\n" % (time.strftime("%y-%m-%d %H:%M:%S")))
+                testInfo = {}
+                testInfo['prid'] = str(prid)
+                testInfo['startTime'] = curTime
                 testInfo['startTimestamp'] = time.time()    
                 # Schedule it
                 
@@ -2622,6 +2628,8 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
                     threads[key]['thread'] = threading.Thread(target=consumerTask, name="PR-" + key, args=(prid, prs[prid], cmd, testInfo))
                     threads[key]['thread'].daemon = True
                     threads[key]['thread'].start()
+                    threads[key]['startTime'] = curTime
+                    threads[key]['startTimestamp'] = time.time()
                     print("--- Scheduled, new (key:%s)"  % (key))
 
                 except:
@@ -2712,11 +2720,6 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
 #                resultFile.write("\t\tFinished. Elaps time is:" + str(time.time()-clangTidyStart)+" sec\n")
 #            
             elapsTime = str(time.time()-startTimestamp)
-#            testInfo['elapsTime'] = str(elapsTime)
-#            testInfo['endTime'] = time.strftime("%y-%m-%d-%H-%M-%S")
-#            testInfo['runFullRegression'] = str(runFullRegression)
-#            
-#            storeTestInfo(smoketestHome)
             
             print("\tFinished: %s, elaps time is: %s sec" % ( time.strftime("%y-%m-%d %H:%M:%S"), str(elapsTime) ))
             resultFile.write("\tFinished: %s, elaps time is: %s sec" % ( time.strftime("%y-%m-%d %H:%M:%S"), str(elapsTime) ))
