@@ -404,13 +404,23 @@ then
     CheckCMakeResult "$logFile"
     
     cd ${PR_ROOT}
-    # TO-DO fix it
-    echo "Patch $TARGET_DIR/etc/HPCCSystems/environment.xml to set $THOR_SLAVES slave Thor system"
-    sudo cp $TARGET_DIR/etc/HPCCSystems/environment.xml $TARGET_DIR/etc/HPCCSystems/environment.xml.bak
-    sed -e 's/slavesPerNode="\(.*\)"/slavesPerNode="'"$THOR_SLAVES"'"/g'                                    \
-             -e 's/maxEclccProcesses="\(.*\)"/maxEclccProcesses="'"$PARALLEL_QUERIES"'"/g'                  \
-             -e 's/name="maxCompileThreads" value="\(.*\)"/name="maxCompileThreads" value="'"$PARALLEL_QUERIES"'"/g'                  \
-             "$TARGET_DIR/etc/HPCCSystems/environment.xml" > temp.xml && sudo mv -f temp.xml "$TARGET_DIR/etc/HPCCSystems/environment.xml"
+    if [[ -f environment.xml ]]
+    then
+        echo "Copy and use preconfigured environment.xml"
+        sudo cp environment.xml $TARGET_DIR/etc/HPCCSystems/environment.xml
+        echo "Rename it to prevent further use"
+        mv environment.xml environment.xml-used
+    
+    else
+        # TO-DO fix it
+        echo "Patch $TARGET_DIR/etc/HPCCSystems/environment.xml to set $THOR_SLAVES slave Thor system"
+        sudo cp $TARGET_DIR/etc/HPCCSystems/environment.xml $TARGET_DIR/etc/HPCCSystems/environment.xml.bak
+        sed -e 's/slavesPerNode="\(.*\)"/slavesPerNode="'"$THOR_SLAVES"'"/g'                                    \
+                 -e 's/maxEclccProcesses="\(.*\)"/maxEclccProcesses="'"$PARALLEL_QUERIES"'"/g'                  \
+                 -e 's/name="maxCompileThreads" value="\(.*\)"/name="maxCompileThreads" value="'"$PARALLEL_QUERIES"'"/g'                  \
+                 "$TARGET_DIR/etc/HPCCSystems/environment.xml" > temp.xml && sudo mv -f temp.xml "$TARGET_DIR/etc/HPCCSystems/environment.xml"
+    fi
+    
     # We can have more than one Thor node and each has their onw slavesPerNode attribute
     WritePlainLog "Number of thor slaves (/thor node)  : $(sed -n 's/slavesPerNode="\(.*\)"/\1/p' $TARGET_DIR/etc/HPCCSystems/environment.xml | tr '\n' ',' | tr -d [:space:])" "$logFile"
     WritePlainLog "Maximum number of Eclcc processes is: $(sed -n 's/maxEclccProcesses="\(.*\)"/\1/p' $TARGET_DIR/etc/HPCCSystems/environment.xml | tr -d [:space:])" "$logFile"
