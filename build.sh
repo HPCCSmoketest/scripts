@@ -421,6 +421,8 @@ then
                  "$TARGET_DIR/etc/HPCCSystems/environment.xml" > temp.xml && sudo mv -f temp.xml "$TARGET_DIR/etc/HPCCSystems/environment.xml"
     fi
     
+    cp $TARGET_DIR/etc/HPCCSystems/environment.xml environment.xml 
+    
     # We can have more than one Thor node and each has their onw slavesPerNode attribute
     WritePlainLog "Number of thor slaves (/thor node)  : $(sed -n 's/slavesPerNode="\(.*\)"/\1/p' $TARGET_DIR/etc/HPCCSystems/environment.xml | tr '\n' ',' | tr -d [:space:])" "$logFile"
     WritePlainLog "Maximum number of Eclcc processes is: $(sed -n 's/maxEclccProcesses="\(.*\)"/\1/p' $TARGET_DIR/etc/HPCCSystems/environment.xml | tr -d [:space:])" "$logFile"
