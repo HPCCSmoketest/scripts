@@ -53,12 +53,13 @@ done
 echo "Create instance for ${INSTANCE_NAME}, type: $instanceType, disk: $instanceDiskVolumeSize, build ${DOCS_BUILD}"
 
 instance=$( aws ec2 run-instances --image-id ami-0d014f7bae44658fe --count 1 --instance-type $instanceType --key-name HPCC-Platform-Smoketest --security-group-ids sg-08a92c3135ec19aea --subnet-id subnet-0f5274ec85eec91da --block-device-mappings "[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"VolumeSize\":$instanceDiskVolumeSize,\"DeleteOnTermination\":true,\"Encrypted\":true}}]" 2>&1 )
+echo "Instance: $instance"
 
 instanceId=$( echo "$instance" | egrep 'InstanceId' | tr -d '", ' | cut -d : -f 2 )
 echo "Instance ID: $instanceId"
 
 instanceInfo=$( aws ec2 describe-instances --instance-ids ${instanceId} 2>&1 | egrep -i 'instan|status|public|volume' )
-echo "Instance: $instanceInfo"
+echo "Instance info: $instanceInfo"
 
 instancePublicIp=$( echo "$instanceInfo" | egrep 'PublicIpAddress' | tr -d '", ' | cut -d : -f 2 )
 echo "Public IP: ${instancePublicIp}"
