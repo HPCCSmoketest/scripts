@@ -11,13 +11,16 @@ INSTANCE_NAME="PR-12701"
 DRY_RUN=''  #"-dryRun"
 if [[ -z ${DRY_RUN} ]]
 then
-    instanceType="m4.10xlarge"
-    #instanceType="m4.16xlarge"
+    INSTANCE_TYPE="m4.10xlarge"
+    #INSTANCE_TYPE="m4.16xlarge"
 else
-    instanceType="t2.micro"
+    INSTANCE_TYPE="t2.micro"
 fi
 
 instanceDiskVolumeSize=20
+AMI_ID="ami-016bc6be662a27746"
+SECURITY_GROUP_ID="sg-08a92c3135ec19aea"
+SUBNET_ID="subnet-0f5274ec85eec91da"
 
 while [ $# -gt 0 ]
 do
@@ -50,13 +53,19 @@ do
 done
 
 
-echo "Create instance for ${INSTANCE_NAME}, type: $instanceType, disk: $instanceDiskVolumeSize, build ${DOCS_BUILD}"
+echo "Create instance for ${INSTANCE_NAME}, type: $INSTANCE_TYPE, disk: $instanceDiskVolumeSize, build ${DOCS_BUILD}"
 
-instance=$( aws ec2 run-instances --image-id ami-0d014f7bae44658fe --count 1 --instance-type $instanceType --key-name HPCC-Platform-Smoketest --security-group-ids sg-08a92c3135ec19aea --subnet-id subnet-0f5274ec85eec91da --block-device-mappings "[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"VolumeSize\":$instanceDiskVolumeSize,\"DeleteOnTermination\":true,\"Encrypted\":true}}]" 2>&1 )
+instance=$( aws ec2 run-instances --image-id ${AMI_ID} --count 1 --instance-type $INSTANCE_TYPE --key-name HPCC-Platform-Smoketest --security-group-ids ${SECURITY_GROUP_ID} --subnet-id ${SUBNET_ID} --block-device-mappings "[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"VolumeSize\":$instanceDiskVolumeSize,\"DeleteOnTermination\":true,\"Encrypted\":true}}]" 2>&1 )
 echo "Instance: $instance"
 
 instanceId=$( echo "$instance" | egrep 'InstanceId' | tr -d '", ' | cut -d : -f 2 )
 echo "Instance ID: $instanceId"
+
+if [[ -z "$instanceId" ]]
+then
+   echo "Instance creation failed, exit"
+   exit -1 
+fi
 
 instanceInfo=$( aws ec2 describe-instances --instance-ids ${instanceId} 2>&1 | egrep -i 'instan|status|public|volume' )
 echo "Instance info: $instanceInfo"
@@ -109,6 +118,12 @@ then
 
         echo "Upload *.dat files"
         rsync -var --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no" ${SMOKETEST_HOME}/${INSTANCE_NAME}/*.dat centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/
+        
+        if [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/environment.xml ]]
+        then
+            echo "Upload environment.xml files"
+            rsync -var --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no" ${SMOKETEST_HOME}/${INSTANCE_NAME}/environment.xml centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/
+        fi
     fi
 
 
