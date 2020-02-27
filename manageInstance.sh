@@ -121,7 +121,7 @@ then
         
         if [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/environment.xml ]]
         then
-            echo "Upload environment.xml files"
+            echo "Upload environment.xml file"
             rsync -var --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no" ${SMOKETEST_HOME}/${INSTANCE_NAME}/environment.xml centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/
         fi
     fi
