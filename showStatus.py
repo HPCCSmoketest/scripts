@@ -34,7 +34,7 @@ def update():
 
     currLogFile = "prp-" + time.strftime("%Y-%m-%d") + ".log"
     #print("logfile:%s, " % (currLogFile )),
-    myProc = subprocess.Popen(["tail -n 40000 "+ currLogFile+ " | egrep -i '^([0-9]*)/([0-9]*)\. Process|wait|^(\s*)sha|^(\s*)base|^(\s*)user|^(\s*)start|^(\s*)end|^(\s*)pass|scheduled|done, exit'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    myProc = subprocess.Popen(["tail -n 40000 "+ currLogFile+ " | egrep -i '^([0-9]*)/([0-9]*)\. Process|^wait|^(\s*)sha|^(\s*)base|^(\s*)user|^(\s*)start|^(\s*)end|^(\s*)pass|scheduled|done, exit'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
     result = myProc.stdout.read() + myProc.stderr.read()
     result = result.split('\n')
         
