@@ -119,11 +119,13 @@ sysId = platform.dist()[0] + ' ' + platform.dist()[1] + ' (' + platform.system()
 gitHubToken=None
 
 if 'inux' in sysId:
-    myProc = subprocess.Popen(["gcc --version | head -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    myProc = subprocess.Popen(["gcc --version | head -n 1 "], shell=True,  bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     sysId += '\n GCC: ' + myProc.stdout.read().rstrip('\n')
-    myProc = subprocess.Popen(["hostname"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    myProc = subprocess.Popen(["hostname"], shell=True, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     sysId += '\n Host: ' + myProc.stdout.read().rstrip('\n')
     
+    myProc = subprocess.Popen(['ps $PPID | tail -n 1 | awk "{print \$6}"'], shell=True, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    parentCommand = myProc.stdout.read().rstrip('\n')
 
 failEmoji=':x:'
 passEmoji=':white_check_mark:'
@@ -772,11 +774,13 @@ def GetOpenPulls(knownPullRequests):
                 myPrint("Remove: " + testDir + " from knownPullRequests[]")
                 knownPullRequests.remove(testDir)
                 
-            key = str(prid)
-            if key in threads:
-                if not threads[key]['thread'].is_alive():
-                    print("--- %s is finished. Remove"  % (key))
-                    del threads[key]
+#            key = str(prid)
+#            if key in threads:
+#                if threads[key]['thread'].is_alive():
+#                    knownPullRequests.remove(testDir)
+#                else:
+#                    print("--- %s is finished. Remove"  % (key))
+#                    del threads[key]
                     
         except:
             print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
@@ -1033,7 +1037,17 @@ def GetOpenPulls(knownPullRequests):
             else:
                 print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' is in draft state, skip it!')
                 skippedPRs += 1
-                
+    
+    # Until this point all open PR is removed from knownPullRequests
+    print("[%s] - Check if there is any closed but still running task..." % (threading.current_thread().name))
+    for key in sorted(threads):
+        testDir = 'PR-' + key
+        if (testDir in knownPullRequests):
+            if threads[key]['thread'].is_alive():
+                print('Keep %s until it is finish' % (testDir))
+                knownPullRequests.remove(testDir)
+            
+    
     print("Number of open PRs      : %2d" % (openPRs))
     print("Number of tested PRs    : %2d" % (testedPRs))
     print("Number of skipped PRs   : %2d" % (skippedPRs))
@@ -2464,7 +2478,6 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
             
             msg = "%d/%d. " % ( prSequnceNumber, numOfPrToTest) + msg.replace('\\n',' ')
             print(msg)
-            print("\ttitle: %s" % (prs[prid]['title']))
             print("\tuser : %s" % (prs[prid]['user']))
             print("\tsha  : %s" % (prs[prid]['sha']))
             
@@ -2599,6 +2612,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
             
             if not key in threads:
                 print("\tstart: %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
+                print("\ttitle: %s" % (prs[prid]['title']))
                 resultFile.write("\tStart: %s\n" % (time.strftime("%y-%m-%d %H:%M:%S")))
                 testInfo = {}
                 testInfo['prid'] = str(prid)
@@ -2631,12 +2645,16 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
                     threads[key]['startTime'] = curTime
                     threads[key]['startTimestamp'] = time.time()
                     print("--- Scheduled, new (key:%s)"  % (key))
+                    print("\tend  : %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
+
+                    elapsTime = str(time.time()-startTimestamp)
+                    print("\tFinished: %s, elaps time is: %s sec" % ( time.strftime("%y-%m-%d %H:%M:%S"), str(elapsTime) ))
+                    resultFile.write("\tFinished: %s, elaps time is: %s sec" % ( time.strftime("%y-%m-%d %H:%M:%S"), str(elapsTime) ))
 
                 except:
                     print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
                     pass
                     
-                print("\tend  : %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
 #                #myStdout = myProc.stdout.read()
 #                #myStderr = myProc.stderr.read()
 #                result = myStdout
@@ -2719,10 +2737,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
 #                print("\t\tFinished. Elaps time is:" + str(time.time()-clangTidyStart)+" sec.")
 #                resultFile.write("\t\tFinished. Elaps time is:" + str(time.time()-clangTidyStart)+" sec\n")
 #            
-            elapsTime = str(time.time()-startTimestamp)
             
-            print("\tFinished: %s, elaps time is: %s sec" % ( time.strftime("%y-%m-%d %H:%M:%S"), str(elapsTime) ))
-            resultFile.write("\tFinished: %s, elaps time is: %s sec" % ( time.strftime("%y-%m-%d %H:%M:%S"), str(elapsTime) ))
             # Create a PR related directory called 'PR<PRID>' for 
             #       - build
             #       - archives
@@ -3178,6 +3193,7 @@ if __name__ == '__main__':
     print("Runtime paramters:")
     print("------------------")
     print("Operating system is                                : " + sysId)
+    print("Parent Command is                                  : " + parentCommand)
     print("Enable to remove HPCC-Platform directory at exit is: " + str(removeMasterAtExit))
     print("Enable shallow clone is                            : " + str(enableShallowClone))
     print("Add git comment is                                 : " + str(addGitComment))

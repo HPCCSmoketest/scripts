@@ -32,7 +32,7 @@ CheckIfNoSessionIsRunning()
         echo "$(date "+%H:%M:%S") Wait for the current session is finished."
         if [[ $(( $checkCount % 12 )) -eq 0 ]]
         then
-            echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ProcessPullRequests session is still running on $(hostname)!" | mailx -s "Overlapped ProcessPullRequests sessions on $(hostname)" attila.vamos@gmail.com
+            echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ProcessPullRequests session is still running on $( curl http://checkip.amazonaws.com )!" | mailx -s "Overlapped ProcessPullRequests sessions on $(hostname)" attila.vamos@gmail.com
         fi
         
         checkCount=$(( $checkCount + 1 ))
@@ -43,7 +43,7 @@ CheckIfNoSessionIsRunning()
 
     if [[ $checkCount -ne 0 ]]
     then
-        echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ProcessPullRequests session finished after $checkCount checks on $(hostname)." | mailx -s "Overlapped ProcessPullRequests sessions on $(hostname)" attila.vamos@gmail.com
+        echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ProcessPullRequests session finished after $checkCount checks on $( curl http://checkip.amazonaws.com )." | mailx -s "Overlapped ProcessPullRequests sessions on $(hostname)" attila.vamos@gmail.com
     fi
     
     echo "ProcessPullRequests is finished after $checkCount checks."
@@ -60,7 +60,8 @@ CheckIfNoSessionIsRunning()
 logfile=prp-$(date +%Y-%m-%d).log 
 exec >> ${logfile} 2>&1
 
-echo "At $(date "+%Y.%m.%d %H:%M:%S") a new ProcessPullRequests session starts on $(hostname) for ${testPrNo}." | mailx -s "New ProcessPullRequests sessions on $(hostname)" attila.vamos@gmail.com
+INSTANCE_ID=$( sudo ls -l /var/lib/cloud/instance | cut -d' '  -f11 | cut -d '/' -f6 )
+echo "At $(date "+%Y.%m.%d %H:%M:%S") a new ProcessPullRequests session starts on $( curl http://checkip.amazonaws.com ) with ${INSTANCE_ID} for ${testPrNo}." | mailx -s "New ProcessPullRequests sessions on $(hostname)" attila.vamos@gmail.com
 
 echo "I am "$( whoami )
 export PATH=$PATH:/usr/local/bin:/bin:/usr/local/sbin:/sbin:/usr/sbin:
