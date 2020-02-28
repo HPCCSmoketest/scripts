@@ -2028,7 +2028,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 print("\tgit status")
                 resultFile.write("\tgit status\n")
                 myProc = subprocess.Popen("git status",  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                result = formatResult(myProc, resultFile)
+                (result, retcode) = formatResult(myProc, resultFile)
                 noBuildReason = ""
             
             if ('Unmerged paths:' in result) or (retcode != 0):
