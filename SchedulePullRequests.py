@@ -2479,7 +2479,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
             msg = "%d/%d. " % ( prSequnceNumber, numOfPrToTest) + msg.replace('\\n',' ')
             print(msg)
             print("\tuser : %s" % (prs[prid]['user']))
-            print("\tsha  : %s" % (prs[prid]['sha']))
+            print("\tsha  : %s" % (prs[prid]['sha'][0:8].upper() ))
             
             resultFile.write("%d/%d. Process PR-%s, label: %s\n" % ( prSequnceNumber, numOfPrToTest, str(prid), prs[prid]['label']))
             resultFile.write("\ttitle: %s\n" % (repr(prs[prid]['title'])))
@@ -3339,7 +3339,8 @@ if __name__ == '__main__':
     for key in sorted(threads):
         print('Wait for task %s to finish' % (threads[key]['thread'].name))
         while threads[key]['thread'].is_alive():
-            time.sleep(1)
+            time.sleep(10)
+            print ('.'), 
         print("%s finished" % (threads[key]['thread'].name))    
     
     print("All tasks are done")
