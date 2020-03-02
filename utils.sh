@@ -392,7 +392,7 @@ WriteMilestone()
 
 StartCheckDiskSpace()
 {
-    WritePlainLog "KillCheckDiskSpace()" "$1"
+    WritePlainLog "StartCheckDiskSpace()" "$1"
     ./checkDiskSpace.sh 1>&/dev/null &
 }
 
