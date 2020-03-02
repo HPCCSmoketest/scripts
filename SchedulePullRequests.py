@@ -2352,6 +2352,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
     os.chdir(cwd)
     
 def consumerTask(prId, pr, cmd, testInfo, resultFileName):
+    resultFile = open(resultFileName,  "a", 0)
     cwd = os.getcwd()
     print("cmd:'%s', cwd: %s" % (cmd,  cwd))
     testInfo['codeBase'] =  prs[prId]['code_base']
@@ -2371,6 +2372,7 @@ def consumerTask(prId, pr, cmd, testInfo, resultFileName):
     (result,  retcode) = formatResult(myProc)
 #    print("[%s] result :%s." % (threading.current_thread().name, "<" + result + ">" ))
     
+    resultFile.write(result)
     # End game
     elapsTime = str(time.time()-testInfo['startTimestamp'])
     testInfo['elapsTime'] = str(elapsTime)
@@ -2385,6 +2387,7 @@ def consumerTask(prId, pr, cmd, testInfo, resultFileName):
 #    buildSummaryFile.write('Build: success\n')
 #    buildSummaryFile.close()
     
+    resultFile.close()
     print("[%s] finished." % (threading.current_thread().name))
     
 def ScheduleOpenPulls(prs,  numOfPrToTest):
@@ -2443,9 +2446,9 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
         # cd smoketest-<PRID>
         os.chdir(testDir)
         startTimestamp = time.time()
-        curTime = time.strftime("%y-%m-%d-%H-%M-%S")
-        resultFileName= "scheduler-" + curTime + ".log"
-        resultFile = open(resultFileName,  "a", 0)
+#        curTime = time.strftime("%y-%m-%d-%H-%M-%S")
+#        resultFileName= "scheduler-" + curTime + ".log"
+#        resultFile = open(resultFileName,  "a", 0)
         
         # First or new build
         isBuild=False
@@ -2484,9 +2487,9 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
             print("\tuser : %s" % (prs[prid]['user']))
             print("\tsha  : %s" % (prs[prid]['sha'][0:8].upper() ))
             
-            resultFile.write("%d/%d. Process PR-%s, label: %s\n" % ( prSequnceNumber, numOfPrToTest, str(prid), prs[prid]['label']))
-            resultFile.write("\ttitle: %s\n" % (repr(prs[prid]['title'])))
-            resultFile.write("\tsha  : %s\n" % (prs[prid]['sha']))
+#            resultFile.write("%d/%d. Process PR-%s, label: %s\n" % ( prSequnceNumber, numOfPrToTest, str(prid), prs[prid]['label']))
+#            resultFile.write("\ttitle: %s\n" % (repr(prs[prid]['title'])))
+#            resultFile.write("\tsha  : %s\n" % (prs[prid]['sha']))
             
             if not os.path.exists('HPCC-Platform'):
                 # clone the HPCC-Platfrom directory into the smoketes-<PRID> directory
@@ -2608,23 +2611,29 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
             if key in threads: 
                 if threads[key]['thread'].is_alive():
                     elaps = time.time()-threads[key]['startTimestamp']
-                    print("--- %s is scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['startTime'], elaps,  elaps / 60 ) )
+                    print("--- PR-%s is scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['startTime'], elaps,  elaps / 60 ) )
                 else:
-                    print("--- %s is scheduled but already finished. Remove"  % (key))
+                    print("--- PR-%s is scheduled but already finished. Remove"  % (key))
                     del threads[key]
             
             if not key in threads:
                 print("\tstart: %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
                 print("\ttitle: %s" % (prs[prid]['title']))
+                curTime = time.strftime("%y-%m-%d-%H-%M-%S")
+                resultFileName= "scheduler-" + curTime + ".test"
+                resultFile = open(resultFileName,  "a", 0)
                 resultFile.write("\tStart: %s\n" % (time.strftime("%y-%m-%d %H:%M:%S")))
                 testInfo = {}
                 testInfo['prid'] = str(prid)
                 testInfo['startTime'] = curTime
                 testInfo['startTimestamp'] = time.time()    
                 # Schedule it
-                
                 print("\tSchedule PR-"+str(prid)+", label: "+prs[prid]['label'])
                 resultFile.write("\tSchedule PR-"+str(prid)+", label: "+prs[prid]['label']+"\n")
+                resultFile.write("%d/%d. Process PR-%s, label: %s\n" % ( prSequnceNumber, numOfPrToTest, str(prid), prs[prid]['label']))
+                resultFile.write("\ttitle: %s\n" % (repr(prs[prid]['title'])))
+                resultFile.write("\tsha  : %s\n" % (prs[prid]['sha']))
+                
                 try:
                     buildScript='manageInstance.sh'
                     cmd  = smoketestHome + "/" + buildScript
@@ -2647,6 +2656,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
                     threads[key]['thread'].start()
                     threads[key]['startTime'] = curTime
                     threads[key]['startTimestamp'] = time.time()
+                    threads[key]['resultFileName'] = resultFileName
                     print("--- Scheduled, new (key:%s)"  % (key))
                     print("\tend  : %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
 
@@ -2658,6 +2668,8 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
                     print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
                     pass
                     
+                resultFile.close()
+                
 #                #myStdout = myProc.stdout.read()
 #                #myStderr = myProc.stderr.read()
 #                result = myStdout
@@ -2768,7 +2780,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
             
         else:
             myPrint("PR-"+str(prid)+", label: "+prs[prid]['label']+ ' already tested!')
-            resultFile.write("PR-"+str(prid)+", label: "+prs[prid]['label']+ ' already tested!\n')
+#            resultFile.write("PR-"+str(prid)+", label: "+prs[prid]['label']+ ' already tested!\n')
 
 #        if (not keepFiles) and ((not testFailed) and (not buildFailed) and (os.path.exists('build') or os.path.exists('HPCC-Platform') or os.path.exists('hpcc'))):
 #            # remove build files to free disk space
@@ -2786,9 +2798,9 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
               
         endTimestamp = time.time()
         myPrint("\tElapsed time:"+str(endTimestamp-startTimestamp)+" sec.")
-        resultFile.write("\tElapsed time:"+str(endTimestamp-startTimestamp)+" sec.\n")
+#        resultFile.write("\tElapsed time:"+str(endTimestamp-startTimestamp)+" sec.\n")
         
-        resultFile.close()
+#        resultFile.close()
         if not isBuild and os.path.exists(resultFileName):
             os.unlink(resultFileName)
         
@@ -2804,14 +2816,17 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
             print("\nIt seems the PR-%s is already closed." % (testPrNo))
         
     # Until this point all open PR is checked/scheduled
+    isNotThere = True
     print("[%s] - Check if there is any closed but still running task..." % (threading.current_thread().name))
     for key in sorted(threads):
         if threads[key]['thread'].is_alive():
-            testDir = 'PR-' + key
-            if (testDir not in sortedPrs):
+            if (int(key) not in sortedPrs):
                 elaps = time.time()-threads[key]['startTimestamp']
-                print("--- %s is closed but scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['startTime'], elaps,  elaps / 60 ) )
-            
+                print("---PR-%s is closed but scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['startTime'], elaps,  elaps / 60 ) )
+                isNotThere = False
+    if isNotThere:
+        print("[%s] - None\n" % (threading.current_thread().name))
+        
     os.chdir(cwd)
 
 
