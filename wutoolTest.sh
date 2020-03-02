@@ -12,6 +12,8 @@ PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
 . ./timestampLogger.sh
 
+. ./utils.sh
+
 #
 #-------------------------------
 #
@@ -28,6 +30,9 @@ WUTOOLTEST_EXCLUSION=
 testTargets=( "Dali" "Cassandra" )
 testParams=( "DALISERVER=." )
 SUDO=
+
+START_DISK_SPACE_CHECKER=$( env | egrep -c 'START_DISK_SPACE_CHECKER' )
+
 #
 #-------------------------------
 #
@@ -184,6 +189,8 @@ WriteLog "Execute wutoolTests..." "$WUTOOLTEST_EXECUTION_LOG_FILE"
 echo ${testParams[@]}
 WriteLog "$wutoolTest" "$WUTOOLTEST_EXECUTION_LOG_FILE"
 
+[[ ${START_DISK_SPACE_CHECKER} -eq 1 ]] && StartCheckDiskSpace  "$WUTOOLTEST_EXECUTION_LOG_FILE"
+
 TIME_STAMP=$(date +%s)
 
 for (( index = 0; index < ${#testParams[@]}; index++ ))
@@ -213,9 +220,10 @@ do
     echo "Elaps: ${SUB_TEST_TIME} sec" >> $WUTOOLTEST_RESULT_FILE
 done
 
-
 echo "TestResult:wutoolTest:total:${TOTAL} passed:${PASSED} failed:${FAILED}" 
 WriteLog "wutoolTests finished." "$WUTOOLTEST_EXECUTION_LOG_FILE"
+
+[[ ${START_DISK_SPACE_CHECKER} -eq 1 ]] && KillCheckDiskSpace "$WUTOOLTEST_EXECUTION_LOG_FILE"
 
 WriteLog "End." "$WUTOOLTEST_EXECUTION_LOG_FILE"
 

@@ -87,8 +87,11 @@ WriteEnvInfo()
 
     if [[ $NUMBER_OF_CPUS -ge 20 ]]
     then
-        PARALLEL_QUERIES=20 # $(( $NUMBER_OF_CPUS * 2 / 3 ))
+        PARALLEL_QUERIES=20 
+    else
+       PARALLEL_QUERIES=$(( $NUMBER_OF_CPUS * 2 / 3 ))
     fi
+    
     echo "Parallel queries: $PARALLEL_QUERIES"
     echo "Parallel queries: $PARALLEL_QUERIES" >> $logFile
 
@@ -384,4 +387,26 @@ WriteMilestone()
     then
         WritePlainLog "Milestone:$1" "$2"
     fi
+}
+
+
+StartCheckDiskSpace()
+{
+    WritePlainLog "KillCheckDiskSpace()" "$1"
+    ./checkDiskSpace.sh 1>&/dev/null &
+}
+
+KillCheckDiskSpace()
+{
+   WritePlainLog "KillCheckDiskSpace()" "$1"
+   pids=$( ps ax | grep "[c]heckDiskSpace.sh" | awk '{print $1}' )
+
+    for i in $pids
+    do 
+        WritePlainLog "kill checkdiskspace.sh with pid: ${i}" "$1"
+        kill -9 $i
+        sleep 1
+    done;
+
+    sleep 1
 }

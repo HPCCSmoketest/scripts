@@ -27,6 +27,8 @@ HPCC_CORE_ARCHIVE=$PR_ROOT/HPCCSystems-cores-$date
 cp -f ../utils.sh .
 . ./utils.sh
 
+cp -f ../checkDiskSpace.sh .
+
 #
 #----------------------------------------------------
 #

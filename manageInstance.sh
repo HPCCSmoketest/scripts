@@ -11,8 +11,9 @@ INSTANCE_NAME="PR-12701"
 DRY_RUN=''  #"-dryRun"
 if [[ -z ${DRY_RUN} ]]
 then
-    INSTANCE_TYPE="m4.10xlarge"
-    #INSTANCE_TYPE="m4.16xlarge"
+    INSTANCE_TYPE="m4.4xlarge"      # 0.888 USD per Hour (16 Cores, 64 GB RAM)
+    #INSTANCE_TYPE="m4.10xlarge"    # 2.22 USD per Hour (40 Cores, 163GB RAM)
+    #INSTANCE_TYPE="m4.16xlarge"    # 3.552 USD per Hour (64 Cores, 256 GB RAM)
 else
     INSTANCE_TYPE="t2.micro"
 fi

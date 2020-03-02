@@ -1039,6 +1039,7 @@ def GetOpenPulls(knownPullRequests):
                 skippedPRs += 1
     
     # Until this point all open PR is removed from knownPullRequests
+    closedActive = 0
     print("[%s] - Check if there is any closed but still running task..." % (threading.current_thread().name))
     for key in sorted(threads):
         testDir = 'PR-' + key
@@ -1046,15 +1047,17 @@ def GetOpenPulls(knownPullRequests):
             if threads[key]['thread'].is_alive():
                 print('Keep %s until it is finish' % (testDir))
                 knownPullRequests.remove(testDir)
-            
+                closedActive += 1
+    print("")
     
-    print("Number of open PRs      : %2d" % (openPRs))
-    print("Number of tested PRs    : %2d" % (testedPRs))
-    print("Number of skipped PRs   : %2d" % (skippedPRs))
-    print("Number of new PRs       : %2d" % (newPRs))
-    print("Number of updated PRs   : %2d" % (updatedPRs))
-    print("Number of forced PRs    : %2d" % (forcedPr))
-    print("-----------------------------")
+    print("Number of closed, but still active PRs : %2d" % (closedActive))
+    print("Number of open PRs                     : %2d" % (openPRs))
+    print("Number of tested PRs                   : %2d" % (testedPRs))
+    print("Number of skipped PRs                  : %2d" % (skippedPRs))
+    print("Number of new PRs                      : %2d" % (newPRs))
+    print("Number of updated PRs                  : %2d" % (updatedPRs))
+    print("Number of forced PRs                   : %2d" % (forcedPr))
+    print("-------------------------------------------")
     if forcedPr > 0:
         print("Number of PRs to build  : %2d (forced)" % (forcedPr))
     else:
@@ -2348,7 +2351,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
         
     os.chdir(cwd)
     
-def consumerTask(prId, pr, cmd, testInfo):
+def consumerTask(prId, pr, cmd, testInfo, resultFileName):
     cwd = os.getcwd()
     print("cmd:'%s', cwd: %s" % (cmd,  cwd))
     testInfo['codeBase'] =  prs[prId]['code_base']
@@ -2442,7 +2445,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
         startTimestamp = time.time()
         curTime = time.strftime("%y-%m-%d-%H-%M-%S")
         resultFileName= "scheduler-" + curTime + ".log"
-        resultFile = open(resultFileName,  "w", 0)
+        resultFile = open(resultFileName,  "a", 0)
         
         # First or new build
         isBuild=False
@@ -2639,7 +2642,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
                     resultFile.write("\t" + cmd + "\n")
                  
                     threads[key] =  prs[prid]
-                    threads[key]['thread'] = threading.Thread(target=consumerTask, name="PR-" + key, args=(prid, prs[prid], cmd, testInfo))
+                    threads[key]['thread'] = threading.Thread(target=consumerTask, name="PR-" + key, args=(prid, prs[prid], cmd, testInfo, resultFileName))
                     threads[key]['thread'].daemon = True
                     threads[key]['thread'].start()
                     threads[key]['startTime'] = curTime
@@ -2800,6 +2803,15 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
         else:
             print("\nIt seems the PR-%s is already closed." % (testPrNo))
         
+    # Until this point all open PR is checked/scheduled
+    print("[%s] - Check if there is any closed but still running task..." % (threading.current_thread().name))
+    for key in sorted(threads):
+        if threads[key]['thread'].is_alive():
+            testDir = 'PR-' + key
+            if (testDir not in sortedPrs):
+                elaps = time.time()-threads[key]['startTimestamp']
+                print("--- %s is closed but scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['startTime'], elaps,  elaps / 60 ) )
+            
     os.chdir(cwd)
 
 
