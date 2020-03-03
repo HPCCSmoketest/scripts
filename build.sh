@@ -149,6 +149,11 @@ do
                 fi
                 WritePlainLog "Stack trace: '${STACK_TRACE}', ENABLE_STACK_TRACE: ${ENABLE_STACK_TRACE}" "$logFile"
                 ;;
+                
+        newEclWatchBuildMode*)
+                NEW_ECLWATCH_BUILD_MODE=${param//newEclWatchBuildMode=True/1}
+                NEW_ECLWATCH_BUILD_MODE=${NEW_ECLWATCH_BUILD_MODE//newEclWatchBuildMode=Falsee/0}
+                WritePlainLog "New ECLWatch build mode:${NEW_ECLWATCH_BUILD_MODE}" "$logFile"
     esac
     shift
 done
@@ -277,39 +282,46 @@ else
     WritePlainLog "To remove ${hpccpackage} success" "$logFile"
 fi
 
+
+PREP_TIME=$(( $(date +%s) - $TIME_STAMP ))
+WritePlainLog "Makefiles created ($(date +%Y-%m-%d_%H-%M-%S) $PREP_TIME sec )" "$logFile"
+
 #
 # ------------------------------------------------
 # ECLWatch build dependencies and Lint check
 #
 
-if [[ "$ECLWATCH_BUILD_STRATEGY" != "SKIP" ]]
+if [[ ${NEW_ECLWATCH_BUILD_MODE} -eq 0 ]]
 then
-    WritePlainLog "npm install start." "$logFile"
-    WritePlainLog "Install ECLWatch build dependencies." "$logFile"
-    pushd ${SOURCE_ROOT}/esp/src
+    if [[ "$ECLWATCH_BUILD_STRATEGY" != "SKIP" ]]
+    then
+        WritePlainLog "npm install start." "$logFile"
+        WritePlainLog "Install ECLWatch build dependencies." "$logFile"
+        pushd ${SOURCE_ROOT}/esp/src
 
-    cmd="npm install"
-    WritePlainLog "$cmd" "$logFile"
+        cmd="npm install"
+        WritePlainLog "$cmd" "$logFile"
 
-    res=$( ${cmd} 2>&1 )
+        res=$( ${cmd} 2>&1 )
 
-    WritePlainLog "res:${res}" "$logFile"
-    WritePlainLog "npm install end." "$logFile"
+        WritePlainLog "res:${res}" "$logFile"
+        WritePlainLog "npm install end." "$logFile"
 
-    cmd="npm test"
-    WritePlainLog "$cmd" "$logFile"
-    res=$( ${cmd} 2>&1 )
+        cmd="npm test"
+        WritePlainLog "$cmd" "$logFile"
+        res=$( ${cmd} 2>&1 )
 
-    WritePlainLog "res:${res}" "$logFile"
-    WritePlainLog "npm test end" "$logFile"
+        WritePlainLog "res:${res}" "$logFile"
+        WritePlainLog "npm test end" "$logFile"
 
-    popd
-else
-    WritePlainLog "Install ECLWatch build dependencies skipped." "$logFile"
+        popd
+    else
+        WritePlainLog "Install ECLWatch build dependencies skipped." "$logFile"
+    fi
+
+    CheckEclWatchBuildResult "$logFile"
 fi
 
-PREP_TIME=$(( $(date +%s) - $TIME_STAMP ))
-WritePlainLog "Makefiles created ($(date +%Y-%m-%d_%H-%M-%S) $PREP_TIME sec )" "$logFile"
 #
 #----------------------------------------------------
 # Build HPCC
@@ -339,7 +351,41 @@ else
     WritePlainLog "Build: success" "$logFile"
 fi
 
-CheckEclWatchBuildResult "$logFile"
+#
+# ------------------------------------------------
+# ECLWatch build dependencies and Lint check
+#
+
+if [[ ${NEW_ECLWATCH_BUILD_MODE} -eq 1 ]]
+then
+    if [[ "$ECLWATCH_BUILD_STRATEGY" != "SKIP" ]]
+    then
+        WritePlainLog "npm install start." "$logFile"
+        WritePlainLog "Install ECLWatch build dependencies." "$logFile"
+        pushd ${SOURCE_ROOT}/esp/src
+
+        cmd="npm install"
+        WritePlainLog "$cmd" "$logFile"
+
+        res=$( ${cmd} 2>&1 )
+
+        WritePlainLog "res:${res}" "$logFile"
+        WritePlainLog "npm install end." "$logFile"
+
+        cmd="npm test"
+        WritePlainLog "$cmd" "$logFile"
+        res=$( ${cmd} 2>&1 )
+
+        WritePlainLog "res:${res}" "$logFile"
+        WritePlainLog "npm test end" "$logFile"
+
+        popd
+    else
+        WritePlainLog "Install ECLWatch build dependencies skipped." "$logFile"
+    fi
+
+    CheckEclWatchBuildResult "$logFile"
+fi
 
 BUILD_TIME=$(( $(date +%s) - $TIME_STAMP ))
 WritePlainLog "Build end ($(date +%Y-%m-%d_%H-%M-%S) $BUILD_TIME sec )" "$logFile"

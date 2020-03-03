@@ -734,6 +734,7 @@ def GetOpenPulls(knownPullRequests):
         prs[prid]['runUnittests'] = False
         prs[prid]['runWutoolTests'] = False
         prs[prid]['buildEclWatch'] = buildEclWatch
+        prs[prid]['newEclWatchBuildMode'] = True
         prs[prid]['inQueue'] = False
         prs[prid]['reason'] = ''
         prs[prid]['buildOnly'] = False
@@ -933,20 +934,14 @@ def GetOpenPulls(knownPullRequests):
                 elif (len(baseVersion) == 1) and ('master' == baseVersion[0]):
                     prs[prid]['runUnittests'] = True
                 
-                # Check base version to enable stack trace
-                stackTraceMinVersion={'major':7, 'minor':2,  'release':22}
+                # Check base version to build ECLWatch
+                newECLWatchBuildMinVersion={'major':7, 'minor':8,  'release':0}
                 baseVersion = prs[prid]['code_base'].split('-')
                 if len(baseVersion) >= 2:
                     baseVersionItems = baseVersion[1].split('.')
                     if len(baseVersionItems) >= 3:
-                        if int(baseVersionItems[0]) == stackTraceMinVersion['major']:
-                            if (int(baseVersionItems[1]) < stackTraceMinVersion['minor']):
-                                prs[prid]['enableStackTrace'] = False
-                            elif (int(baseVersionItems[1]) == stackTraceMinVersion['minor']):
-                               if ('x' not in baseVersionItems[2]) and (int(baseVersionItems[2]) < stackTraceMinVersion['release']):
-                                prs[prid]['enableStackTrace'] = False
-                        elif int(baseVersionItems[0]) < stackTraceMinVersion['major']:
-                            prs[prid]['enableStackTrace'] = False
+                        if int(baseVersionItems[0]) < newECLWatchBuildMinVersion['major']:
+                            prs[prid]['newEclWatchBuildMode'] = False
                         pass
                     pass
                 
@@ -2050,11 +2045,12 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 print(msg)
                 resultFile.write(msg + "\n")
                 
-                msg = "Delete source directory to save disk space %s (%s)." % (testDir, prs[prid]['label'])
-                print (msg)
-                resultFile.write(msg + "\n")
-                myProc = subprocess.Popen(["sudo rm -rf HPCC-Platform"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                result = formatResult(myProc, resultFile)
+                if not keepFiles:
+                    msg = "Delete source directory to save disk space %s (%s)." % (testDir, prs[prid]['label'])
+                    print (msg)
+                    resultFile.write(msg + "\n")
+                    myProc = subprocess.Popen(["sudo rm -rf HPCC-Platform"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                    result = formatResult(myProc, resultFile)
             
                 pass
             
@@ -2129,6 +2125,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                     cmd += " -buildEclWatch=" + str(prs[prid]['buildEclWatch'])
                     cmd += " -keepFiles=" + str(keepFiles)
                     cmd += " -enableStackTrace=" + str(prs[prid]['enableStackTrace'])
+                    cmd += " -newEclWatchBuildMode=" + str(prs[prid]['newEclWatchBuildMode'])
                     
                     resultFile.write("\t" + cmd + "\n")
                     myProc = subprocess.Popen([ cmd ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
