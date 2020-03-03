@@ -86,7 +86,7 @@ if ('useQuickBuild' in os.environ) and (os.environ['useQuickBuild'] == '1'):
     useQuickBuild = True
 
 # Build ECLWatch or SKIP it
-buildEclWatch=False
+buildEclWatch=True
 # For override buildEclWatch setting
 if ('buildEclWatch' in os.environ) and (os.environ['buildEclWatch'] == '1'):
     buildEclWatch = True
