@@ -126,6 +126,7 @@ do
         
         build*) ECLWATCH_BUILD_STRATEGY=${param//buildEclWatch=True/IF_MISSING}
                 ECLWATCH_BUILD_STRATEGY=${ECLWATCH_BUILD_STRATEGY//buildEclWatch=False/SKIP}
+                ECLWATCH_BUILD_STRATEGY=IF_MISSING
                 WritePlainLog "Build ECLWatch: '${ECLWATCH_BUILD_STRATEGY}'" "$logFile"
                 if [[ "$ECLWATCH_BUILD_STRATEGY" == "IF_MISSING" ]]
                 then
