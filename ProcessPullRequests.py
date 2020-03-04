@@ -2001,6 +2001,14 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             myProc = subprocess.Popen("git checkout -f "+prs[prid]['code_base'],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             result = formatResult(myProc, resultFile)
             #resultFile.write("\tresult:"+result+"\n")
+            
+            # Clean-up base branch
+            s = "\tclean-up "
+            print(s)
+            resultFile.write(s + '\n')
+            myProc = subprocess.Popen("git clean -f -fd",  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            result = formatResult(myProc, resultFile)
+            #resultFile.write("\tresult:"+result+"\n")
                 
             # Pull the branch
             # git fetch upstream pull/<'number'>/head:<'label'>+'-smoketest'
@@ -2016,7 +2024,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                     myProc = subprocess.Popen(prs[prid]['cmd2'],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                     (result, retcode) = formatResult(myProc, resultFile)
                 
-            if (retcode != 0) and ('Merge conflict' not in result):
+            if (retcode != 0) and ('Merge conflict' not in result) and ('Adding as' not in result):
                 noBuildReason = "Error in git command, should skip build and test."
             else:    
                 # Status
@@ -2025,6 +2033,11 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 myProc = subprocess.Popen("git status",  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                 (result, retcode) = formatResult(myProc, resultFile)
                 noBuildReason = ""
+            
+            if ('Unmerged paths:' in result) and ('added by us:' in result):
+                print("\tThere is one or more unmerged path. It can come from the not up-to-date base branch, skip it")
+                result = ""
+                
             
             if ('Unmerged paths:' in result) or (retcode != 0):
                 # There is some conflict on this branch, I think it is better to skip build and test
