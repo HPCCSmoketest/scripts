@@ -19,7 +19,8 @@ else
 fi
 
 instanceDiskVolumeSize=20
-AMI_ID="ami-016bc6be662a27746"
+#AMI_ID=$( aws ec2 describe-images --owners 446598291512 | egrep -i -B10 '-el7-' | egrep -i '"available"|"ImageId"' | egrep -i '"ImageId"' | tr -d "[:space:]" | cut -d":" -f2 )
+AMI_ID="ami-0f6f902a9aff6d384"
 SECURITY_GROUP_ID="sg-08a92c3135ec19aea"
 SUBNET_ID="subnet-0f5274ec85eec91da"
 
@@ -184,7 +185,7 @@ then
     find ${SMOKETEST_HOME}/${INSTANCE_NAME}/ -maxdepth 1 -mmin +$age -type f -iname '*.log' -o -iname '*test*.summary' -o -iname '*.diff' -o -iname '*.txt' -o -iname '*.old' | zip -m -u ${SMOKETEST_HOME}/${INSTANCE_NAME}/old-logs-${timestamp} -@
 
     echo "Compress and download result"
-    ssh -i ~/HPCC-Platform-Smoketest.pem centos@${instancePublicIp} "zip -m ~/smoketest/${instanceName}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S') -r ~/smoketest/${instanceName}/HPCCSystems-regression/* > ~/smoketest/${instanceName}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1"
+    ssh -i ~/HPCC-Platform-Smoketest.pem centos@${instancePublicIp} "zip -m /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S') -r /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression/* > /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1"
     rsync -va --timeout=60 --exclude=*.rpm --exclude=*.sh --exclude=*.py --exclude=*.txt -e "ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME} ${SMOKETEST_HOME}/
     rsync -va --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no" centos@${instancePublicIp}:/home/centos/smoketest/SmoketestInfo.csv ${SMOKETEST_HOME}/${INSTANCE_NAME}/SmoketestInfo-${INSTANCE_NAME}-$(date '+%y-%m-%d_%H-%M-%S').csv
     rsync -va --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no" centos@${instancePublicIp}:/home/centos/smoketest/prp-$(date '+%Y-%m-%d').log ${SMOKETEST_HOME}/${INSTANCE_NAME}/prp-$(date '+%Y-%m-%d')-${INSTANCE_NAME}-${instancePublicIp}.log
@@ -198,5 +199,5 @@ terminate=$( aws ec2 terminate-instances --instance-ids ${instanceId} 2>&1 )
 echo "Terminate: ${terminate}"
 
 echo "Instance:"
-aws ec2 describe-instances --filters "Name=tag:PR,Values=${instanceName}"  | egrep -i 'instan|status|public'
+aws ec2 describe-instances --filters "Name=tag:PR,Values=${INSTANCE_NAME}"  | egrep -i 'instan|status|public'
 
