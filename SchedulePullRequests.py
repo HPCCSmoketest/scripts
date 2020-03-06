@@ -1045,7 +1045,8 @@ def GetOpenPulls(knownPullRequests):
         testDir = 'PR-' + key
         if (testDir in knownPullRequests):
             if threads[key]['thread'].is_alive():
-                print('Keep %s until it is finish' % (testDir))
+                elaps = time.time()-threads[key]['startTimestamp']
+                print("--- Keep PR-%s until it is finished. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['startTime'], elaps,  elaps / 60 ) )
                 knownPullRequests.remove(testDir)
                 closedActive += 1
     print("")
@@ -2368,11 +2369,18 @@ def consumerTask(prId, pr, cmd, testInfo, resultFileName):
 #    time.sleep(wait)
     
     # Real
-    myProc = subprocess.Popen([ cmd ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-    (result,  retcode) = formatResult(myProc)
+    try:
+        myProc = subprocess.Popen([ cmd ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+        (result,  retcode) = formatResult(myProc, resultFile)
+    except:
+        msg = "Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" 
+        print(msg)
+        resultFile.write(msg + '\n')
+        pass
+        
 #    print("[%s] result :%s." % (threading.current_thread().name, "<" + result + ">" ))
     
-    resultFile.write(result)
+#    resultFile.write(result)
     # End game
     elapsTime = str(time.time()-testInfo['startTimestamp'])
     testInfo['elapsTime'] = str(elapsTime)
@@ -2822,7 +2830,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
         if threads[key]['thread'].is_alive():
             if (int(key) not in sortedPrs):
                 elaps = time.time()-threads[key]['startTimestamp']
-                print("---PR-%s is closed but scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['startTime'], elaps,  elaps / 60 ) )
+                print("--- PR-%s is closed but scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['startTime'], elaps,  elaps / 60 ) )
                 isNotThere = False
     if isNotThere:
         print("[%s] - None\n" % (threading.current_thread().name))

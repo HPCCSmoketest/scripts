@@ -4,7 +4,7 @@
 #------------------------------
 #
 
-INSTANCE_ID=$( sudo ls -l /var/lib/cloud/instance | cut -d' '  -f11 | cut -d '/' -f6 )
+INSTANCE_ID=$( sudo ls -l /var/lib/cloud/instance | cut -d' '  -f12 | cut -d '/' -f6 )
 PUBLIC_IP=$( curl http://checkip.amazonaws.com )
 
 #
