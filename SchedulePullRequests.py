@@ -2809,8 +2809,8 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
 #        resultFile.write("\tElapsed time:"+str(endTimestamp-startTimestamp)+" sec.\n")
         
 #        resultFile.close()
-        if not isBuild and os.path.exists(resultFileName):
-            os.unlink(resultFileName)
+#        if not isBuild and os.path.exists(resultFileName):
+#            os.unlink(resultFileName)
         
         os.chdir(smoketestHome)
         
