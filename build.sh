@@ -474,7 +474,7 @@ then
     
     if [[ -d "$TARGET_DIR/opt/HPCCSystems/lib64" ]]
     then
-        echo "There is an unwanted lib64 directory, copy its contents into lib"
+        WritePlainLog "There is an unwanted lib64 directory, copy its contents into lib" "$logFile"
         sudo cp -v $TARGET_DIR/opt/HPCCSystems/lib64/* $TARGET_DIR/opt/HPCCSystems/lib/
     fi
     
