@@ -472,6 +472,13 @@ then
     
     cp $TARGET_DIR/etc/HPCCSystems/environment.xml environment.xml-used
     
+    if [[ -d "$TARGET_DIR/opt/HPCCSystems/lib64" ]]
+    then
+        echo "There is an unwanted lib64 directory, copy its contents into lib"
+        sudo cp -v $TARGET_DIR/opt/HPCCSystems/lib64/* $TARGET_DIR/opt/HPCCSystems/lib/
+    fi
+    
+    
     # We can have more than one Thor node and each has their onw slavesPerNode attribute
     WritePlainLog "Number of thor slaves (/thor node)  : $(sed -n 's/slavesPerNode="\(.*\)"/\1/p' $TARGET_DIR/etc/HPCCSystems/environment.xml | tr '\n' ',' | tr -d [:space:])" "$logFile"
     WritePlainLog "Maximum number of Eclcc processes is: $(sed -n 's/maxEclccProcesses="\(.*\)"/\1/p' $TARGET_DIR/etc/HPCCSystems/environment.xml | tr -d [:space:])" "$logFile"
