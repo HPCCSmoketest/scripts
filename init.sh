@@ -30,6 +30,12 @@ do
                 echo "Add git comment: ${ADD_GIT_COMMENT}"
                 ;;
                 
+        commit*) COMMIT_ID=${param//commitId=/}
+                COMMIT_ID=${COMMIT_ID//\"/}
+                echo "Commit ID: ${COMMIT_ID}"
+                ;;
+                
+                
         dryRun) DRY_RUN=1
                 echo "Dry run."
                 ;;
@@ -81,7 +87,7 @@ prId=${INSTANCE_NAME//PR-/}
 if [[ $DRY_RUN -eq 0 ]]
 then
     # For real
-    ( crontab -l; echo $( date  -d "$today + $timeStep minute" "+%M %H %d %m") " * cd ~/smoketest; ./update.sh; export addGitComment=${ADD_GIT_COMMENT}; export runOnce=1; export keepFiles=0; export testOnlyOnePR=1; export testPrNo=$prId; export runFullRegression=1; export useQuickBuild=0; export skipDraftPr=0; export AVERAGE_SESSION_TIME=0.5; scl enable devtoolset-7 './smoketest.sh'" ) | crontab
+    ( crontab -l; echo $( date  -d "$today + $timeStep minute" "+%M %H %d %m") " * cd ~/smoketest; ./update.sh; export commitId=${COMMIT_ID}; export addGitComment=${ADD_GIT_COMMENT}; export runOnce=1; export keepFiles=0; export testOnlyOnePR=1; export testPrNo=$prId; export runFullRegression=1; export useQuickBuild=0; export skipDraftPr=0; export AVERAGE_SESSION_TIME=0.5; scl enable devtoolset-7 './smoketest.sh'" ) | crontab
 else
     #For testing
     ( crontab -l; echo $( date  -d "$today + $timeStep minute" "+%M %H %d %m") " * cd ~/smoketest; ./update.sh; cd $INSTANCE_NAME; echo 'Build: success' > build.summary; export addGitComment=${ADD_GIT_COMMENT} " ) | crontab

@@ -67,7 +67,7 @@ CheckIfNoSessionIsRunning()
 logfile=prp-$(date +%Y-%m-%d).log 
 exec >> ${logfile} 2>&1
 
-echo "At $(date "+%Y.%m.%d %H:%M:%S") a new ProcessPullRequests session starts on ${PUBLIC_IP} with instance ID:${INSTANCE_ID} for PR-${testPrNo}." | mailx -s "New ProcessPullRequests sessions on ${PUBLIC_IP}" attila.vamos@gmail.com
+echo "At $(date "+%Y.%m.%d %H:%M:%S") a new ProcessPullRequests session starts on ${PUBLIC_IP} with instance ID:${INSTANCE_ID} for PR-${testPrNo}, commit ID: ${commitId}." | mailx -s "New ProcessPullRequests sessions on ${PUBLIC_IP}" attila.vamos@gmail.com
 
 echo "I am "$( whoami )
 export PATH=$PATH:/usr/local/bin:/bin:/usr/local/sbin:/sbin:/usr/sbin:

@@ -2650,6 +2650,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
                     cmd += " -addGitComment=" + str(addGitComment)
 #                    cmd += " -tests='" + prs[prid]['regSuiteTests'] + "'"
                     cmd += " -docs=" +  str(prs[prid]['isDocsChanged'])
+                    cmd += " -commitId=" + prs[prid]['sha'][0:8].upper() 
 #                    cmd += " -unittest=" + str(prs[prid]['runUnittests'])
 #                    cmd += " -wuttest=" + str(prs[prid]['runWutoolTests'])
 #                    cmd += " -buildEclWatch=" + str(prs[prid]['buildEclWatch'])

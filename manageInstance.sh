@@ -50,6 +50,9 @@ do
                 echo "Add git comment: ${ADD_GIT_COMMENT}"
                 ;;
                 
+        commit*) COMMIT_ID=${param}
+                echo "Commit ID: ${COMMIT_ID}"
+                
     esac
     shift
 done
@@ -139,7 +142,7 @@ then
     ssh -i ~/HPCC-Platform-Smoketest.pem -oStrictHostKeyChecking=no centos@${instancePublicIp} "ls -l"
 
     echo "Execute init.sh"
-    ssh -i ~/HPCC-Platform-Smoketest.pem centos@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT} ${DRY_RUN}"
+    ssh -i ~/HPCC-Platform-Smoketest.pem centos@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT}  ${COMMIT_ID} ${DRY_RUN}"
 
     echo "Check user directory"
     ssh -i ~/HPCC-Platform-Smoketest.pem centos@${instancePublicIp} "ls -l"
