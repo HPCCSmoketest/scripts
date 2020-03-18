@@ -1060,9 +1060,9 @@ def GetOpenPulls(knownPullRequests):
     print("Number of forced PRs                   : %2d" % (forcedPr))
     print("-------------------------------------------")
     if forcedPr > 0:
-        print("Number of PRs to build  : %2d (forced)" % (forcedPr))
+        print("Number of PRs to build                 : %2d (forced)" % (forcedPr))
     else:
-        print("Number of PRs to build  : %2d" % (buildPr))
+        print("Number of PRs to build                 : %2d" % (buildPr))
     
     queue = {}
     for pr in prs:
