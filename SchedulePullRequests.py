@@ -1068,7 +1068,7 @@ def GetOpenPulls(knownPullRequests):
     for pr in prs:
         if prs[pr]['inQueue']:
             queue[pr] = prs[pr]
-            
+        
     #return (prs, buildPr)
     return (queue, buildPr)
 
