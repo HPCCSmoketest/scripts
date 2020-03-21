@@ -173,7 +173,8 @@ then
     while [[ $smoketestRunning -eq 1 ]]
     do
         sleep 1m
-        smoketestRunning=$( ssh -i ~/HPCC-Platform-Smoketest.pem centos@${instancePublicIp} "pgrep smoketest | wc -l" )
+        smoketestRunning=$( ssh -i ~/HPCC-Platform-Smoketest.pem -oConnectionAttempts=5 -oConnectTimeout=20 centos@${instancePublicIp} "pgrep smoketest | wc -l" )
+        [[ $? -ne 0 ]] && smoketestRunning=1
         echo $(date "+%y-%m-%d %H:%M:%S")": Smoketest is $( [[ $smoketestRunning -eq 1 ]] && echo 'running.' || echo 'finished.')"
     done
 
