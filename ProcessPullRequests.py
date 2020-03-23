@@ -865,6 +865,7 @@ def GetOpenPulls(knownPullRequests):
             if os.path.exists(changedFilesFileName):
                 os.rename(changedFilesFileName,  oldChangedFilesFileName)
                 
+            eclWatchOnly=True
             changedFilesFile = open(changedFilesFileName,  "wb")
             for changedFile in  prs[prid]['files']:
                 if changedFile.startswith('testing/regress/ecl/'):
@@ -891,7 +892,7 @@ def GetOpenPulls(knownPullRequests):
                 elif '.gitmodules' == changedFile:
                     prs[prid]['newSubmodule'] = True
                 elif changedFile.startswith('esp/src/'):
-                    # Buiild ECLWatch in and only if something changed in its source
+                    # Build ECLWatch if and only if something changed in its source
                     prs[prid]['buildEclWatch'] = True
                     
                 changedFilesFile.write( changedFile+'\n' )
@@ -942,6 +943,11 @@ def GetOpenPulls(knownPullRequests):
                     if len(baseVersionItems) >= 3:
                         if int(baseVersionItems[0]) < newECLWatchBuildMinVersion['major']:
                             prs[prid]['newEclWatchBuildMode'] = False
+                            prs[prid]['buildEclWatch'] = False
+                        elif (int(baseVersionItems[0]) == newECLWatchBuildMinVersion['major']) and 
+                             (int(baseVersionItems[1]) < newECLWatchBuildMinVersion['minor']):
+                            prs[prid]['newEclWatchBuildMode'] = False
+                            prs[prid]['buildEclWatch'] = False
                         pass
                     pass
                 
