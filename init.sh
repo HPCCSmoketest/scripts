@@ -6,7 +6,9 @@ PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 INSTANCE_NAME="PR-12701"
 DOCS_BUILD=0
 DRY_RUN=0
-
+AVERAGE_SESSION_TIME=0.75 # Hours
+GUILLOTINE=90 # minutes ( 2 x AVERAGE_SESSION_TIME)
+ 
 while [ $# -gt 0 ]
 do
     param=$1
@@ -88,6 +90,9 @@ if [[ $DRY_RUN -eq 0 ]]
 then
     # For real
     ( crontab -l; echo $( date  -d "$today + $timeStep minute" "+%M %H %d %m") " * cd ~/smoketest; ./update.sh; export commitId=${COMMIT_ID}; export addGitComment=${ADD_GIT_COMMENT}; export runOnce=1; export keepFiles=0; export testOnlyOnePR=1; export testPrNo=$prId; export runFullRegression=1; export useQuickBuild=0; export skipDraftPr=0; export AVERAGE_SESSION_TIME=0.5; scl enable devtoolset-7 './smoketest.sh'" ) | crontab
+    
+    # Add self destruction
+    ( crontab -l; echo ""; echo "# Self destruction initiated in ${GUILLOTINE} minutes"; echo $( date  -d "$today + ${GUILLOTINE} minutes" "+%M %H %d %m") " * sleep 10; sudo shutdown now " ) | crontab
 else
     #For testing
     ( crontab -l; echo $( date  -d "$today + $timeStep minute" "+%M %H %d %m") " * cd ~/smoketest; ./update.sh; cd $INSTANCE_NAME; echo 'Build: success' > build.summary; export addGitComment=${ADD_GIT_COMMENT} " ) | crontab
