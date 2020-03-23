@@ -944,8 +944,7 @@ def GetOpenPulls(knownPullRequests):
                         if int(baseVersionItems[0]) < newECLWatchBuildMinVersion['major']:
                             prs[prid]['newEclWatchBuildMode'] = False
                             prs[prid]['buildEclWatch'] = False
-                        elif (int(baseVersionItems[0]) == newECLWatchBuildMinVersion['major']) and 
-                             (int(baseVersionItems[1]) < newECLWatchBuildMinVersion['minor']):
+                        elif (int(baseVersionItems[0]) == newECLWatchBuildMinVersion['major']) and (int(baseVersionItems[1]) < newECLWatchBuildMinVersion['minor']):
                             prs[prid]['newEclWatchBuildMode'] = False
                             prs[prid]['buildEclWatch'] = False
                         pass
