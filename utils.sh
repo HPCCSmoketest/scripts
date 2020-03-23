@@ -59,10 +59,35 @@ fi
 TARGET=all
 #TARGET=hthor
 
-
 GLOBAL_EXCLUSION="-e 3rdparty"
 GLOBAL_EXCLUSION="-e=embedded,3rdparty"
 PYTHON_PLUGIN=''
+
+#
+#-----------------------------------------------------------
+#
+# Determine the package manager
+
+IS_NOT_RPM=$( type "rpm" 2>&1 | grep -c "not found" )
+PKG_EXT=
+PKG_INST_CMD=
+PKG_QRY_CMD=
+PKG_REM_CMD=
+
+if [[ "$IS_NOT_RPM" -eq 1 ]]
+then
+    PKG_EXT=".deb"
+    PKG_INST_CMD="dpkg -i "
+    PKG_QRY_CMD="dpkg -l "
+    PKG_REM_CMD="dpkg -r "
+else
+    PKG_EXT=".rpm"
+    PKG_INST_CMD="rpm -i --nodeps "
+    PKG_QRY_CMD="rpm -qa "
+    PKG_REM_CMD="rpm -e --nodeps "
+fi
+
+
 
 #
 #-----------------------------------------------------------
@@ -377,7 +402,19 @@ cleanUpLeftovers()
     else
         WritePlainLog "There is no leftover process" "$logFile"
     fi
-
+    # Check if HPCC Systems is installed
+    IS_INSTALLED=$( sudo ${PKG_QRY_CMD} hpccsystems-platform | egrep '[h]pcc')
+    if [[ "$IS_INSTALLED." != "." ]]
+    then
+        res=$( sudo ${PKG_REM_CMD} $hpcc_package  >> "$logFile" 2>&1 )
+        WritePlainLog "Remove package result:\n${res}" "$logFile"
+    fi
+    if [[ -d "/opt/HPCCSystems" ]]
+    then
+        WritePlainLog "Remove leftover '/opt/HPCCSystems' directory" "$logFile"
+        sudo rm -rf /opt/HPCCSystems
+    fi
+    
     WritePlainLog "Done." "$logFile"
 }
 

@@ -401,19 +401,19 @@ PACKAGE_TIME=$(( $(date +%s) - $TIME_STAMP ))
 WritePlainLog "Package end ($(date +%Y-%m-%d_%H-%M-%S)  $PACKAGE_TIME sec )" "$logFile"
 TIME_STAMP=$(date +%s)
 
-IS_NOT_RPM=$( type "rpm" 2>&1 | grep -c "not found" )
-WritePlainLog "IS_NOT_RPM: $IS_NOT_RPM" "$logFile"
-PKG_EXT=
-INST_CMD=
-
-if [[ "$IS_NOT_RPM" -ne 0 ]]
-then
-    PKG_EXT=".deb"
-    INST_CMD="dpkg -i "
-else
-    PKG_EXT=".rpm"
-    INST_CMD="rpm -i --nodeps "
-fi
+#IS_NOT_RPM=$( type "rpm" 2>&1 | grep -c "not found" )
+#WritePlainLog "IS_NOT_RPM: $IS_NOT_RPM" "$logFile"
+#PKG_EXT=
+#INST_CMD=
+#
+#if [[ "$IS_NOT_RPM" -ne 0 ]]
+#then
+#    PKG_EXT=".deb"
+#    INST_CMD="dpkg -i "
+#else
+#    PKG_EXT=".rpm"
+#    INST_CMD="rpm -i --nodeps "
+#fi
 WritePlainLog "packageExt: '$PKG_EXT', installCMD: '$INST_CMD'." "$logFile"
 
 #hpccpackage=$( grep 'Current release version' ${logFile} | cut -c 31- )".deb"
