@@ -436,7 +436,7 @@ then
     
     WriteMilestone "Install $hpccpackage" "$logFile"
     #sudo dpkg -i $hpccpackage >> $logFile 2>&1
-    CMD="sudo ${INST_CMD} $hpccpackage"
+    CMD="sudo ${PKG_INST_CMD} $hpccpackage"
     WritePlainLog "$CMD" "$logFile"
     TIME_STAMP=$(date +%s)
     ${CMD} >> $logFile 2>&1
