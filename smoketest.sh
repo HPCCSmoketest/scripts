@@ -24,12 +24,13 @@ SignalHandler()
 
 CheckIfNoSessionIsRunning()
 {
+    PROCESSOR=$1
     checkCount=0
     delayToFinish=5 # minutes
     
     echo "Check if no session is running"
-    pids=$( ps aux | grep '[p]ython ./ProcessPullRequests.py' | awk '{print $2}' )
-    echo "ProcessPullRequests pid(s): ${pids}"
+    pids=$( ps aux | grep '[p]ython ./${PROCESSOR}' | awk '{print $2}' )
+    echo "${PROCESSOR} pid(s): ${pids}"
         
     # Wait it for stop
     while [ -n "${pids}" ]
@@ -39,21 +40,21 @@ CheckIfNoSessionIsRunning()
         echo "$(date "+%H:%M:%S") Wait for the current session is finished."
         if [[ $(( $checkCount % 12 )) -eq 0 ]]
         then
-            echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ProcessPullRequests session is still running on ${PUBLIC_IP} with ${INSTANCE_ID}!" | mailx -s "Overlapped ProcessPullRequests sessions on $(PUBLIC_IP)" attila.vamos@gmail.com
+            echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ${PROCESSOR} session is still running on ${PUBLIC_IP} with ${INSTANCE_ID}!" | mailx -s "Overlapped ${PROCESSOR} sessions on $(PUBLIC_IP)" attila.vamos@gmail.com
         fi
         
         checkCount=$(( $checkCount + 1 ))
         # Give it some time to finish
         sleep 5m
-        pids=$( ps aux | grep '[p]ython ./ProcessPullRequests.py' | awk '{print $2}' )
+        pids=$( ps aux | grep '[p]ython ./${PROCESSOR}' | awk '{print $2}' )
     done
 
     if [[ $checkCount -ne 0 ]]
     then
-        echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ProcessPullRequests session finished  after $checkCount checks on ${PUBLIC_IP} with ${INSTANCE_ID}." | mailx -s "Overlapped ProcessPullRequests sessions on ${PUBLIC_IP}" attila.vamos@gmail.com
+        echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ${PROCESSOR} session finished  after $checkCount checks on ${PUBLIC_IP} with ${INSTANCE_ID}." | mailx -s "Overlapped ${PROCESSOR} sessions on ${PUBLIC_IP}" attila.vamos@gmail.com
     fi
     
-    echo "ProcessPullRequests is finished after $checkCount checks."
+    echo "${PROCESSOR} is finished after $checkCount checks."
     echo "---------------------------------------------------------"
     echo ""
 }
@@ -64,10 +65,17 @@ CheckIfNoSessionIsRunning()
 #
 # Main 
 
+
+PR_PROCESSOR="ProcessPullRequests.py"
+if [[ "$1." != "." ]]
+then
+    PR_PROCESSOR="$1"
+fi
+
 logfile=prp-$(date +%Y-%m-%d).log 
 exec >> ${logfile} 2>&1
 
-echo "At $(date "+%Y.%m.%d %H:%M:%S") a new ProcessPullRequests session starts on ${PUBLIC_IP} with instance ID:${INSTANCE_ID} for PR-${testPrNo}, commit ID: ${commitId}." | mailx -s "New ProcessPullRequests sessions on ${PUBLIC_IP}" attila.vamos@gmail.com
+echo "At $(date "+%Y.%m.%d %H:%M:%S") a new 4{PR_PROCESSOR} session starts on ${PUBLIC_IP} with instance ID:${INSTANCE_ID} for PR-${testPrNo}, commit ID: ${commitId}." | mailx -s "New ${PR_PROCESSOR} sessions on ${PUBLIC_IP}" attila.vamos@gmail.com
 
 echo "I am "$( whoami )
 export PATH=$PATH:/usr/local/bin:/bin:/usr/local/sbin:/sbin:/usr/sbin:
@@ -95,7 +103,7 @@ echo "At $(date "+%Y-%m-%d %H:%M:%S") " >> ${logfile} 2>&1
 # To avoid overlapping if a session is stil running 
 # and cron kicked off a new one.
 
-CheckIfNoSessionIsRunning 
+CheckIfNoSessionIsRunning ${PR_PROCESSOR}
 
 echo "Start it."
 echo "Set core file name format to : core_%e.%p, where %e the name of executable and %p is its PID"
@@ -119,8 +127,8 @@ ulimit -a
 #. ./.ssh_auth_sock.var
 #env | grep SSH_AUTH_SOCK
 
-echo "Start ProcessPullRequest.py..."
-unbuffer ./ProcessPullRequests.py
+echo "Start $PR_PROCESSOR..."
+unbuffer ./${PR_PROCESSOR}
 
 echo "Smoketest finished."
 
