@@ -3375,8 +3375,9 @@ if __name__ == '__main__':
     for key in sorted(threads):
         print('Wait for task %s to finish' % (threads[key]['thread'].name))
         while threads[key]['thread'].is_alive():
-            time.sleep(10)
-            print ('.'), 
+            time.sleep(120)
+            elaps = time.time()-threads[key]['startTimestamp']
+            print("--- PR-%s is closed but scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['startTime'], elaps,  elaps / 60 ) ) 
         print("%s finished" % (threads[key]['thread'].name))    
     
     print("All tasks are done")
