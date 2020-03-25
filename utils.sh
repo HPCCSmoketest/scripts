@@ -406,6 +406,7 @@ cleanUpLeftovers()
     IS_INSTALLED=$( sudo ${PKG_QRY_CMD} hpccsystems-platform | egrep '[h]pcc')
     if [[ "$IS_INSTALLED." != "." ]]
     then
+        WritePlainLog "${IS_INSTALLED} is installed, remove" "$logFile"
         res=$( sudo ${PKG_REM_CMD} $hpcc_package  >> "$logFile" 2>&1 )
         WritePlainLog "Remove package result:\n${res}" "$logFile"
     fi
