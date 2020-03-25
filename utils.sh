@@ -400,8 +400,9 @@ cleanUpLeftovers()
             WritePlainLog "There is no leftover process" "$logFile"
         fi
     else
-        WritePlainLog "There is no leftover process" "$logFile"
+        WritePlainLog "There is not leftover process" "$logFile"
     fi
+    
     # Check if HPCC Systems is installed
     IS_INSTALLED=$( sudo ${PKG_QRY_CMD} hpccsystems-platform | egrep '[h]pcc')
     if [[ "$IS_INSTALLED." != "." ]]
@@ -409,11 +410,16 @@ cleanUpLeftovers()
         WritePlainLog "${IS_INSTALLED} is installed, remove" "$logFile"
         res=$( sudo ${PKG_REM_CMD} ${IS_INSTALLED}  >> "$logFile" 2>&1 )
         WritePlainLog "Remove package result:\n${res}" "$logFile"
+    else
+        WritePlainLog "There is not HPCC package isntalled" "$logFile"
     fi
+    
     if [[ -d "/opt/HPCCSystems" ]]
     then
         WritePlainLog "Remove leftover '/opt/HPCCSystems' directory" "$logFile"
         sudo rm -rf /opt/HPCCSystems
+    else
+        WritePlainLog "There is not leftover /opt/HPCCSystems directory" "$logFile"
     fi
     
     WritePlainLog "Done." "$logFile"
