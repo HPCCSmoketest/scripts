@@ -96,6 +96,7 @@ tag=$( aws ec2 create-tags --resources ${instanceId} ${volumeId} \
                   Key=support_email,Value=attila.vamos@lexisnexisrisk.com \
                   Key=purpose,Value=Smoketest \
                   Key=PR,Value=${INSTANCE_NAME} \
+                  Key=Commit,Value=${COMMIT_ID} \
         2>&1 )
 
 echo $(date "+%y-%m-%d %H:%M:%S")": Wait ~2 minutes for initialise instance"
