@@ -1046,7 +1046,7 @@ def GetOpenPulls(knownPullRequests):
         if (testDir in knownPullRequests):
             if threads[key]['thread'].is_alive():
                 elaps = time.time()-threads[key]['startTimestamp']
-                print("--- Keep PR-%s until it is finished. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['startTime'], elaps,  elaps / 60 ) )
+                print("--- Keep PR-%s (%s) until it is finished. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['commitId'], threads[key]['startTime'], elaps,  elaps / 60 ) )
                 knownPullRequests.remove(testDir)
                 closedActive += 1
     print("")
@@ -2493,7 +2493,6 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
             msg = "%d/%d. " % ( prSequnceNumber, numOfPrToTest) + msg.replace('\\n',' ')
             print(msg)
             print("\tuser : %s" % (prs[prid]['user']))
-            print("\tsha  : %s" % (prs[prid]['sha'][0:8].upper() ))
             
 #            resultFile.write("%d/%d. Process PR-%s, label: %s\n" % ( prSequnceNumber, numOfPrToTest, str(prid), prs[prid]['label']))
 #            resultFile.write("\ttitle: %s\n" % (repr(prs[prid]['title'])))
@@ -2619,12 +2618,13 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
             if key in threads: 
                 if threads[key]['thread'].is_alive():
                     elaps = time.time()-threads[key]['startTimestamp']
-                    print("--- PR-%s is scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['startTime'], elaps,  elaps / 60 ) )
+                    print("--- PR-%s (%s) is scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['commitId'], threads[key]['startTime'], elaps,  elaps / 60 ) )
                 else:
-                    print("--- PR-%s is scheduled but already finished. Remove"  % (key))
+                    print("--- PR-%s (%s) is scheduled but already finished. Remove"  % (key, threads[key]['commitId']))
                     del threads[key]
             
             if not key in threads:
+                print("\tsha  : %s" % (prs[prid]['sha'][0:8].upper() ))
                 print("\tstart: %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
                 print("\ttitle: %s" % (prs[prid]['title']))
                 curTime = time.strftime("%y-%m-%d-%H-%M-%S")
@@ -2634,7 +2634,8 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
                 testInfo = {}
                 testInfo['prid'] = str(prid)
                 testInfo['startTime'] = curTime
-                testInfo['startTimestamp'] = time.time()    
+                testInfo['startTimestamp'] = time.time()
+                testInfo['commitId'] = prs[prid]['sha'][0:8].upper()
                 # Schedule it
                 print("\tSchedule PR-"+str(prid)+", label: "+prs[prid]['label'])
                 resultFile.write("\tSchedule PR-"+str(prid)+", label: "+prs[prid]['label']+"\n")
@@ -2666,6 +2667,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
                     threads[key]['startTime'] = curTime
                     threads[key]['startTimestamp'] = time.time()
                     threads[key]['resultFileName'] = resultFileName
+                    threads[key]['commitId'] = testInfo['commitId']
                     print("--- Scheduled, new (key:%s)"  % (key))
                     print("\tend  : %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
 
@@ -2831,7 +2833,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
         if threads[key]['thread'].is_alive():
             if (int(key) not in sortedPrs):
                 elaps = time.time()-threads[key]['startTimestamp']
-                print("--- PR-%s is closed but scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['startTime'], elaps,  elaps / 60 ) )
+                print("--- PR-%s (%s) is closed but scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['commitId'], threads[key]['startTime'], elaps,  elaps / 60 ) )
                 isNotThere = False
     if isNotThere:
         print("[%s] - None\n" % (threading.current_thread().name))
@@ -3377,7 +3379,7 @@ if __name__ == '__main__':
         while threads[key]['thread'].is_alive():
             time.sleep(120)
             elaps = time.time()-threads[key]['startTimestamp']
-            print("--- PR-%s is closed but scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['startTime'], elaps,  elaps / 60 ) ) 
+            print("--- PR-%s (%s) is cheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['commitId'], threads[key]['startTime'], elaps,  elaps / 60 ) ) 
         print("%s finished" % (threads[key]['thread'].name))    
     
     print("All tasks are done")
