@@ -2124,6 +2124,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 testInfo['runUnittests'] = str(prs[prid]['runUnittests'])
                 testInfo['runWutoolTests'] = str(prs[prid]['runWutoolTests'])
                 testInfo['buildEclWatch'] = str(prs[prid]['buildEclWatch'])
+                testInfo['commitId'] = prs[prid]['sha']
                 
                 # Build it
                 # ./ build.sh
