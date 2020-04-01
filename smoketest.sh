@@ -4,7 +4,7 @@
 #------------------------------
 #
 
-INSTANCE_ID= # $( wget -q -O - http://169.254.169.254/latest/meta-data/instance-id )
+INSTANCE_ID=$( wget -q -t1 -T1 -O - http://169.254.169.254/latest/meta-data/instance-id )
 if [[ -z "$INSTANCE_ID" ]]
 then
     INSTANCE_ID=$( sudo ls -l /var/lib/cloud/instance | cut -d' '  -f11 | cut -d '/' -f6 )
