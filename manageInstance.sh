@@ -7,24 +7,7 @@ DOCS_BUILD=0
 SMOKETEST_HOME=
 ADD_GIT_COMMENT=0
 INSTANCE_NAME="PR-12701"
-
-SSH_OPTIONS="-oConnectionAttempts=5 -oConnectTimeout=20 -oStrictHostKeyChecking=no"
-
 DRY_RUN=''  #"-dryRun"
-if [[ -z ${DRY_RUN} ]]
-then
-    INSTANCE_TYPE="m4.4xlarge"      # 0.888 USD per Hour (16 Cores, 64 GB RAM)
-    #INSTANCE_TYPE="m4.10xlarge"    # 2.22 USD per Hour (40 Cores, 163GB RAM)
-    #INSTANCE_TYPE="m4.16xlarge"    # 3.552 USD per Hour (64 Cores, 256 GB RAM)
-else
-    INSTANCE_TYPE="t2.micro"
-fi
-
-instanceDiskVolumeSize=20
-#AMI_ID=$( aws ec2 describe-images --owners 446598291512 | egrep -i -B10 '-el7-' | egrep -i '"available"|"ImageId"' | egrep -i '"ImageId"' | tr -d "[:space:]" | cut -d":" -f2 )
-AMI_ID="ami-0f6f902a9aff6d384"
-SECURITY_GROUP_ID="sg-08a92c3135ec19aea"
-SUBNET_ID="subnet-0f5274ec85eec91da"
 
 while [ $# -gt 0 ]
 do
@@ -56,10 +39,31 @@ do
                 echo "Commit ID: ${COMMIT_ID}"
                 ;;
                 
+        dryRun) DRY_RUN=${param}
+                echo "Dry run: ${DRY_RUN}"
+                ;;
+                
     esac
     shift
 done
 
+if [[ -z ${DRY_RUN} ]]
+then
+    INSTANCE_TYPE="m4.4xlarge"      # 0.888 USD per Hour (16 Cores, 64 GB RAM)
+    #INSTANCE_TYPE="m4.10xlarge"    # 2.22 USD per Hour (40 Cores, 163GB RAM)
+    #INSTANCE_TYPE="m4.16xlarge"    # 3.552 USD per Hour (64 Cores, 256 GB RAM)
+    instanceDiskVolumeSize=20       # GB
+else
+    INSTANCE_TYPE="t2.micro"
+    instanceDiskVolumeSize=8        # GB    
+fi
+
+
+SSH_OPTIONS="-oConnectionAttempts=5 -oConnectTimeout=20 -oStrictHostKeyChecking=no"
+#AMI_ID=$( aws ec2 describe-images --owners 446598291512 | egrep -i -B10 '-el7-' | egrep -i '"available"|"ImageId"' | egrep -i '"ImageId"' | tr -d "[:space:]" | cut -d":" -f2 )
+AMI_ID="ami-0f6f902a9aff6d384"
+SECURITY_GROUP_ID="sg-08a92c3135ec19aea"
+SUBNET_ID="subnet-0f5274ec85eec91da"
 
 echo $(date "+%y-%m-%d %H:%M:%S")": Create instance for ${INSTANCE_NAME}, type: $INSTANCE_TYPE, disk: $instanceDiskVolumeSize, build ${DOCS_BUILD}"
 
@@ -165,24 +169,47 @@ then
 
     if [[ -z $DRY_RUN ]]
     then
-        INIT_WAIT=2m # minutes
+        INIT_WAIT=2m
+        LOOP_WAIT=1m
     else
-        INIT_WAIT=10s # 10sec
+        INIT_WAIT=1s
+        LOOP_WAIT=1m
     fi
     
     echo $(date "+%y-%m-%d %H:%M:%S")": Wait ${INIT_WAIT} before start checking Smoketest state"
     sleep ${INIT_WAIT}
-    smoketestRunning=1
-    while [[ $smoketestRunning -eq 1 ]]
+    smoketestIsRunning=1
+    while [[ $smoketestIsRunning -eq 1 ]]
     do
-        sleep 1m
-        smoketestRunning=$( ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS} centos@${instancePublicIp} "pgrep smoketest | wc -l" )
+        smoketestIsRunning=$( ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS} centos@${instancePublicIp} "pgrep smoketest | wc -l"  2>&1 )
         if [[ $? -ne 0 ]]
         then
-            smoketestRunning=1
-            echo $(date "+%y-%m-%d %H:%M:%S")": ssh error, try again"
+            # Something is wrong, try to find out what
+            timeOut=$( echo "$smoketestIsRunning" | egrep 'timed out' | wc -l);
+            if [[ $timeOut -eq 0 ]]
+            then
+                echo $(date "+%y-%m-%d %H:%M:%S")": ssh error, try again"
+                smoketestIsRunning=1
+            else
+                echo $(date "+%y-%m-%d %H:%M:%S")": ssh timed out, chek if the instance is still running"
+                isTerminated=$( aws ec2 describe-instances --filters "Name=tag:PR,Values=${INSTANCE_NAME}" --query "Reservations[].Instances[].State[].Name" | egrep -c 'terminated|stopped'  )
+                if [[ $isTerminated -ne 0 ]]
+                then
+                    echo $(date "+%y-%m-%d %H:%M:%S")": instance is terminated, exit"
+                    smoketestIsRunning=0
+                    exit -3
+                else
+                    echo $(date "+%y-%m-%d %H:%M:%S")": instance is still running, try again"
+                    smoketestIsRunning=1
+                fi
+            fi
         else
-            echo $(date "+%y-%m-%d %H:%M:%S")": Smoketest is $( [[ $smoketestRunning -eq 1 ]] && echo 'running.' || echo 'finished.')"
+            echo $(date "+%y-%m-%d %H:%M:%S")": Smoketest is $( [[ $smoketestIsRunning -eq 1 ]] && echo 'running.' || echo 'finished.')"
+        fi
+        
+        if [[ $smoketestIsRunning -eq 1 ]]
+        then
+            sleep ${LOOP_WAIT}
         fi
     done
 
