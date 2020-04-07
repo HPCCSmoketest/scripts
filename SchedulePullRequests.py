@@ -1049,16 +1049,6 @@ def GetOpenPulls(knownPullRequests):
                 print("--- Keep PR-%s (%s) until it is finished. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['commitId'], threads[key]['startTime'], elaps,  elaps / 60 ) )
                 knownPullRequests.remove(testDir)
                 closedActive += 1
-        try:
-            prid = int(key)
-            if prs[prid]['inQueue']:
-                prs[prid]['inQueue'] = False
-                elaps = time.time()-threads[key]['startTimestamp']
-                print("--- PR-%s (%s) is already scheduled remove it from the queues. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['commitId'], threads[key]['startTime'], elaps,  elaps / 60 ) )
-                buildPr -= 1
-        except:
-            print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
-            pass
             
     print("")
     
