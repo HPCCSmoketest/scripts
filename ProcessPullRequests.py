@@ -492,6 +492,7 @@ def CollectResults(logPath, tests, prid=0, isGitHubComment=True):
                     table.addItem('fail:' + str(failed))
                     table.addItem('elaps#'+ elapsTimes[prefix][target], '#')
                     table.completteRow()
+                    testInfo[target + '_' + prefix + '_time'] = elapsTimes[prefix][target].split()[0]
                     #print("total:%3d, pass: %3d, fails:%3d\n-----------------------\n" % (executed,  passed,  failed))
                 pass
             result += table.getTable()
@@ -1557,8 +1558,16 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                 for res in unittestResults:
                     table.addItem(res.replace('_', ' '))
                     items = res.split(':')
+                    if 'Test' in items[0]:
+                        testName = items[1] + '_time'
+                        continue
+                    
                     try:
-                        uresults[items[0]] = int(items[1].replace('_sec',''))
+                        if 'sec' in items[1]:
+                            items[1] = items[1].replace('_sec','')
+                            testInfo[testName] = items[1]
+                            
+                        uresults[items[0]] = int(items[1])
                     except ValueError as e:
                         print str(e)+"(line: "+str(inspect.stack()[0][2])+")"
                         pass
@@ -1602,8 +1611,16 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                     for res in wutoolTestResults:
                         table.addItem(res.replace('_', ' '))
                         items = res.split(':')
+                        if 'Test' in items[0]:
+                            testName = items[1] + '_time'
+                            continue
+                        
                         try:
-                            wresults[line][items[0]] = int(items[1].replace('_sec',''))
+                            if 'sec' in items[1]:
+                                items[1] = items[1].replace('_sec','')
+                                testInfo[testName] = items[1]
+                                
+                            wresults[line][items[0]] = int(items[1])
                         except ValueError as e:
                             print "Exception:" + str(e) + "(line: "+str(inspect.stack()[0][2]) + ")"
                             print("items[0]:'%s', items[1]:'%s" % (items[0], items[1]))
