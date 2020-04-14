@@ -59,7 +59,9 @@ else
 fi
 
 
+SSH_KEYFILE="~/HPCC-Platform-Smoketest.pem"
 SSH_OPTIONS="-oConnectionAttempts=5 -oConnectTimeout=20 -oStrictHostKeyChecking=no"
+
 #AMI_ID=$( aws ec2 describe-images --owners 446598291512 | egrep -i -B10 '-el7-' | egrep -i '"available"|"ImageId"' | egrep -i '"ImageId"' | tr -d "[:space:]" | cut -d":" -f2 )
 AMI_ID="ami-0f6f902a9aff6d384"
 SECURITY_GROUP_ID="sg-08a92c3135ec19aea"
@@ -111,7 +113,7 @@ tryCount=4
 while [[ $tryCount -ne 0 ]] 
 do
     echo $(date "+%y-%m-%d %H:%M:%S")": Check user directory"
-    ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l"
+    ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l"
 
     [ $? -eq 0 ] && break
 
@@ -124,48 +126,48 @@ if [[ $tryCount -ne 0 ]]
 then
 
     echo $(date "+%y-%m-%d %H:%M:%S")": Upload token.dat files into smoketest directory"
-    rsync -var --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS}" ${SMOKETEST_HOME}/token.dat centos@${instancePublicIp}:/home/centos/smoketest/
+    rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/token.dat centos@${instancePublicIp}:/home/centos/smoketest/
 
     if [ -d ${SMOKETEST_HOME}/${INSTANCE_NAME} ]
     then
 
         echo $(date "+%y-%m-%d %H:%M:%S")": Upload *.dat files"
-        rsync -var --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/*.dat centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/
+        rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/*.dat centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/
         
         if [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/environment.xml ]]
         then
             echo $(date "+%y-%m-%d %H:%M:%S")": Upload environment.xml file"
-            rsync -var --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/environment.xml centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/
+            rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/environment.xml centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/
         fi
     fi
 
 
     echo $(date "+%y-%m-%d %H:%M:%S")": Upload init.sh"
-    rsync -va --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init.sh centos@${instancePublicIp}:/home/centos/
+    rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init.sh centos@${instancePublicIp}:/home/centos/
 
     echo $(date "+%y-%m-%d %H:%M:%S")": Set it to executable"
-    ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS} centos@${instancePublicIp} "chmod +x init.sh"
+    ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "chmod +x init.sh"
 
     echo $(date "+%y-%m-%d %H:%M:%S")": Check user directory"
-    ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l"
+    ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l"
 
     echo $(date "+%y-%m-%d %H:%M:%S")": Execute init.sh"
-    ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS} centos@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT} ${COMMIT_ID} ${DRY_RUN}"
+    ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT} ${COMMIT_ID} ${DRY_RUN}"
 
     echo $(date "+%y-%m-%d %H:%M:%S")": Check user directory"
-    ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l"
+    ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l"
 
     if [[ ${DOCS_BUILD} -ne 0 ]]
     then
         echo $(date "+%y-%m-%d %H:%M:%S")": Check fop"
-        ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS} centos@${instancePublicIp} "/usr/bin/fop -version"
+        ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "/usr/bin/fop -version"
     fi
     
     echo $(date "+%y-%m-%d %H:%M:%S")": Check Smoketest"
-    ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l ~/smoketest/"
+    ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l ~/smoketest/"
 
     echo $(date "+%y-%m-%d %H:%M:%S")": Check crontab"
-    ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS} centos@${instancePublicIp} "crontab -l"
+    ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "crontab -l"
 
     if [[ -z $DRY_RUN ]]
     then
@@ -179,9 +181,11 @@ then
     echo $(date "+%y-%m-%d %H:%M:%S")": Wait ${INIT_WAIT} before start checking Smoketest state"
     sleep ${INIT_WAIT}
     smoketestIsRunning=1
+    checkCount=0
+    emergencyLogDownloadThreshold=60  # minutes
     while [[ $smoketestIsRunning -eq 1 ]]
     do
-        smoketestIsRunning=$( ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS} centos@${instancePublicIp} "pgrep smoketest | wc -l"  2>&1 )
+        smoketestIsRunning=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "pgrep smoketest | wc -l"  2>&1 )
         if [[ $? -ne 0 ]]
         then
             # Something is wrong, try to find out what
@@ -205,6 +209,16 @@ then
             fi
         else
             echo $(date "+%y-%m-%d %H:%M:%S")": Smoketest is $( [[ $smoketestIsRunning -eq 1 ]] && echo 'running.' || echo 'finished.')"
+            
+            checkCount= $(( $checkCount + 1 ))
+            
+            # If session run time is longger than 1.25 * average_instance_time then we need to make emergency backup form logfiles regurarly (every 1-2 -3 minutes).
+            if [[ ( $checkCount -ge $emergencyLogDownloadThreshold ) && ( $(( $checkCount % 2 )) -eq 0) ]]
+            then
+                echo $(date "+%y-%m-%d %H:%M:%S")": This instance is running in $checkCount minutes (> $emergencyLogDownloadThreshold). Download its logs."
+                rsync -va --timeout=60 --exclude=*.rpm --exclude=*.sh --exclude=*.py --exclude=*.txt --exclude=*.xml --exclude=build/* --exclude=HPCC-Platform/* -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/* ${SMOKETEST_HOME}/${INSTANCE_NAME}/
+            fi
+
         fi
         
         if [[ $smoketestIsRunning -eq 1 ]]
@@ -214,7 +228,7 @@ then
     done
 
     echo $(date "+%y-%m-%d %H:%M:%S")": Check Smoketest"
-    ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l ~/smoketest/${INSTANCE_NAME}"
+    ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l ~/smoketest/${INSTANCE_NAME}"
     
     echo $(date "+%y-%m-%d %H:%M:%S")": Smoketest finished."
     age=2 # minutes
@@ -225,11 +239,11 @@ then
     find ${SMOKETEST_HOME}/${INSTANCE_NAME}/ -maxdepth 1 -mmin +$age -type f -iname '*.log' -o -iname '*test*.summary' -o -iname '*.diff' -o -iname '*.txt' -o -iname '*.old' | zip -m -u ${SMOKETEST_HOME}/${INSTANCE_NAME}/old-logs-${timestamp} -@
 
     echo $(date "+%y-%m-%d %H:%M:%S")": Compress and download result"
-    ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS} centos@${instancePublicIp} "zip -m /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S') -r /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression/* > /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1"
-    ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS} centos@${instancePublicIp} "rm -rf /home/centos/smoketest/${INSTANCE_NAME}/HPCC-Platform /home/centos/smoketest/${INSTANCE_NAME}/build"
-    rsync -va --timeout=60 --exclude=*.rpm --exclude=*.sh --exclude=*.py --exclude=*.txt -e "ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME} ${SMOKETEST_HOME}/
-    rsync -va --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/SmoketestInfo.csv ${SMOKETEST_HOME}/${INSTANCE_NAME}/SmoketestInfo-${INSTANCE_NAME}-$(date '+%y-%m-%d_%H-%M-%S').csv
-    rsync -va --timeout=60 -e "ssh -i ~/HPCC-Platform-Smoketest.pem ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/prp-$(date '+%Y-%m-%d').log ${SMOKETEST_HOME}/${INSTANCE_NAME}/prp-$(date '+%Y-%m-%d')-${INSTANCE_NAME}-${instancePublicIp}.log
+    ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "zip -m /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S') -r /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression/* > /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1"
+    ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "rm -rf /home/centos/smoketest/${INSTANCE_NAME}/HPCC-Platform /home/centos/smoketest/${INSTANCE_NAME}/build"
+    rsync -va --timeout=60 --exclude=*.rpm --exclude=*.sh --exclude=*.py --exclude=*.txt -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME} ${SMOKETEST_HOME}/
+    rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/SmoketestInfo.csv ${SMOKETEST_HOME}/${INSTANCE_NAME}/SmoketestInfo-${INSTANCE_NAME}-$(date '+%y-%m-%d_%H-%M-%S').csv
+    rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/prp-$(date '+%Y-%m-%d').log ${SMOKETEST_HOME}/${INSTANCE_NAME}/prp-$(date '+%Y-%m-%d')-${INSTANCE_NAME}-${instancePublicIp}.log
 
 fi
 
