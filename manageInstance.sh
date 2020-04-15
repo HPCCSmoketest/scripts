@@ -108,7 +108,7 @@ tag=$( aws ec2 create-tags --resources ${instanceId} ${volumeId} \
 echo $(date "+%y-%m-%d %H:%M:%S")": Wait ~2 minutes for initialise instance"
 sleep 1m
 
-tryCount=4
+tryCount=8
  
 while [[ $tryCount -ne 0 ]] 
 do
@@ -244,7 +244,8 @@ then
     rsync -va --timeout=60 --exclude=*.rpm --exclude=*.sh --exclude=*.py --exclude=*.txt -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME} ${SMOKETEST_HOME}/
     rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/SmoketestInfo.csv ${SMOKETEST_HOME}/${INSTANCE_NAME}/SmoketestInfo-${INSTANCE_NAME}-$(date '+%y-%m-%d_%H-%M-%S').csv
     rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/prp-$(date '+%Y-%m-%d').log ${SMOKETEST_HOME}/${INSTANCE_NAME}/prp-$(date '+%Y-%m-%d')-${INSTANCE_NAME}-${instancePublicIp}.log
-
+else
+    echo $(date "+%y-%m-%d %H:%M:%S")": The try count exhausted before the instance became up and running.'
 fi
 
 echo $(date "+%y-%m-%d %H:%M:%S")": Wait 10 seconds before terminate"
