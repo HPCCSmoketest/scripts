@@ -70,6 +70,8 @@ SUBNET_ID="subnet-0f5274ec85eec91da"
 echo $(date "+%y-%m-%d %H:%M:%S")": Create instance for ${INSTANCE_NAME}, type: $INSTANCE_TYPE, disk: $instanceDiskVolumeSize, build ${DOCS_BUILD}"
 
 instance=$( aws ec2 run-instances --image-id ${AMI_ID} --count 1 --instance-type $INSTANCE_TYPE --key-name HPCC-Platform-Smoketest --security-group-ids ${SECURITY_GROUP_ID} --subnet-id ${SUBNET_ID} --instance-initiated-shutdown-behavior terminate --block-device-mappings "[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"VolumeSize\":$instanceDiskVolumeSize,\"DeleteOnTermination\":true,\"Encrypted\":true}}]" 2>&1 )
+retCode=$?
+echo $(date "+%y-%m-%d %H:%M:%S")":Ret code: $retCode"
 echo $(date "+%y-%m-%d %H:%M:%S")": Instance: $instance"
 
 instanceId=$( echo "$instance" | egrep 'InstanceId' | tr -d '", ' | cut -d : -f 2 )
@@ -78,6 +80,7 @@ echo $(date "+%y-%m-%d %H:%M:%S")": Instance ID: $instanceId"
 if [[ -z "$instanceId" ]]
 then
    echo "Instance creation failed, exit"
+   echo $instance > ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
    exit -1 
 fi
 
