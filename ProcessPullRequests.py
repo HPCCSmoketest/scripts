@@ -1829,7 +1829,7 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                 itemName = items[0].strip()
                 itemValue = items[1]
                 timeStatsTable.addItem(itemName + " : " + itemValue, ' : ')
-                testInfo[itemName.replace(' ','_')] = itemValue.strip().split(' ')[0]
+                testInfo[itemName.replace(' ','_')] = itemValue.strip().split(' ')[0] # We need the second value only
             pass
             
 #        if len(msg) > maxMsgLen:
