@@ -1826,7 +1826,10 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                 #timeStatsTable.addItem('Stage:' + items[0].replace(' time', '').strip() )
                 #timeStatsTable.addItem('Time: ' + items[1], ': ')
                 # Create a horizontal table 
-                timeStatsTable.addItem(items[0].strip() +" : " + items[1], ' : ')
+                itemName = items[0].strip()
+                itemValue = items[1]
+                timeStatsTable.addItem(itemName + " : " + itemValue, ' : ')
+                testInfo[itemName.replace(' ','_')] = itemValue.strip().split(' ')[0]
             pass
             
 #        if len(msg) > maxMsgLen:
