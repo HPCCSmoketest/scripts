@@ -66,7 +66,7 @@ do
         instance*)  INSTANCE_NAME=${param//instanceName=/}
                 INSTANCE_NAME=${INSTANCE_NAME//\"/}
                 INSTANCE_NAME=${INSTANCE_NAME//PR/PR-}
-                WriteLog "Instance name: '${INSTANCE_NAME}'" "$LOG_FILE"
+                WriteLog "Instancename: '${INSTANCE_NAME}'" "$LOG_FILE"
                 ;;
                 
         docs*)  DOCS_BUILD=${param}
@@ -83,7 +83,7 @@ do
                 ;;
                 
         commit*) COMMIT_ID=${param}
-                WriteLog "Commit ID: ${COMMIT_ID}" "$LOG_FILE"
+                WriteLog "CommitID: ${COMMIT_ID}" "$LOG_FILE"
                 C_ID=${COMMIT_ID//commitId=/}
                 ;;
                 
