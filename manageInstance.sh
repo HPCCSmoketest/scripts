@@ -279,7 +279,7 @@ then
         else
             WriteLog "Smoketest is $( [[ $smoketestIsRunning -eq 1 ]] && echo 'running.' || echo 'finished.')"  "$LOG_FILE"
             
-            checkCount= $(( $checkCount + 1 ))
+            checkCount=$(( $checkCount + 1 ))
             
             # If session run time is longger than 1.25 * average_instance_time then we need to make emergency backup form logfiles regurarly (every 1-2 -3 minutes).
             if [[ ( $checkCount -ge $emergencyLogDownloadThreshold ) && ( $(( $checkCount % 2 )) -eq 0) ]]
