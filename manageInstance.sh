@@ -110,7 +110,9 @@ fi
 SSH_KEYFILE="~/HPCC-Platform-Smoketest.pem"
 SSH_OPTIONS="-oConnectionAttempts=3 -oConnectTimeout=20 -oStrictHostKeyChecking=no"
 
-#AMI_ID=$( aws ec2 describe-images --owners 446598291512 | egrep -i -B10 '-el7-' | egrep -i '"available"|"ImageId"' | egrep -i '"ImageId"' | tr -d "[:space:]" | cut -d":" -f2 )
+#AMI_ID=$( aws ec2 describe-images --owners 446598291512 | egrep -i '"name"|imageid' | egrep -i -A2 '-el7-' | egrep -i '"ImageId"' | tr -d " " | cut -d":" -f2 )
+# Better approach
+#AMI_ID=$( aws ec2 describe-images --owners 446598291512 --filters "Name=name,Values=*-el7-x86_64" --query Images[].ImageId --output text )
 AMI_ID="ami-0f6f902a9aff6d384"
 SECURITY_GROUP_ID="sg-08a92c3135ec19aea"
 SUBNET_ID="subnet-0f5274ec85eec91da"
