@@ -156,6 +156,7 @@ def update():
     divCurrentUser.text = user
     divCurrentEct.text = ect
     divCurrentPhase.text = phase + subPhase
+    result.reverse()
     
     source.data = {
         'msg' : result
@@ -163,8 +164,8 @@ def update():
         
     # Select the last row in the table
     #sel = Selection( indices = [len(result)-2, len(result)-1])
-    sel = Selection( indices = [len(result)-1])
-    source.selected = sel
+    #sel = Selection( indices = [len(result)-1])
+    #source.selected = sel
     
     print(" Done (%2d sec)." % (time.time()-startTimestamp))
     
