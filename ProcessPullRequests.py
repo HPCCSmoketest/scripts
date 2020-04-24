@@ -1206,9 +1206,14 @@ def CatchUpMaster():
     #    logging.error("%s. checkHpccStatus error:%s!" % (1,  err))
     #    raise Error(err)
         pass
+        
+    except:
+        print("Internal error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
+        pass
     
     finally:
-            pass
+        print("Catch up maste done.r")
+        pass
             
     os.chdir("../")
     
