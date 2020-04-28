@@ -289,6 +289,14 @@ then
                 WriteLog "This instance is running in $checkCount minutes (> $emergencyLogDownloadThreshold). Download its logs." "$LOG_FILE"
                 res=$( rsync -va --timeout=60 --exclude=*.rpm --exclude=*.sh --exclude=*.py --exclude=*.txt --exclude=*.xml --exclude=build/* --exclude=HPCC-Platform/* -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
                 WriteLog "Res: $res" "$LOG_FILE"
+                
+                WriteLog "Compress and download HPCCSystems logs..." "$LOG_FILE"
+                res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "zip -u /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-$(date '+%y-%m-%d_%H-%M-%S') -r /var/log/HPCCSystems/* > /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1" 2>&1 )
+                WriteLog "Res: $res" "$LOG_FILE"
+                
+                res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
+                WriteLog "Res: $res" "$LOG_FILE"
+                
             fi
 
         fi
@@ -326,6 +334,13 @@ then
     WriteLog "Res: $res" "$LOG_FILE"
     
     res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/prp-$(date '+%Y-%m-%d').log ${SMOKETEST_HOME}/${INSTANCE_NAME}/prp-$(date '+%Y-%m-%d')-${INSTANCE_NAME}-${instancePublicIp}.log 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+    
+    WriteLog "Compress and download HPCCSystems logs..." "$LOG_FILE"
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "zip -u /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-$(date '+%y-%m-%d_%H-%M-%S') -r /var/log/HPCCSystems/* > /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1" 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
     
 else
