@@ -3,6 +3,11 @@
 #
 #------------------------------
 #
+PR_PROCESSOR="ProcessPullRequests.py"
+if [[ "$1." != "." ]]
+then
+    PR_PROCESSOR="$1"
+fi
 
 INSTANCE_ID=$( wget -q -t1 -T1 -O - http://169.254.169.254/latest/meta-data/instance-id )
 if [[ -z "$INSTANCE_ID" ]]
@@ -21,7 +26,7 @@ SignalHandler()
     # run if user hits control-c or process receives SIGTERM signal
     echo "User break (Ctrl-c) or KILL!"
     
-    pids=$( ps aux | grep '[p]ython ./ProcessPullRequests.py' | awk '{print $2}' )
+    pids=$( pgrep -f "python ./${PR_PROCESSOR}" )
     echo "Pids: ${pids}" 
     
     sudo kill ${pids}
@@ -34,7 +39,7 @@ CheckIfNoSessionIsRunning()
     delayToFinish=5 # minutes
     
     echo "Check if no session is running"
-    pids=$( ps aux | grep '[p]ython ./${PROCESSOR}' | awk '{print $2}' )
+    pids=$(  pgrep -f "python ./${PR_PROCESSOR}" )
     echo "${PROCESSOR} pid(s): ${pids}"
         
     # Wait it for stop
@@ -51,7 +56,7 @@ CheckIfNoSessionIsRunning()
         checkCount=$(( $checkCount + 1 ))
         # Give it some time to finish
         sleep 5m
-        pids=$( ps aux | grep '[p]ython ./${PROCESSOR}' | awk '{print $2}' )
+        pids=$(  pgrep -f "python ./${PR_PROCESSOR}" )
     done
 
     if [[ $checkCount -ne 0 ]]
@@ -69,13 +74,6 @@ CheckIfNoSessionIsRunning()
 # -----------------------------
 #
 # Main 
-
-
-PR_PROCESSOR="ProcessPullRequests.py"
-if [[ "$1." != "." ]]
-then
-    PR_PROCESSOR="$1"
-fi
 
 logfile=prp-$(date +%Y-%m-%d).log 
 exec >> ${logfile} 2>&1
