@@ -29,7 +29,7 @@ SignalHandler()
     pids=$( pgrep -f "python ./${PR_PROCESSOR}" )
     echo "Pids: ${pids}" 
     
-    sudo kill ${pids}
+    sudo kill -2 ${pids}
 }
 
 CheckIfNoSessionIsRunning()
@@ -37,6 +37,8 @@ CheckIfNoSessionIsRunning()
     PROCESSOR=$1
     checkCount=0
     delayToFinish=5 # minutes
+    
+    host="$(hostname) (${PUBLIC_IP})"
     
     echo "Check if no session is running"
     pids=$(  pgrep -f "python ./${PR_PROCESSOR}" )
@@ -50,7 +52,7 @@ CheckIfNoSessionIsRunning()
         echo "$(date "+%H:%M:%S") Wait for the current session is finished."
         if [[ $(( $checkCount % 12 )) -eq 0 ]]
         then
-            echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ${PROCESSOR} session is still running on ${PUBLIC_IP} with ${INSTANCE_ID}!" | mailx -s "Overlapped ${PROCESSOR} sessions on $(PUBLIC_IP)" attila.vamos@gmail.com
+            echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ${PROCESSOR} session is still running on ${host} with ${INSTANCE_ID}!" | mailx -s "Overlapped ${PROCESSOR} sessions on ${host}" attila.vamos@gmail.com
         fi
         
         checkCount=$(( $checkCount + 1 ))
@@ -61,7 +63,7 @@ CheckIfNoSessionIsRunning()
 
     if [[ $checkCount -ne 0 ]]
     then
-        echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ${PROCESSOR} session finished  after $checkCount checks on ${PUBLIC_IP} with ${INSTANCE_ID}." | mailx -s "Overlapped ${PROCESSOR} sessions on ${PUBLIC_IP}" attila.vamos@gmail.com
+        echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ${PROCESSOR} session finished  after $checkCount checks on ${host} with ${INSTANCE_ID}." | mailx -s "Overlapped ${PROCESSOR} sessions on ${host}" attila.vamos@gmail.com
     fi
     
     echo "${PROCESSOR} is finished after $checkCount checks."
