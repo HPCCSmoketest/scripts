@@ -54,7 +54,7 @@ CheckIfNoSessionIsRunning()
         then
             echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ${PROCESSOR} session is still running on ${host} with ${INSTANCE_ID}!" | mailx -s "Overlapped ${PROCESSOR} sessions on ${host}" attila.vamos@gmail.com
             zipPids=$(  pgrep -f "zip" )
-            if [ -n "${zipPids} ]
+            if [ -n "${zipPids}" ]
             then
                 sudo kill ${zipPids}
             fi
