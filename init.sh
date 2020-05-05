@@ -105,9 +105,9 @@ else
 fi
 
 # Before self destruction initiate it would be nice to kill (send Ctrl-C/Ctrl-Break signal to) Regression Test Engine to put some log into the PR
-REGRESSION_TEST_ENGINE_PID=$( pgrep "ecl-test" )
+BREAK_TIME=20 # $(( ${GUILLOTINE} - 10 ))
 BREAK_TIME=$(( ${GUILLOTINE} - 10 ))
-( crontab -l; echo ""; echo "# Send Ctrl - C to Regression Test Enginein ${BREAK_TIME} minutes"; echo $( date -d "$today + ${BREAK_TIME} minutes" "+%M %H %d %m") " * sudo kill -2 ${REGRESSION_TEST_ENGINE_PID}; sleep 10; sudo kill -2 ${REGRESSION_TEST_ENGINE_PID}; " ) | crontab
+( crontab -l; echo ""; echo "# Send Ctrl - C to Regression Test Engine after ${BREAK_TIME} minutes"; echo $( date -d " + ${BREAK_TIME} minutes" "+%M %H %d %m") " * REGRESSION_TEST_ENGINE_PID=\$( pgrep -f ecl-test ); while [[ -z \"\$REGRESSION_TEST_ENGINE_PID\" ]] ; do date; sleep 10; REGRESSION_TEST_ENGINE_PID=\$( pgrep -f ecl-test ); done; echo \$REGRESSION_TEST_ENGINE_PID; sudo kill -2 \${REGRESSION_TEST_ENGINE_PID}; sleep 10; sudo kill -2 \${REGRESSION_TEST_ENGINE_PID}; " ) | crontab
 
 
 
