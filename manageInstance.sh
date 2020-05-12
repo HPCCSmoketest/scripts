@@ -15,7 +15,7 @@ LOG_FILE="/dev/null"
 
 . ./timestampLogger.sh
 
-res=$( declare -f -F WriteLoog  2>&1 )
+res=$( declare -f -F WriteLog  2>&1 )
 	
 if [ $? -ne 0 ]
 then
