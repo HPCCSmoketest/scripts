@@ -3,6 +3,9 @@
 PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
 
+
+LOG_FILE="/dev/null"
+
 #
 #------------------------------
 #
@@ -11,6 +14,16 @@ PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 # WriteLog() function
 
 . ./timestampLogger.sh
+
+res=$( declare -f -F WriteLoog  2>&1 )
+	
+if [ $? -ne 0 ]
+then
+    echo "WriteLog() function is missing (${res}) try to import again"
+    . ./timestampLogger.sh
+else
+    WriteLog "res: ${res}" "$LOG_FILE"
+fi
 
 #
 #------------------------------
@@ -53,7 +66,6 @@ SMOKETEST_HOME=
 ADD_GIT_COMMENT=0
 INSTANCE_NAME="PR-12701"
 DRY_RUN=''  #"-dryRun"
-LOG_FILE="/dev/null"
 
 
 while [ $# -gt 0 ]
