@@ -82,6 +82,9 @@ cd $INSTANCE_NAME
 echo "Execute Smoketest on $INSTANCE_NAME" > test.log
 cd ..
 
+
+echo "Add items for crontab"
+
 prId=${INSTANCE_NAME//PR-/}
 INSTANCE_ID=$( wget -q -t1 -T1 -O - http://169.254.169.254/latest/meta-data/instance-id )
 
@@ -110,4 +113,4 @@ BREAK_TIME=$(( ${GUILLOTINE} - 10 ))
 ( crontab -l; echo ""; echo "# Send Ctrl - C to Regression Test Engine after ${BREAK_TIME} minutes"; echo $( date -d " + ${BREAK_TIME} minutes" "+%M %H %d %m") " * REGRESSION_TEST_ENGINE_PID=\$( pgrep -f ecl-test ); while [[ -z \"\$REGRESSION_TEST_ENGINE_PID\" ]] ; do date; sleep 10; REGRESSION_TEST_ENGINE_PID=\$( pgrep -f ecl-test ); done; echo \$REGRESSION_TEST_ENGINE_PID; sudo kill -2 \${REGRESSION_TEST_ENGINE_PID}; sleep 10; sudo kill -2 \${REGRESSION_TEST_ENGINE_PID}; " ) | crontab
 
 
-
+echo "End of init.sh"
