@@ -19,7 +19,7 @@ res=$( declare -f -F WriteLog  2>&1 )
     
 if [ $? -ne 0 ]
 then
-    echo "WriteLog() function is missing (${res}) try to import again"
+    echo "WriteLog() function is missing (${res}, cwd: $(pwd)) try to import again"
     . ~/smoketest/timestampLogger.sh
 else
     WriteLog "res: ${res}" "$LOG_FILE"
