@@ -3,6 +3,8 @@
 PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
 
+PUBLIC_IP=$( curl http://checkip.amazonaws.com )
+PUBLIC_HOSTNAME=$( wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname )
 INSTANCE_NAME="PR-12701"
 DOCS_BUILD=0
 KEEP_FILES=0
@@ -55,7 +57,7 @@ enabled = 1
 gpgcheck = 0
 DATASTAX_ENTRIES
 
-PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools"
+PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools python-pip"
 if [ $DOCS_BUILD -eq 1 ]
 then
     wget http://mirror.centos.org/centos/7/os/x86_64/Packages/fop-1.1-6.el7.noarch.rpm
@@ -112,5 +114,25 @@ BREAK_TIME=20 # $(( ${GUILLOTINE} - 10 ))
 BREAK_TIME=$(( ${GUILLOTINE} - 10 ))
 ( crontab -l; echo ""; echo "# Send Ctrl - C to Regression Test Engine after ${BREAK_TIME} minutes"; echo $( date -d " + ${BREAK_TIME} minutes" "+%M %H %d %m") " * REGRESSION_TEST_ENGINE_PID=\$( pgrep -f ecl-test ); while [[ -z \"\$REGRESSION_TEST_ENGINE_PID\" ]] ; do date; sleep 10; REGRESSION_TEST_ENGINE_PID=\$( pgrep -f ecl-test ); done; echo \$REGRESSION_TEST_ENGINE_PID; sudo kill -2 \${REGRESSION_TEST_ENGINE_PID}; sleep 10; sudo kill -2 \${REGRESSION_TEST_ENGINE_PID}; " ) | crontab
 
+# Install, prepare and stat Bokeh
+echo install Bokeh
+sudo pip install --upgrade pip
+sudo yum remove -y pyparsing
+sudo pip install pandas bokeh pyproj
+
+echo "Prepare Bokeh"
+cd ~/smoketest
+# Don't use Public IP, out network may refuse to connect to it
+#sed -e 's/origin=\(ec2.*\)/origin='"$PUBLIC_IP"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
+#echo "Bokeh address: $PUBLIC_IP:5006"
+
+# Use Public hostname isntead
+sed -e 's/origin=\(ec2.*\)/origin='"$PUBLIC_HOSTNAME"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
+echo "Bokeh address: $PUBLIC_HOSTNAME:5006"
+
+echo "Start Bokeh"
+chmod +x ./startBokeh.sh
+./startBokeh.sh &
+echo "Bokeh pid: $!"
 
 echo "End of init.sh"
