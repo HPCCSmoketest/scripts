@@ -21,9 +21,10 @@ then
 fi
 echo "$INSTANCE_ID"
 
-echo Public IP:"
+echo "Public IP:"
 PUBLIC_IP=$( curl http://checkip.amazonaws.com )
 echo "$PUBLIC_IP"
+
 #
 #------------------------------
 #
