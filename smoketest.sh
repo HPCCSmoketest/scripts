@@ -9,10 +9,6 @@ then
     PR_PROCESSOR="$1"
 fi
 
-export HTTP_PROXY=http://bdmzproxyout.risk.regn.net:80
-export HTTPS_PROXY=http://bdmzproxyout.risk.regn.net:80
-export ALL_PROXY=http://bdmzproxyout.risk.regn.net:80
-
 echo "Instance ID:"
 INSTANCE_ID=$( wget -q -t1 -T1 -O - http://169.254.169.254/latest/meta-data/instance-id )
 if [[ -z "$INSTANCE_ID" ]]
