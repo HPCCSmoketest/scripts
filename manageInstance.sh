@@ -244,6 +244,11 @@ then
         WriteLog "Res: $res" "$LOG_FILE"
     fi
     
+    # Donwload Bokeh URL file
+    WriteLog "Download /home/centos/smoketest/bokeh.url file" "$LOG_FILE"
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/bokeh.url ${SMOKETEST_HOME}/${INSTANCE_NAME}/bokeh.url 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+    
     WriteLog "Check Smoketest" "$LOG_FILE"
     res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l ~/smoketest/" 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"

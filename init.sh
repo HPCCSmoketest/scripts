@@ -129,6 +129,7 @@ cd ~/smoketest
 # Use Public hostname isntead
 sed -e 's/origin=\(ec2.*\)/origin='"$PUBLIC_HOSTNAME"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
 echo "Bokeh address: $PUBLIC_HOSTNAME:5006"
+echo "http://$PUBLIC_HOSTNAME:5006" > bokeh.url
 
 echo "Start Bokeh"
 chmod +x ./startBokeh.sh

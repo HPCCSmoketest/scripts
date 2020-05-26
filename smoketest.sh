@@ -91,6 +91,9 @@ echo "I am "$( whoami )
 export PATH=$PATH:/usr/local/bin:/bin:/usr/local/sbin:/sbin:/usr/sbin:
 echo "path: $PATH"
 
+export HTTP_PROXY=http://bdmzproxyout.risk.regn.net:80
+export HTTPS_PROXY=http://bdmzproxyout.risk.regn.net:80
+
 echo "Trap SIGINT, SIGTERM and SIGKILL signals"
 # trap keyboard interrupt (control-c) and SIGTERM signals
 trap SignalHandler SIGINT
