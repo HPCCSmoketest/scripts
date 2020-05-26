@@ -13,14 +13,17 @@ export HTTP_PROXY=http://bdmzproxyout.risk.regn.net:80
 export HTTPS_PROXY=http://bdmzproxyout.risk.regn.net:80
 export ALL_PROXY=http://bdmzproxyout.risk.regn.net:80
 
+echo "Instance ID:"
 INSTANCE_ID=$( wget -q -t1 -T1 -O - http://169.254.169.254/latest/meta-data/instance-id )
 if [[ -z "$INSTANCE_ID" ]]
 then
     INSTANCE_ID=$( sudo ls -l /var/lib/cloud/instance | cut -d' '  -f11 | cut -d '/' -f6 )
 fi
+echo "$INSTANCE_ID"
 
+echo Public IP:"
 PUBLIC_IP=$( curl http://checkip.amazonaws.com )
-
+echo "$PUBLIC_IP"
 #
 #------------------------------
 #
@@ -59,7 +62,7 @@ CheckIfNoSessionIsRunning()
             echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ${PROCESSOR} session is still running on ${host} with ${INSTANCE_ID}!" | mailx -s "Overlapped ${PROCESSOR} sessions on ${host}" attila.vamos@gmail.com
             zipPids=$(  pgrep -f "zip" )
             if [ -n "${zipPids}" ]
-            then
+            then11868
                 sudo kill ${zipPids}
             fi
         fi
