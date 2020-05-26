@@ -13,7 +13,8 @@ echo "Instance ID:"
 INSTANCE_ID=$( wget -q -t1 -T1 -O - http://169.254.169.254/latest/meta-data/instance-id )
 if [[ -z "$INSTANCE_ID" ]]
 then
-    INSTANCE_ID=$( sudo ls -l /var/lib/cloud/instance | cut -d' '  -f12 | cut -d '/' -f6 )
+    #INSTANCE_ID=$( sudo ls -l /var/lib/cloud/instance | cut -d' '  -f12 | cut -d '/' -f6 )
+    INSTANCE_ID=$( l=$(readlink /var/lib/cloud/instance); echo ${l##*/} )
 fi
 echo "$INSTANCE_ID"
 
