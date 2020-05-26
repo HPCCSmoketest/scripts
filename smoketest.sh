@@ -9,6 +9,10 @@ then
     PR_PROCESSOR="$1"
 fi
 
+export HTTP_PROXY=http://bdmzproxyout.risk.regn.net:80
+export HTTPS_PROXY=http://bdmzproxyout.risk.regn.net:80
+export ALL_PROXY=http://bdmzproxyout.risk.regn.net:80
+
 INSTANCE_ID=$( wget -q -t1 -T1 -O - http://169.254.169.254/latest/meta-data/instance-id )
 if [[ -z "$INSTANCE_ID" ]]
 then
@@ -90,9 +94,6 @@ echo "At $(date "+%Y.%m.%d %H:%M:%S") a new ${PR_PROCESSOR} session starts on ${
 echo "I am "$( whoami )
 export PATH=$PATH:/usr/local/bin:/bin:/usr/local/sbin:/sbin:/usr/sbin:
 echo "path: $PATH"
-
-export HTTP_PROXY=http://bdmzproxyout.risk.regn.net:80
-export HTTPS_PROXY=http://bdmzproxyout.risk.regn.net:80
 
 echo "Trap SIGINT, SIGTERM and SIGKILL signals"
 # trap keyboard interrupt (control-c) and SIGTERM signals
