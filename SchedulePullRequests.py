@@ -642,11 +642,11 @@ def GetOpenPulls(knownPullRequests):
         # This solution tries to get PR info with stanadard GitHub API. If the pullRequests.json file
         # doesn't have 'draft' attribute then use the experimental API (via Accept header) to get extended result
         headers = '--header "Authorization: token ' +  gitHubToken + '"'
-        myProc = subprocess.Popen(["wget -S " + headers + " -OpullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+        # Using wget (problems on Replacement MFA machines)
+        #myProc = subprocess.Popen(["wget -S " + headers + " -OpullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
 
-        # With curl
-        #headers = '-H "Authorization: token ' + gitHubToken +'" '
-        #myProc = subprocess.Popen(["curl -S " + headers + " -o pullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+        # Using curl
+        myProc = subprocess.Popen(["curl " + headers + " -opullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
         
         result = myProc.stdout.read() + myProc.stderr.read()
         pulls_data = open('pullRequests.json').read()
@@ -654,10 +654,17 @@ def GetOpenPulls(knownPullRequests):
             print("Use an experimental GitHub api to determine draft pull requests")
             headers += " '--header=User-Agent: Mozilla/5.0 (Windows NT 6.0) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.97 Safari/537.11'"
             headers += " '--header=Accept:application/vnd.github.shadow-cat-preview'"
-            myProc = subprocess.Popen(["wget -S " + headers + " -OpullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            # Using wget (problems on Replacement MFA machines)
+            #myProc = subprocess.Popen(["wget -S " + headers + " -OpullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            
+            # Using curl
+            myProc = subprocess.Popen(["curl " + headers + " -opullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+ 
             result = myProc.stdout.read() + myProc.stderr.read()
-            # In the result tehre are  X-RateLimit-Limit: 60\n  X-RateLimit-Remaining: 41 
-            # to get info about how many reguest lest
+            
+        # get headers
+        myProc = subprocess.Popen(["curl --head " + headers + " https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+        result = myProc.stdout.read() + myProc.stderr.read()
             
             # With curl
             #myProc = subprocess.Popen(["curl -S " + headers + " -i -o pullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
@@ -675,7 +682,11 @@ def GetOpenPulls(knownPullRequests):
             lastPageIndex = int(re.search('(?<=page=)\d+', lastPageUrl).group(0))
             for page in range(nextPageIndex,  lastPageIndex+1):
                 #myProc = subprocess.Popen(["wget -S " + headers + " -OpullRequests"+str(page)+".json https://api.github.com/repositories/2030681/pulls?page="+str(page)],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                myProc = subprocess.Popen(["wget -S " + headers + " -OpullRequests"+str(page)+".json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls?page="+str(page)], shell=True, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                # Using wget (problems on Replacement MFA machines)
+                #myProc = subprocess.Popen(["wget -S " + headers + " -OpullRequests"+str(page)+".json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls?page="+str(page)], shell=True, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                # Using curl
+                myProc = subprocess.Popen(["curl " + headers + " -opullRequests"+str(page)+".json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls?page="+str(page)],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                result = myProc.stdout.read() + myProc.stderr.read()
 
                 # With curl
                 #myProc = subprocess.Popen(["curl -S " + headers + " -opullRequests"+str(page)+".json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls?page="+str(page)], shell=True, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -871,12 +882,9 @@ def GetOpenPulls(knownPullRequests):
     
             # generates changed file list:
             # wget -O<PRID>.diff https://github.com/hpcc-systems/HPCC-Platform/pull/<PRID>.diff
-            myProc = subprocess.Popen(["wget --header 'Authorization: token " +  gitHubToken + "' --timeout=60 -O"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-
-            # with curl
-            #headers = '-H "Authorization: token ' + gitHubToken +'" '
-            # myProc = subprocess.Popen(["curl -S " + headers + " -o"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            
+            #myProc = subprocess.Popen(["wget --timeout=60 -O"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            # With curl
+            myProc = subprocess.Popen(["curl -L --connect-timeout 60 -o"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             # The myProc.stdout.read() hanged if there was a large (> 40MB) diff file to get.
             (result,  err) = myProc.communicate()
             result = result.rstrip('\n').split('\n')
@@ -1263,8 +1271,13 @@ def CatchUpMaster():
     #    raise Error(err)
         pass
     
+    except:
+        print("Internal error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
+        pass
+    
     finally:
-            pass
+        print("Catch up maste done.r")
+        pass
             
     os.chdir("../")
     
