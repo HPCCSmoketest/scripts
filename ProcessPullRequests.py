@@ -2797,7 +2797,8 @@ if __name__ == '__main__':
     else:
         gitHubToken = ''
         print("\nWARNING:\n--------\nThe GitHub access token file not found!")
-        print("The Pull Request processing would be fine, but \nno result and error report added into the PR discussion.")
+        print("The Pull Request processing unable to access GitHub without token.\nnExit.")
+        exit()
         
     idleTime = 60
 

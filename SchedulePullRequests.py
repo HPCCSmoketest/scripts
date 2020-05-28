@@ -3295,7 +3295,8 @@ if __name__ == '__main__':
     else:
         gitHubToken = ''
         print("\nWARNING:\n--------\nThe GitHub access token file not found!")
-        print("The Pull Request processing would be fine, but \nno result and error report added into the PR discussion.")
+        print("The Pull Request processing unable to access GitHub without token.\nnExit.")
+        exit()
         
     idleTime = 60
 
@@ -3393,7 +3394,7 @@ if __name__ == '__main__':
         while threads[key]['thread'].is_alive():
             time.sleep(120)
             elaps = time.time()-threads[key]['startTimestamp']
-            print("--- PR-%s (%s) is cheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['commitId'], threads[key]['startTime'], elaps,  elaps / 60 ) ) 
+            print("--- PR-%s (%s) is scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['commitId'], threads[key]['startTime'], elaps,  elaps / 60 ) ) 
         print("%s finished" % (threads[key]['thread'].name))    
     
     print("All tasks are done")
