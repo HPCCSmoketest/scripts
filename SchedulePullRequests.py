@@ -1059,7 +1059,7 @@ def GetOpenPulls(knownPullRequests):
                 closedActive += 1
     if closedActive == 0:
         print("[%s] - None\n" % (threading.current_thread().name))
-    else
+    else:
         print("[%s] - End of list\n" % (threading.current_thread().name))
         
     print("")
@@ -2855,7 +2855,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
                 isNotThere = False
     if isNotThere:
         print("[%s] - None\n" % (threading.current_thread().name))
-    else
+    else:
         print("[%s] - End of list\n" % (threading.current_thread().name))
         
     os.chdir(cwd)
