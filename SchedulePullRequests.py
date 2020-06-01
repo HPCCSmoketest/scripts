@@ -1057,7 +1057,11 @@ def GetOpenPulls(knownPullRequests):
                 print("--- Keep PR-%s (%s) until it is finished. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['commitId'], threads[key]['startTime'], elaps,  elaps / 60 ) )
                 knownPullRequests.remove(testDir)
                 closedActive += 1
-            
+    if closedActive == 0:
+        print("[%s] - None\n" % (threading.current_thread().name))
+    else
+        print("[%s] - End of list\n" % (threading.current_thread().name))
+        
     print("")
     
     print("Number of closed, but still active PRs : %2d" % (closedActive))
@@ -2851,6 +2855,8 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
                 isNotThere = False
     if isNotThere:
         print("[%s] - None\n" % (threading.current_thread().name))
+    else
+        print("[%s] - End of list\n" % (threading.current_thread().name))
         
     os.chdir(cwd)
 
