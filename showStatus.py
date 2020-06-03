@@ -4,7 +4,11 @@
 #
 # bokeh serve showStatus.py --allow-websocket-origin=10.241.40.11:5006 (remotely)
 #
+# For pass and fail
+#  suite=$( egrep -i 'suite:' RelWithDebInfo_Build_2020-06-02_13-27-25.log | tail -n 1 ); suite=${suite//\[Action\]/};  echo "$suite";  section=$( sed -rn "/$suite$/,/$suite$/p" RelWithDebInfo_Build_2020-06-02_13-27-25.log ); echo "$section" | egrep -i 'Queries: '; echo "$section" | egrep -i -c ' Pass ';  echo "$section" | egrep -i -c ' Fail ';
 #
+
+
 
 #importing libraries
 #from bokeh.plotting import figure
@@ -124,6 +128,17 @@ def update():
                                             
                                         else:
                                             subPhase += "0 "
+                                            
+                                    myProc5 = subprocess.Popen([" suite=$( egrep -i 'suite:' " + logfiles[0] + " | tail -n 1 ); suite=${suite//\[Action\]/};  section=$( sed -rn \"/$suite$/,/$suite$/p\" " + logfiles[0] + " ); echo \"$section\" | egrep -i -c ' Pass ';  echo \"$section\" | egrep -i -c ' Fail '; "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                                    result5 = myProc5.stdout.read() + myProc5.stderr.read()
+                                    if len(result5) > 0:
+                                        result5Items = result5.split()
+                                        if len(result5Items) >= 1:
+                                            for index in range(len(result5Items)):
+                                                subPhase += "/" + result5Items[index].strip('.') + " "
+                                            
+                                        else:
+                                            subPhase += "/- /- "
                                     
                             if len(subPhase) > 0:
                                 subPhase = ' ( ' + subPhase + ') '

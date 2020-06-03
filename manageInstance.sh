@@ -13,7 +13,7 @@ LOG_FILE="/dev/null"
 #
 # WriteLog() function
 
-. ./timestampLogger.sh
+. ~/smoketest/timestampLogger.sh
 
 res=$( declare -f -F WriteLog  2>&1 )
     
