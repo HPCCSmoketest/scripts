@@ -108,11 +108,14 @@ def update():
                                 myProc3 = subprocess.Popen([" egrep -i -A1 'Suite:' " + logfiles[0] + " | tail -n 2 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                                 result3 = myProc3.stdout.read() + myProc3.stderr.read()
                                 if len(result3) > 0:
+                                    prefix = ["E: ", ", N: "]
+                                    index = 0
                                     result3Items = result3.split('\n')
                                     for item in result3Items:
                                         items = item.split(':', 1)
                                         if len(items) == 2:
-                                            subPhase += items[1].strip() + " / "
+                                            subPhase += prefix[index] + items[1].strip()
+                                            index += 1
                                     
                                     myProc4 = subprocess.Popen([" egrep -i  -i '\[Action\]' " + logfiles[0] + " | tail -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                                     result4 = myProc4.stdout.read() + myProc4.stderr.read()
@@ -124,7 +127,7 @@ def update():
                                             index = 1
                                             while (result4Items[index] == ''):
                                                 index += 1
-                                            subPhase += result4Items[index].strip('.') + " "
+                                            subPhase += ", R: " + result4Items[index].strip('.') + " "
                                             
                                         else:
                                             subPhase += "0 "
@@ -132,13 +135,14 @@ def update():
                                     myProc5 = subprocess.Popen([" suite=$( egrep -i 'suite:' " + logfiles[0] + " | tail -n 1 ); suite=${suite//\[Action\]/};  section=$( sed -rn \"/$suite$/,/$suite$/p\" " + logfiles[0] + " ); echo \"$section\" | egrep -i -c ' Pass ';  echo \"$section\" | egrep -i -c ' Fail '; "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                                     result5 = myProc5.stdout.read() + myProc5.stderr.read()
                                     if len(result5) > 0:
+                                        prefix = [", P: ", ", F: "]
                                         result5Items = result5.split()
                                         if len(result5Items) >= 1:
                                             for index in range(len(result5Items)):
-                                                subPhase += "/" + result5Items[index].strip('.') + " "
+                                                subPhase += prefix[index] + result5Items[index].strip('.')
                                             
                                         else:
-                                            subPhase += "/- /- "
+                                            subPhase += "/ - /-  "
                                     
                             if len(subPhase) > 0:
                                 subPhase = ' ( ' + subPhase + ') '
@@ -211,14 +215,14 @@ divCurrentState = Div(text=" ", width=100, height=20)
 divCurrentPrHeader = Div(text="Session:", width=100, height=15)
 divCurrentPr = Div(text=" ", width=100, height=20)
 
-divCurrentUserHeader = Div(text="User: ", width=100, height=15)
+divCurrentUserHeader = Div(text="User: ", width=50, height=15)
 divCurrentUser = Div(text=" ", width=100, height=20)
 
 divCurrentEctHeader = Div(text="ECT:", width=50, height=15)
 divCurrentEct = Div(text=" ", width=200, height=20)
 
 divCurrentPhaseHeader = Div(text="Phase: ", width=50, height=15)
-divCurrentPhase = Div(text=" ", width=250, height=20)
+divCurrentPhase = Div(text=" ", width=325, height=20)
 
 def update_time():
     divTime.text = time.strftime("%H:%M:%S")
