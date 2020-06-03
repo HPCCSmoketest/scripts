@@ -219,10 +219,10 @@ divCurrentUserHeader = Div(text="User: ", width=50, height=15)
 divCurrentUser = Div(text=" ", width=100, height=20)
 
 divCurrentEctHeader = Div(text="ECT:", width=50, height=15)
-divCurrentEct = Div(text=" ", width=200, height=20)
+divCurrentEct = Div(text=" ", width=150, height=20)
 
 divCurrentPhaseHeader = Div(text="Phase: ", width=50, height=15)
-divCurrentPhase = Div(text=" ", width=325, height=20)
+divCurrentPhase = Div(text=" ", width=350, height=20)
 
 def update_time():
     divTime.text = time.strftime("%H:%M:%S")
