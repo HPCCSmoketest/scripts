@@ -1280,7 +1280,7 @@ def CatchUpMaster():
         pass
     
     finally:
-        print("Catch up maste done.r")
+        print("Catch up maste done.")
         pass
             
     os.chdir("../")
