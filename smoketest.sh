@@ -54,7 +54,7 @@ CheckIfNoSessionIsRunning()
     do  
         [ ! -f ./smoketest.stop ] && touch ./smoketest.stop   # Attempt to stop it gracefully
         
-        echo "$(date "+%H:%M:%S") Wait for the current session is finished."
+        echo "$(date "+%H:%M:%S") Wait for the current session (${pids}) is finished."
         if [[ $(( $checkCount % 12 )) -eq 0 ]]
         then
             echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ${PROCESSOR} session is still running on ${host} with ${INSTANCE_ID}!" | mailx -s "Overlapped ${PROCESSOR} sessions on ${host}" attila.vamos@gmail.com
