@@ -61,7 +61,8 @@ CheckIfNoSessionIsRunning()
             zipPids=$(  pgrep -f "zip" )
             if [ -n "${zipPids}" ]
             then
-                sudo kill ${zipPids}
+                echo "There is/are stuck ZIP(s): ${zipPids}"
+                sudo kill -9 ${zipPids}
             fi
         fi
         
@@ -75,6 +76,8 @@ CheckIfNoSessionIsRunning()
     then
         echo "At $(date "+%Y.%m.%d %H:%M:%S") the previous ${PROCESSOR} session finished  after $checkCount checks on ${host} with ${INSTANCE_ID}." | mailx -s "Overlapped ${PROCESSOR} sessions on ${host}" attila.vamos@gmail.com
     fi
+    
+    [ -f ./smoketest.stop ] && rm ./smoketest.stop   # To prevent a Hara Kiri
     
     echo "${PROCESSOR} is finished after $checkCount checks."
     echo "---------------------------------------------------------"
