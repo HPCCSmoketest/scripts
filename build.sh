@@ -296,11 +296,21 @@ if [[ ${NEW_ECLWATCH_BUILD_MODE} -eq 0 ]]
 then
     if [[ "$ECLWATCH_BUILD_STRATEGY" != "SKIP" ]]
     then
-        WritePlainLog "npm install start." "$logFile"
-        WritePlainLog "Install ECLWatch build dependencies." "$logFile"
         pushd ${SOURCE_ROOT}/esp/src
+        WritePlainLog "npm install start." "$logFile"
+        
+        WritePlainLog "npm ci." "$logFile"
 
-        cmd="npm install"
+        cmd="npm ci"
+        WritePlainLog "$cmd" "$logFile"
+
+        res=$( ${cmd} 2>&1 )
+
+        WritePlainLog "res:${res}" "$logFile"
+        
+        WritePlainLog "Install ECLWatch build dependencies." "$logFile"
+
+        cmd="npm run build"
         WritePlainLog "$cmd" "$logFile"
 
         res=$( ${cmd} 2>&1 )
@@ -308,7 +318,7 @@ then
         WritePlainLog "res:${res}" "$logFile"
         WritePlainLog "npm install end." "$logFile"
 
-        cmd="npm test"
+        cmd="npm run test"
         WritePlainLog "$cmd" "$logFile"
         res=$( ${cmd} 2>&1 )
 
@@ -365,6 +375,7 @@ then
         WritePlainLog "Install ECLWatch build dependencies." "$logFile"
         pushd ${SOURCE_ROOT}/esp/src
 
+        
         cmd="npm install"
         WritePlainLog "$cmd" "$logFile"
 
