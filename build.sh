@@ -309,7 +309,7 @@ then
         WritePlainLog "res:${res}" "$logFile"
         WritePlainLog "npm install end." "$logFile"
 
-        cmd="npm test"
+        cmd="npm run test"
         WritePlainLog "$cmd" "$logFile"
         res=$( ${cmd} 2>&1 )
 

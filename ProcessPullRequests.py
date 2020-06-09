@@ -1790,7 +1790,7 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                 result = result.replace('"','')
                 npmInstallResultWarn += result
             
-        elif result.startswith('npm test'):
+        elif result.startswith('npm test') or result.startswith('npm run test'):
             if not npmTest:
                 npmTest=True
 #                eclWatchBuild=True
