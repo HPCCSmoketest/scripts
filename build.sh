@@ -301,7 +301,7 @@ then
         
         WritePlainLog "Install ECLWatch build dependencies." "$logFile"
 
-        cmd="npm run build"
+        cmd="npm install"
         WritePlainLog "$cmd" "$logFile"
 
         res=$( ${cmd} 2>&1 )
@@ -309,7 +309,7 @@ then
         WritePlainLog "res:${res}" "$logFile"
         WritePlainLog "npm install end." "$logFile"
 
-        cmd="npm run test"
+        cmd="npm test"
         WritePlainLog "$cmd" "$logFile"
         res=$( ${cmd} 2>&1 )
 
@@ -376,7 +376,7 @@ then
         
         WritePlainLog "Install ECLWatch build dependencies." "$logFile"
         
-        cmd="npm install"
+        cmd="npm run build"
         WritePlainLog "$cmd" "$logFile"
 
         res=$( ${cmd} 2>&1 )
@@ -384,7 +384,7 @@ then
         WritePlainLog "res:${res}" "$logFile"
         WritePlainLog "npm install end." "$logFile"
 
-        cmd="npm test"
+        cmd="npm run test"
         WritePlainLog "$cmd" "$logFile"
         res=$( ${cmd} 2>&1 )
 
