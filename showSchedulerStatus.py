@@ -38,11 +38,12 @@ def update():
 
     currLogFile = "prp-" + time.strftime("%Y-%m-%d") + ".log"
     #print("logfile:%s, " % (currLogFile )),
-    myProc = subprocess.Popen(["tail -n 1000 "+ currLogFile+ " |  grep -zoP 'Start: (?![\s\S]*Start: )[\s\S]*\z' | egrep -v 'Build|Number|No |Add'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    myProc = subprocess.Popen(["tail -n 1000 "+ currLogFile+ " |  grep -zoP 'Start: (?![\s\S]*Start: )[\s\S]*\z' | egrep -v 'Build|Number|No |Add|^$'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
     result = myProc.stdout.read() + myProc.stderr.read()
     result = result.split('\n')
         
     lastMsg = result[-2]
+    print("lastMsg: %d, index of 'Done':%d" % (lastMsg,  result.index('Done')))
     if lastMsg.startswith('Wait') or lastMsg.startswith('start'): 
         divCurrentState.text = 'Idle'
     elif lastMsg.startswith('Done, exit'):
