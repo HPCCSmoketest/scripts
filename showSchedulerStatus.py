@@ -233,7 +233,7 @@ staRow2 = row(divCurrentPrHeader, divCurrentPr, divCurrentUserHeader, divCurrent
 staRow3 = row(divCurrentEctHeader, divCurrentEct, divCurrentPhaseHeader, divCurrentPhase)
 curdoc().add_root(column(staRow1, staRow2, staRow3, dataTable))
 
-curdoc().title = "Smoketest status"
+curdoc().title = "Smoketest Scheduler Status"
 
 curdoc().add_periodic_callback(update, updateInterval * 1000)
 
