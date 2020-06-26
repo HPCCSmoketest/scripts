@@ -68,7 +68,9 @@ SMOKETEST_HOME=
 ADD_GIT_COMMENT=0
 INSTANCE_NAME="PR-12701"
 DRY_RUN=''  #"-dryRun"
+AVERAGE_SESSION_TIME=0.75 # Hours
 
+APP_ID=$(hostname)
 
 while [ $# -gt 0 ]
 do
@@ -105,6 +107,10 @@ do
                 WriteLog "Dry run: ${DRY_RUN}" "$LOG_FILE"
                 ;;
                 
+        appId) APP_ID=${param}
+                WriteLog "App ID: ${APP_ID}" "$LOG_FILE"
+                ;;
+        
     esac
     shift
 done
@@ -172,6 +178,7 @@ tag=$( aws ec2 create-tags --resources ${instanceId} ${volumeId} \
                   Key=purpose,Value=Smoketest \
                   Key=PR,Value=${INSTANCE_NAME} \
                   Key=Commit,Value=${C_ID} \
+                  Key=AppID,Value=${APP_ID} \
         2>&1 )
 WriteLog "Tag: ${tag}" "$LOG_FILE"
         
@@ -270,7 +277,9 @@ then
     sleep ${INIT_WAIT}
     smoketestIsRunning=1
     checkCount=0
-    emergencyLogDownloadThreshold=60  # minutes
+    emergencyLogDownloadThreshold=$( echo " $AVERAGE_SESSION_TIME * 4 / 3 * 60" | bc |  xargs printf "%.0f" ) # 60  # minutes
+    WriteLog "emergencyLogDownloadThreshold: $emergencyLogDownloadThreshold minutes"  "$LOG_FILE"
+    
     while [[ $smoketestIsRunning -eq 1 ]]
     do
         smoketestIsRunning=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "pgrep smoketest | wc -l"  2>&1 )

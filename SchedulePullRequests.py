@@ -115,7 +115,7 @@ doNotUpdate = True
 maxIdleTime = 180 # 600 # sec
 noEcho = False
 sysId = platform.dist()[0] + ' ' + platform.dist()[1] + ' (' + platform.system() + ' ' + platform.release() + ')'
-
+appId = "App"""
 gitHubToken=None
 
 if 'inux' in sysId:
@@ -126,6 +126,9 @@ if 'inux' in sysId:
     
     myProc = subprocess.Popen(['ps $PPID | tail -n 1 | awk "{print \$6}"'], shell=True, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     parentCommand = myProc.stdout.read().rstrip('\n')
+    
+    myProc = subprocess.Popen(['hostname'], shell=True, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    appId = myProc.stdout.read().rstrip('\n')
 
 failEmoji=':x:'
 passEmoji=':white_check_mark:'
@@ -770,6 +773,7 @@ def GetOpenPulls(knownPullRequests):
         prs[prid]['buildOnly'] = False
         prs[prid]['sessionTime'] = averageSessionTime   # default, average full test competion time
         prs[prid]['enableStackTrace'] = True
+        prs[prid]['excludeFromTest'] = False
         
         testDir = 'smoketest-'+str(prid)
         # mkdir smoketest-<PRID>
@@ -785,14 +789,6 @@ def GetOpenPulls(knownPullRequests):
                 myPrint("Remove: " + testDir + " from knownPullRequests[]")
                 knownPullRequests.remove(testDir)
                 
-#            key = str(prid)
-#            if key in threads:
-#                if threads[key]['thread'].is_alive():
-#                    knownPullRequests.remove(testDir)
-#                else:
-#                    print("--- %s is finished. Remove"  % (key))
-#                    del threads[key]
-                    
         except:
             print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
             pass
@@ -846,7 +842,11 @@ def GetOpenPulls(knownPullRequests):
             # Force to rebuild and retest
             isBuilt = False
             
-        if (prs[prid]['draft'] == False) and ((sha != newSha) or (baseBranch != newBaseBranch) or (not isBuilt)):
+        isNotDraft = prs[prid]['draft'] == False
+        isChangedOrNew = (sha != newSha) or (baseBranch != newBaseBranch) or (not isBuilt)
+        isNotExcluded = prs[prid]['excludeFromTest'] == False
+        
+        if isNotDraft and isChangedOrNew and isNotExcluded:
             # New commit occurred or it didn't build yet
             prs[prid]['reason']="Did not build yet"
             if sha != newSha:
@@ -934,6 +934,8 @@ def GetOpenPulls(knownPullRequests):
                 elif changedFile.startswith('esp/src/'):
                     # Buiild ECLWatch in and only if something changed in its source
                     prs[prid]['buildEclWatch'] = True
+                elif changedFile.startswith('helm') or changedFile.startswith('Dockefiles'):
+                    prs[prid]['excludeFromTest'] = True
                     
                 changedFilesFile.write( changedFile+'\n' )
             changedFilesFile.close()
@@ -1031,13 +1033,20 @@ def GetOpenPulls(knownPullRequests):
                 # buildSummaryFile.close()
                 # print("In PR-"+str(prid)+", label: "+prs[prid]['label']+" only documentation changed! Don't sheduled to testing ")
 
-            prs[prid]['inQueue'] = True
-            buildPr += 1
-            #print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+" scheduled to testing (reason:'"+prs[prid]['reason']+"', is DOCS changed:"+str(prs[prid]['isDocsChanged'])+")")
-            print("Build PR-%s, label: %s scheduled to testing (reason:'%s', is DOCS changed: %s, is ECLWatch build: %s)" % (str(prid), prs[prid]['label'], prs[prid]['reason'], str(prs[prid]['isDocsChanged']), str(prs[prid]['buildEclWatch']) ) )
+            if prs[prid]['excludeFromTest']:
+                print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' is excluded from test (helm or Dockerfile related), skip it!')
+                skippedPRs += 1
+            else:
+                prs[prid]['inQueue'] = True
+                buildPr += 1
+                #print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+" scheduled to testing (reason:'"+prs[prid]['reason']+"', is DOCS changed:"+str(prs[prid]['isDocsChanged'])+")")
+                print("Build PR-%s, label: %s scheduled to testing (reason:'%s', is DOCS changed: %s, is ECLWatch build: %s)" % (str(prid), prs[prid]['label'], prs[prid]['reason'], str(prs[prid]['isDocsChanged']), str(prs[prid]['buildEclWatch']) ) )
             pass
             
             
+        elif prs[prid]['excludeFromTest']:
+            print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' is excluded from test, skip it!')
+            skippedPRs += 1
         else:
             if pr['draft'] == False:
                 print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' already tested!')
@@ -2675,6 +2684,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
 #                    cmd += " -buildEclWatch=" + str(prs[prid]['buildEclWatch'])
 #                    cmd += " -keepFiles=" + str(keepFiles)
 #                    cmd += " -enableStackTrace=" + str(prs[prid]['enableStackTrace'])
+                    cmd += " -appId='" + appId + "'"
                     
                     resultFile.write("\t" + cmd + "\n")
                  
@@ -3395,14 +3405,22 @@ if __name__ == '__main__':
     # 
     
     print("[%s] - Wait for all (%d) tasks finish..." % (threading.current_thread().name,  len(threads)))
-    for key in sorted(threads):
-        print('Wait for task %s to finish' % (threads[key]['thread'].name))
-        while threads[key]['thread'].is_alive():
+    stillActive = True
+    while stillActive:
+        print("Check at " + time.strftime("%Y.%m.%d %H:%M:%S"))
+        stillActive = False
+        for key in sorted(threads):
+            if threads[key]['thread'].is_alive():
+                elaps = time.time()-threads[key]['startTimestamp']
+                print("--- PR-%s (%s) is scheduled and active. (started at: %s, elaps: %6d sec, %4d min))"  % (key, threads[key]['commitId'], threads[key]['startTime'], elaps,  elaps / 60 ) ) 
+                stillActive = True
+            else:
+                print("--- PR-%s (%s) is finished" % (key,  threads[key]['commitId']))    
+#        print("---------------------------------------------")
+        
+        if stillActive:
             time.sleep(120)
-            elaps = time.time()-threads[key]['startTimestamp']
-            print("--- PR-%s (%s) is scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['commitId'], threads[key]['startTime'], elaps,  elaps / 60 ) ) 
-        print("%s finished" % (threads[key]['thread'].name))    
-    
+        
     print("All tasks are done")
         
     if stopSmoketest:

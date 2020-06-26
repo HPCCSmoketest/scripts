@@ -10,7 +10,8 @@ DOCS_BUILD=0
 KEEP_FILES=0
 DRY_RUN=0
 AVERAGE_SESSION_TIME=0.75 # Hours
-GUILLOTINE=90 # minutes ( 2 x AVERAGE_SESSION_TIME)
+GUILLOTINE=$( echo " 2 * $AVERAGE_SESSION_TIME * 60" | bc |  xargs printf "%.0f" ) # minutes ( 2 x AVERAGE_SESSION_TIME)
+printf "AVERAGE_SESSION_TIME = %f hours, GUILLOTINE = %d minutes" "$AVERAGE_SESSION_TIME" "$GUILLOTINE"
  
 while [ $# -gt 0 ]
 do
