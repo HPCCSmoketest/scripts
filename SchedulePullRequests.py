@@ -842,6 +842,35 @@ def GetOpenPulls(knownPullRequests):
             # Force to rebuild and retest
             isBuilt = False
             
+        # generates changed file list:
+        # wget -O<PRID>.diff https://github.com/hpcc-systems/HPCC-Platform/pull/<PRID>.diff
+        #myProc = subprocess.Popen(["wget --timeout=60 -O"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+        # With curl
+        myProc = subprocess.Popen(["curl -L --connect-timeout 60 -o"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+        # The myProc.stdout.read() hanged if there was a large (> 40MB) diff file to get.
+        (result,  err) = myProc.communicate()
+        result = result.rstrip('\n').split('\n')
+        err = err.rstrip('\n').split('\n')
+        
+        # cat <PRID>.diff | grep '[d]iff' | awk '{ print $3 }' | sed 's/a\///'
+        # gives the changes source files with path
+        #prs[pr['number']]['files'] = output of command
+        
+        myProc = subprocess.Popen(["cat "+testDir+"/"+str(prid)+".diff | grep '[d]iff ' | awk '{ print $3 }' | sed 's/a\///'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+        result = myProc.stdout.read().rstrip('\n').split('\n')
+        prs[prid]['files'] = result
+        
+        changedFilesFileName = os.path.join(testDir, 'changedFiles.txt')
+        oldChangedFilesFileName = os.path.join(testDir, 'changedFiles.old')
+        if os.path.exists(oldChangedFilesFileName):
+            os.unlink(oldChangedFilesFileName)
+            
+        if os.path.exists(changedFilesFileName):
+            os.rename(changedFilesFileName,  oldChangedFilesFileName)
+        
+        # Check directory exclusions
+        prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if ('helm/' in x ) or ('dockerfiles/' in x)] )
+        
         isNotDraft = prs[prid]['draft'] == False
         isChangedOrNew = (sha != newSha) or (baseBranch != newBaseBranch) or (not isBuilt)
         isNotExcluded = prs[prid]['excludeFromTest'] == False
@@ -880,31 +909,31 @@ def GetOpenPulls(knownPullRequests):
                 newPRs += 1
             #print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' sheduled to testing ('+prs[prid]['reason']+')')
     
-            # generates changed file list:
-            # wget -O<PRID>.diff https://github.com/hpcc-systems/HPCC-Platform/pull/<PRID>.diff
-            #myProc = subprocess.Popen(["wget --timeout=60 -O"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            # With curl
-            myProc = subprocess.Popen(["curl -L --connect-timeout 60 -o"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            # The myProc.stdout.read() hanged if there was a large (> 40MB) diff file to get.
-            (result,  err) = myProc.communicate()
-            result = result.rstrip('\n').split('\n')
-            err = err.rstrip('\n').split('\n')
-            
-            # cat <PRID>.diff | grep '[d]iff' | awk '{ print $3 }' | sed 's/a\///'
-            # gives the changes source files with path
-            #prs[pr['number']]['files'] = output of command
-            
-            myProc = subprocess.Popen(["cat "+testDir+"/"+str(prid)+".diff | grep '[d]iff ' | awk '{ print $3 }' | sed 's/a\///'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = myProc.stdout.read().rstrip('\n').split('\n')
-            prs[prid]['files'] = result
-            
-            changedFilesFileName = os.path.join(testDir, 'changedFiles.txt')
-            oldChangedFilesFileName = os.path.join(testDir, 'changedFiles.old')
-            if os.path.exists(oldChangedFilesFileName):
-                os.unlink(oldChangedFilesFileName)
-                
-            if os.path.exists(changedFilesFileName):
-                os.rename(changedFilesFileName,  oldChangedFilesFileName)
+#            # generates changed file list:
+#            # wget -O<PRID>.diff https://github.com/hpcc-systems/HPCC-Platform/pull/<PRID>.diff
+#            #myProc = subprocess.Popen(["wget --timeout=60 -O"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+#            # With curl
+#            myProc = subprocess.Popen(["curl -L --connect-timeout 60 -o"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+#            # The myProc.stdout.read() hanged if there was a large (> 40MB) diff file to get.
+#            (result,  err) = myProc.communicate()
+#            result = result.rstrip('\n').split('\n')
+#            err = err.rstrip('\n').split('\n')
+#            
+#            # cat <PRID>.diff | grep '[d]iff' | awk '{ print $3 }' | sed 's/a\///'
+#            # gives the changes source files with path
+#            #prs[pr['number']]['files'] = output of command
+#            
+#            myProc = subprocess.Popen(["cat "+testDir+"/"+str(prid)+".diff | grep '[d]iff ' | awk '{ print $3 }' | sed 's/a\///'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+#            result = myProc.stdout.read().rstrip('\n').split('\n')
+#            prs[prid]['files'] = result
+#            
+#            changedFilesFileName = os.path.join(testDir, 'changedFiles.txt')
+#            oldChangedFilesFileName = os.path.join(testDir, 'changedFiles.old')
+#            if os.path.exists(oldChangedFilesFileName):
+#                os.unlink(oldChangedFilesFileName)
+#                
+#            if os.path.exists(changedFilesFileName):
+#                os.rename(changedFilesFileName,  oldChangedFilesFileName)
                 
             changedFilesFile = open(changedFilesFileName,  "wb")
             for changedFile in  prs[prid]['files']:
