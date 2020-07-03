@@ -873,7 +873,9 @@ def GetOpenPulls(knownPullRequests):
                 os.rename(changedFilesFileName,  oldChangedFilesFileName)
             
             # Check directory exclusions
-            prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if ('helm/' in x ) or ('dockerfiles/' in x)] )
+            #prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if ('^helm/' in x ) or ('^dockerfiles/' in x) or ('.github/' in x)] )
+            excludePaths = ['helm/', 'dockerfiles/', '.github/' ]
+            prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])] )
         
         isNotExcluded = prs[prid]['excludeFromTest'] == False
         
