@@ -350,7 +350,7 @@ archiveOldLogs()
     fi
     # Move all *.log, *test*.summary, *.diff, *.txt and *.old files into a zip archive.
     # TO-DO check if there any. e.g. for a new PR there is not any file to archive
-    find . -maxdepth 1 -mmin +$age -type f -iname '*.log' -o -iname '*test*.summary' -o -iname '*.diff' -o -iname '*.txt' -o -iname '*.old' | zip -m -u old-logs-${timestamp} -@
+    find . -maxdepth 1 -mmin +$age -type f -iname '*.log' -o -iname '*test*.summary' -o -iname '*.diff' -o -iname '*.txt' -o -iname '*.old' | egrep -v 'result-|RelWith' | zip -m -u old-logs-${timestamp} -@
 
 }
 
