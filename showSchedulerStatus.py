@@ -39,7 +39,8 @@ def update():
 
     currLogFile = "prp-" + time.strftime("%Y-%m-%d") + ".log"
     #print("logfile:%s, " % (currLogFile )),
-    myProc = subprocess.Popen(["tail -n 1000 "+ currLogFile+ " |  grep -zoP 'Start: (?![\s\S]*Start: )[\s\S]*\z' | egrep -v 'Build|Number|No |Add|^$' | egrep '\-{3} PR'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    #myProc = subprocess.Popen(["tail -n 1000 "+ currLogFile+ " |  grep -zoP 'Start: (?![\s\S]*Start: )[\s\S]*\z' | egrep -v 'Build|Number|No |Add|^$' | egrep '\-{3} PR'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    myProc = subprocess.Popen(["./showSchedulerStatus.sh " + currLogFile + "| egrep '\-{3} PR'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
     result = myProc.stdout.read() + myProc.stderr.read()
     result = result.split('\n')
         
