@@ -36,3 +36,8 @@ then
 else
     echo "No file"; 
 fi
+
+
+# Other version:
+# ccd ~/smoketest; SHORT_DATE=2020-07-03; while true; do clear; date "+%y-%m-%d %H:%M:%S" ;[[ -f  prp-$SHORT_DATE.log ]] && time (  last_entry_lines=($(grep -n '^Start: ' prp-$SHORT_DATE.log | tail -n2 | cut -d: -f1 )); echo "last_entry_lines:${last_entry_lines[@]}"; last_pr_line=$(grep -n '\-\-\- PR\-' prp-$SHORT_DATE.log | tail -1 | cut -d: -f1 ); echo "last_pr_line:$last_pr_line"; [[ $last_pr_line -le ${last_entry_line[1]} ]] && last_entry_line=${last_entry_lines[0]} || last_entry_line=${last_entry_lines[1]}; echo "last_entry_line:$last_entry_line" ; cat  prp-$SHORT_DATE.log  | sed -n "${last_entry_line},/*/p" | egrep -v 'Build|Number|No |Add|^\n*$' ; echo "${PIPESTATUS[*]}" ) ||( echo "No file"; tail -n 50 prp-$SHORT_DATE.log ); ls -l  prp-$SHORT_DATE.log; tail -n5 prp-$SHORT_DATE.log; sleep 15; done;
+
