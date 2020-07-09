@@ -2230,6 +2230,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             
             
             print("\tpass : %s" % (testInfo['status']))
+            resultFile.write("\tpass : %s\n" % (testInfo['status']))
             
             # Avoid orphan escape '\' char.
             #while ( msg[maxMsgLen-1] == '\\' ):
