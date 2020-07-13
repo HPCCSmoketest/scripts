@@ -682,7 +682,7 @@ def GetOpenPulls(knownPullRequests):
                 myProc = subprocess.Popen(["curl " + headers + " -opullRequests"+str(page)+".json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls?page="+str(page)],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                 result = myProc.stdout.read() + myProc.stderr.read()
 
-                pulls_data2 = open('pullRequests2.json').read()
+                pulls_data2 = open('pullRequests' + str(page) + '.json').read()
                 pulls_data2 = ',\n'+pulls_data2.lstrip('[').rstrip(']\n')
                 morePages.append(pulls_data2)
             pass
@@ -721,6 +721,13 @@ def GetOpenPulls(knownPullRequests):
     # The result is '"mergeable": true,' or '"mergeable": false,'
     openPRs = len(pulls)
     print("Number of open PRs: %2d" % ( openPRs ))
+    if (openPRs == 0) or ( (openPRs > 0) and ('number' not in pulls[0])):
+        # Possible to get open pulls data failed and there is no PR data (only an error message in pullRequests.json file)
+        # Empty the knownPullRequest list ot avoid the further processing 
+        # they are closed and move them out
+        del knownPullRequests[:]
+        return (prs, buildPr)
+        
     for pr in pulls:
         prid = pr['number']
         prs[prid] = {'user':pr['user']['login'], 'code_base':pr['base']['ref'],  'label':pr['head']['ref'].encode('ascii','replace'),
