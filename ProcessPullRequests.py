@@ -1903,7 +1903,7 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
     else:
         resultFile.write("\ttype(msg) is : " + repr(type(msg)) +"\n")
 
-    msg = msg.replace('[32m','').replace('[33m','').replace('[0m', '\\n').replace('[31m', '\\n').replace('\<','').replace('/>','').replace('\n', '\\n') #.replace('\\xc2\\xae', '\xc2\xae')
+    msg = msg.replace('[32m','').replace('[33m','').replace('[0m', '\\n').replace('[31m', '\\n').replace('\<','').replace('/>','').replace('\n', '\\n').replace('"', '\'') #.replace('\\xc2\\xae', '\xc2\xae')
 
     if type(msg) == type(u' '):
         msg = unicodedata.normalize('NFKD', msg).encode('ascii','ignore').replace('\'','').replace('\\u', '\\\\u')

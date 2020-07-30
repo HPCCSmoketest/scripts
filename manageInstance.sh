@@ -179,8 +179,8 @@ tag=$( aws ec2 create-tags --resources ${instanceId} ${volumeId} \
                   Key=PR,Value=${INSTANCE_NAME} \
                   Key=Commit,Value=${C_ID} \
                   Key=AppID,Value=${APP_ID} \
-                  Key=bu,Value=hpcc-platform \
-                  Key=costcenter,Value=n/a \
+                  Key=bu,Value=research-and-development \
+                  Key=costcenter,Value=hpcc-platform-sandbox \
         2>&1 )
 WriteLog "Tag: ${tag}" "$LOG_FILE"
         
