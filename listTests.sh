@@ -24,7 +24,7 @@ echo "From closed PRs:"
 find OldPrs/PR-*/ -iname 'result*-'"$testDay"'*.log' -type f -printf "\n" -print -exec /usr/bin/bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - " \;
 
 echo "From open PRs:"
-find PR-*/ -iname 'result*-'"$testDay"'*.log' -type f -printf "\n" -print -exec /usr/bin/bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - " \; ; popd
+find PR-*/ -iname 'result*-'"$testDay"'*.log' -type f -printf "\n" -print -exec /usr/bin/bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - " \; ;
 
 popd
 echo "End."
