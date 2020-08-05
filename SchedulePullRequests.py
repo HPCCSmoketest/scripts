@@ -867,7 +867,7 @@ def GetOpenPulls(knownPullRequests):
             # gives the changes source files with path
             #prs[pr['number']]['files'] = output of command
             
-            myProc = subprocess.Popen(["cat "+testDir+"/"+str(prid)+".diff | grep '[d]iff ' | awk '{ print $3 }' | sed 's/a\///'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            myProc = subprocess.Popen(["cat "+testDir+"/"+str(prid)+".diff | grep '^[d]iff ' | awk '{ print $3 }' | sed 's/a\///'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             result = myProc.stdout.read().rstrip('\n').split('\n')
             prs[prid]['files'] = result
             
@@ -881,8 +881,12 @@ def GetOpenPulls(knownPullRequests):
             
             # Check directory exclusions
             #prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if ('^helm/' in x ) or ('^dockerfiles/' in x) or ('.github/' in x)] )
-            excludePaths = ['helm/', 'dockerfiles/', '.github/' ]
-            prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])] )
+            excludePaths = ['helm/', 'dockerfiles/', '.github/', 'testing/helm/', 'MyDockerfile/']
+            #prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])] )
+            t = [True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])]
+            if len(t) == len(prs[prid]['files']):
+                # if the number of files in exludePaths is equal to the number of changed files then skip it.
+                prs[prid]['excludeFromTest'] = True
         
         isNotExcluded = prs[prid]['excludeFromTest'] == False
         
@@ -974,8 +978,8 @@ def GetOpenPulls(knownPullRequests):
                 elif changedFile.startswith('esp/src/'):
                     # Buiild ECLWatch in and only if something changed in its source
                     prs[prid]['buildEclWatch'] = True
-                elif changedFile.startswith('helm') or changedFile.startswith('Dockefiles'):
-                    prs[prid]['excludeFromTest'] = True
+#                elif changedFile.startswith('helm') or changedFile.startswith('Dockefiles'):
+#                    prs[prid]['excludeFromTest'] = True
                     
                 changedFilesFile.write( changedFile+'\n' )
             changedFilesFile.close()
@@ -1085,7 +1089,7 @@ def GetOpenPulls(knownPullRequests):
             
             
         elif prs[prid]['excludeFromTest']:
-            print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' is excluded from test, skip it!')
+            print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' is excluded from test (helm or Dockerfile related), skip it!')
             skippedPRs += 1
         else:
             if pr['draft'] == False:
