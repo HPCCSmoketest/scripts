@@ -59,11 +59,11 @@ gpgcheck = 0
 DATASTAX_ENTRIES
 
 PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools python-pip bc"
-if [ $DOCS_BUILD -eq 1 ]
-then
+#if [ $DOCS_BUILD -eq 1 ]
+#then
     wget http://mirror.centos.org/centos/7/os/x86_64/Packages/fop-1.1-6.el7.noarch.rpm
     PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL fop-1.1"
-fi
+#fi
 
 echo "Packages to install: ${PACKAGES_TO_INSTALL}"
 sudo yum install -y ${PACKAGES_TO_INSTALL}
