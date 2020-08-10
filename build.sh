@@ -195,6 +195,9 @@ do
                     then
                         REGRESSION_TEST=${REGRESSION_TEST}" *py*"
                     fi
+                    excludeInclude=$( egrep -c '\(not included \) and excluded' $SOURCE_ROOT/testing/regress/hpcc/regression/suite.py )
+                    [[ $excludeInclude -eq 1 ]] && GLOBAL_EXCLUSION="$GLOBAL_EXCLUSION -r=python3"
+                    
                     PYTHON_PLUGIN="-DSUPPRESS_PY2EMBED=ON -DINCLUDE_PY2EMBED=OFF"
                     ;;
                     
@@ -441,10 +444,20 @@ then
     res=$?
     if [ $res -ne 0 ]
     then
-        WritePlainLog "Install failed: ${res}" > ../build.summary
-        CheckResult "$logFile"
-        CheckEclWatchBuildResult "$logFile"
-        exit 1
+        if [[ $res -eq 1 ]]
+        then
+            # Uninstall and try to install again
+            UninstallHpcc "$logFile"
+            ${CMD} >> $logFile 2>&1
+            res=$?
+        fi
+        if [ $res -ne 0 ]
+        then
+            WritePlainLog "Install failed: ${res}" > ../build.summary
+            CheckResult "$logFile"
+            CheckEclWatchBuildResult "$logFile"
+            exit 1
+        fi
     fi
 
     INSTALL_TIME=$(( $(date +%s) - $TIME_STAMP ))
