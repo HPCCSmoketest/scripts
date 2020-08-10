@@ -313,7 +313,10 @@ UninstallHpcc()
         WritePlainLog "so, uninstall HPCC..." "$logFile"
         if [ -f /opt/HPCCSystems/sbin/complete-uninstall.sh ]
         then
-            sudo /opt/HPCCSystems/sbin/complete-uninstall.sh 
+            # Check '-p' parameter
+            purge=$( /opt/HPCCSystems/sbin/complete-uninstall.sh -h | while read l; do [[ "${l}" =~ "-p, " ]] && echo "-p"; done )
+            sudo /opt/HPCCSystems/sbin/complete-uninstall.sh $purge 
+
             WritePlainLog "HPCC Uninstall: OK" "$logFile"
             if [ -f "/etc/HPCCSystems/environment.xml" ]
             then
