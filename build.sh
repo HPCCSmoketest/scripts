@@ -438,9 +438,10 @@ then
     WritePlainLog "$CMD" "$logFile"
     TIME_STAMP=$(date +%s)
     ${CMD} >> $logFile 2>&1
-    if [ $? -ne 0 ]
+    res=$?
+    if [ $res -ne 0 ]
     then
-        WritePlainLog "Install failed" > ../build.summary
+        WritePlainLog "Install failed: ${res}" > ../build.summary
         CheckResult "$logFile"
         CheckEclWatchBuildResult "$logFile"
         exit 1
