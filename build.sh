@@ -196,6 +196,8 @@ do
                         REGRESSION_TEST=${REGRESSION_TEST}" *py*"
                     fi
                     excludeInclude=$( egrep -c '\(not included \) and excluded' $SOURCE_ROOT/testing/regress/hpcc/regression/suite.py )
+                    WritePlainLog "excludeInclude: ${excludeInclude} (path: $SOURCE_ROOT/testing/regress/hpcc/regression/suite.py)" "$logFile"
+
                     [[ $excludeInclude -eq 1 ]] && GLOBAL_EXCLUSION="$GLOBAL_EXCLUSION -r=python3"
                     
                     PYTHON_PLUGIN="-DSUPPRESS_PY2EMBED=ON -DINCLUDE_PY2EMBED=OFF"
