@@ -5,7 +5,13 @@ PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
 clear
 
-testDay="20-08-03"
+if [[ -n $1 ]]
+then
+    testDay=$1
+else
+    testDay=$( date "+%y-%m-%d")
+fi
+
 pushd ~/smoketest/ScheduleInfos; 
 rsync -va ../PR-*/scheduler-*.test . ; 
 rsync -va ../OldPrs/PR-*/scheduler-*.test . ; 
@@ -21,10 +27,15 @@ popd
 pushd ~/smoketest; 
 
 echo "From closed PRs:"
+echo "................"
 find OldPrs/PR-*/ -iname 'result*-'"$testDay"'*.log' -type f -printf "\n" -print -exec /usr/bin/bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - " \;
+echo ""
 
 echo "From open PRs:"
+echo ".............."
 find PR-*/ -iname 'result*-'"$testDay"'*.log' -type f -printf "\n" -print -exec /usr/bin/bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - " \; ;
+
+echo "-----------------------------------------"
 
 popd
 echo "End."
