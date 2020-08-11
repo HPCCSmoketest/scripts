@@ -12,18 +12,26 @@ else
     testDay=$( date "+%y-%m-%d")
 fi
 
-pushd ~/smoketest/ScheduleInfos; 
-rsync -va ../PR-*/scheduler-*.test . ; 
-rsync -va ../OldPrs/PR-*/scheduler-*.test . ; 
+echo "Tests on $testDay :"; 
 
-echo "-----------------------------------------"; 
-echo "List of scheduled tests on $testDay :"; 
-echo ""; 
+if [[ -d ~/smoketest/ScheduleInfos ]]
+then
+    pushd ~/smoketest/ScheduleInfos; 
+    rsync -va ../PR-*/scheduler-*.test . ; 
+    rsync -va ../OldPrs/PR-*/scheduler-*.test . ; 
 
-find . -iname 'scheduler-'"$testDay"'*.test' -exec /usr/bin/bash -c "cat '{}' |  egrep -i 'Instance name|Commit Id|Instance Id' | cut -d' ' -f5 | tr -d \' | paste -d, -s - | cut -d',' -f1,2,3 --output ', ' | awk -F \",\" '{ print $3 }' " \; ;
+    echo "-----------------------------------------"; 
+    echo "List of scheduled test:"; 
+    echo ""; 
+
+    find . -iname 'scheduler-'"$testDay"'*.test' -exec /usr/bin/bash -c "cat '{}' |  egrep -i 'Instance name|Commit Id|Instance Id' | cut -d' ' -f5 | tr -d \' | paste -d, -s - | cut -d',' -f1,2,3 --output ', ' | awk -F \",\" '{ print $3 }' " \; ;
+    popd > /dev/null
+    
+fi
+
 echo "-----------------------------------------"
 
-popd
+
 pushd ~/smoketest; 
 
 echo "From closed PRs:"
