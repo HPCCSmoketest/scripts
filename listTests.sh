@@ -14,20 +14,21 @@ fi
 
 echo "Tests on $testDay :"; 
 
-if [[ -d ~/smoketest/ScheduleInfos ]]
-then
-    pushd ~/smoketest/ScheduleInfos; 
-    rsync -va ../PR-*/scheduler-*.test . ; 
-    rsync -va ../OldPrs/PR-*/scheduler-*.test . ; 
-
-    echo "-----------------------------------------"; 
-    echo "List of scheduled test:"; 
-    echo ""; 
-
-    find . -iname 'scheduler-'"$testDay"'*.test' -exec /usr/bin/bash -c "cat '{}' |  egrep -i 'Instance name|Commit Id|Instance Id' | cut -d' ' -f5 | tr -d \' | paste -d, -s - | cut -d',' -f1,2,3 --output ', ' | awk -F \",\" '{ print $3 }' " \; ;
-    popd > /dev/null
-    
-fi
+#if [[ -d ~/smoketest/ScheduleInfos ]]
+#then
+#    pushd ~/smoketest/ScheduleInfos; 
+#    rsync -va ../PR-*/scheduler-*.test . ; 
+#    rsync -va ../OldPrs/PR-*/scheduler-*.test . ; 
+#
+#    echo "-----------------------------------------"; 
+#    echo "List of scheduled test:"; 
+#    echo ""; 
+#
+#    find . -iname 'scheduler-'"$testDay"'*.test' -exec /usr/bin/bash -c "cat '{}' |  egrep -i 'Instance name|Commit Id|Instance Id' | cut -d' ' -f5 | tr -d \' | paste -d, -s - | cut -d',' -f1,2,3 --output ', ' | awk -F \",\" '{ print $3 }' " \; ;
+#    popd > /dev/null
+#    
+#fi
+find OldPrs/PR-*/ PR-*/ -iname 'scheduler*-'"$testDay"'*.test' -exec /usr/bin/bash -c "cat '{}' |  egrep -i 'Instance name|Commit Id|Instance Id' | cut -d' ' -f5 | tr -d \' | paste -d, -s - | cut -d',' -f1,2,3 --output ', ' | awk -F \",\" '{ print $3 }' " \;
 
 echo "-----------------------------------------"
 
