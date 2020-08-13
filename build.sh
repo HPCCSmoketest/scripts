@@ -195,6 +195,8 @@ do
                     then
                         REGRESSION_TEST=${REGRESSION_TEST}" *py*"
                     fi
+                    
+                    WritePlainLog "line in suite: $( egrep '\(not included \) and excluded' $SOURCE_ROOT/testing/regress/hpcc/regression/suite.py )'." "$logFile"
                     excludeInclude=$( egrep -c '\(not included \) and excluded' $SOURCE_ROOT/testing/regress/hpcc/regression/suite.py )
                     WritePlainLog "excludeInclude: ${excludeInclude} (path: $SOURCE_ROOT/testing/regress/hpcc/regression/suite.py)" "$logFile"
 
