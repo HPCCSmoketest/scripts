@@ -34,6 +34,8 @@ cp -f ../checkDiskSpace.sh .
 #
 
 # Archive previous session's logs.
+
+WritePlainLog "Sytem ID: ${SYSTEM_ID}" "$logFile"
 archiveOldLogs "$logFile" "$date"
 
 cleanUpLeftovers "$logFile" 
@@ -53,12 +55,29 @@ MyEcho ()
     WritePlainLog "${param}" "$resultFile"
 }
 
+MyExit ()
+{
+    exitCode=$1
+    CheckResult "$logFile"
+    CheckEclWatchBuildResult "$logFile"
+    WritePlainLog "ReportTimes." "$logFile"
+    ReportTimes "$logFile"
+    
+    exit $exitCode
+    
+}
+
 BUILD_ROOT=build
 if [ ! -d ${BUILD_ROOT} ]
 then
     mkdir ${BUILD_ROOT}
+    # Experimental to use RAMDisk tas build directory
+    #res=$( free; sudo -S sync; echo 3 | sudo tee /proc/sys/vm/drop_caches; free )
+    #WritePlainLog "res:${res}" "$resultFile"
+    #sudo mount -t tmpfs -o noatime,size=6G tmpfs $(pwd)/${BUILD_ROOT}
+    #WritePlainLog " $( mount | egrep '/home/ati/Smoketest' )" "$resultFile"
 fi
-echo "BUILD_ROOT:$BUILD_ROOT"
+WritePlainLog "BUILD_ROOT:$BUILD_ROOT" "$resultFile"
 
 #
 #----------------------------------------------------
@@ -253,6 +272,24 @@ cd $PR_ROOT
 
 cd ${BUILD_ROOT}
 
+if [[ ( "${SYSTEM_ID}" =~ "Ubuntu_16_04" ) ]]
+then
+    if [[ ! -f ${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz ]]
+    then
+        WritePlainLog "There is not '${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz' file." "$logFile"
+        #mkdir -p ${BUILD_ROOT}/downloads/
+        #wget -v  -O ${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz  https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
+        #WritePlainLog "$( ls -l ${BUILD_ROOT}/downloads/*.gz )" "$logFile"
+        
+        MAKE_FILE="../HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake"
+        sed -e 's/TIMEOUT \(.*\)/TIMEOUT 60/g' ${MAKE_FILE} >temp.cmake && sudo mv -f temp.cmake ${MAKE_FILE}
+        WritePlainLog "There is $( egrep 'TIMEOUT' ${MAKE_FILE} )" "$logFile"
+    fi
+else
+    WritePlainLog "This system is not PRP VM." "$logFile"
+fi    
+
+
 WritePlainLog "Create makefiles $(date +%Y-%m-%d_%H-%M-%S)" "$logFile"
 #cmake -G"Eclipse CDT4 - Unix Makefiles" -D CMAKE_BUILD_TYPE=Debug -D CMAKE_ECLIPSE_MAKE_ARGUMENTS=-30 ../HPCC-Platform ln -s ../HPCC-Platform >> $logFile 2>&1
 #cmake  -G"Eclipse CDT4 - Unix Makefiles" -DINCLUDE_PLUGINS=ON -DTEST_PLUGINS=1 -DSUPPRESS_PY3EMBED=ON -DINCLUDE_PY3EMBED=OFF -DMAKE_DOCS=$DOCS_BUILD -DUSE_CPPUNIT=$UNIT_TESTS -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DUSE_LIBXSLT=ON -DXALAN_LIBRARIES= -D MAKE_CASSANDRAEMBED=1 -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D CMAKE_ECLIPSE_MAKE_ARGUMENTS=-30 ../HPCC-Platform ln -s ../HPCC-Platform >> $logFile 2>&1
@@ -260,7 +297,14 @@ WritePlainLog "Create makefiles $(date +%Y-%m-%d_%H-%M-%S)" "$logFile"
 GENERATOR="Eclipse CDT4 - Unix Makefiles"
 CMAKE_CMD=$'cmake -G "'${GENERATOR}$'"'
 CMAKE_CMD+=$' -D CMAKE_BUILD_TYPE='$BUILD_TYPE
-CMAKE_CMD+=$' -D INCLUDE_PLUGINS=ON -D TEST_PLUGINS=1 '${PYTHON_PLUGIN}
+
+if [[ ( "${SYSTEM_ID}" =~ "Ubuntu_16_04" ) ]]
+then
+      # On Ubuntu 16.04 RPR VM I have not proper Python 3.6 so avoid to build plugins and Python stuff
+      CMAKE_CMD+=$' -D INCLUDE_PLUGINS=OFF -D TEST_PLUGINS=OFF -DSUPPRESS_PY3EMBED=ON -DINCLUDE_PY3EMBED=OFF -DSUPPRESS_PY2EMBED=ON -DINCLUDE_PY2EMBED=OFF -D USE_PYTHON3=OFF'
+else
+      CMAKE_CMD+=$' -D INCLUDE_PLUGINS=ON -D TEST_PLUGINS=1 '${PYTHON_PLUGIN}
+fi
 CMAKE_CMD+=$' -D MAKE_DOCS='$DOCS_BUILD
 CMAKE_CMD+=$' -D USE_CPPUNIT='$UNIT_TESTS
 CMAKE_CMD+=$' -D INCLUDE_SPARK='${ENABLE_SPARK}' -DSUPPRESS_SPARK='${SUPPRESS_SPARK}' -DSPARK='${ENABLE_SPARK}
@@ -271,6 +315,7 @@ if [ -f "/usr/local/lib/libssl.so" ]
 then
     CMAKE_CMD+=$' -D OPENSSL_LIBRARIES=/usr/local/lib/libssl.so -D OPENSSL_SSL_LIBRARY=/usr/local/lib/libssl.so'
 fi
+CMAKE_CMD+=$' -DCENTOS_6_BOOST=ON'
 CMAKE_CMD+=$' -D CMAKE_ECLIPSE_MAKE_ARGUMENTS=-30 ../HPCC-Platform'
 WritePlainLog "CMAKE_CMD:'${CMAKE_CMD}'\\n" "$logFile"
 
@@ -289,7 +334,6 @@ then
 else
     WritePlainLog "To remove ${hpccpackage} success" "$logFile"
 fi
-
 
 PREP_TIME=$(( $(date +%s) - $TIME_STAMP ))
 WritePlainLog "Makefiles created ($(date +%Y-%m-%d_%H-%M-%S) $PREP_TIME sec )" "$logFile"
@@ -354,8 +398,13 @@ then
     WritePlainLog "res: $res" "$logFile"
     #cat $logFile
     WritePlainLog "Build failed" > ../build.summary
-    CheckResult "$logFile"
-    exit 1
+    BUILD_TIME=$(( $(date +%s) - $TIME_STAMP ))
+#    CheckResult "$logFile"
+#    
+#    WritePlainLog "ReportTimes." "$logFile"
+#    ReportTimes "$logFile"
+#    exit 1
+    MyExit "-1"
 else
     WritePlainLog "Build: success" "$logFile"
 fi
@@ -419,7 +468,7 @@ PACKAGE_TIME=$(( $(date +%s) - $TIME_STAMP ))
 WritePlainLog "Package end ($(date +%Y-%m-%d_%H-%M-%S)  $PACKAGE_TIME sec )" "$logFile"
 TIME_STAMP=$(date +%s)
 
-WritePlainLog "packageExt: '$PKG_EXT', installCMD: '$INST_CMD'." "$logFile"
+WritePlainLog "packageExt: '$PKG_EXT', installCMD: '$PKG_INST_CMD'." "$logFile"
 
 #hpccpackage=$( grep 'Current release version' ${logFile} | cut -c 31- )".deb"
 hpccpackage=$( grep 'Current release version' ${logFile} | cut -c 31- )${PKG_EXT}
@@ -458,9 +507,10 @@ then
         if [ $res -ne 0 ]
         then
             WritePlainLog "Install failed: ${res}" > ../build.summary
-            CheckResult "$logFile"
-            CheckEclWatchBuildResult "$logFile"
-            exit 1
+#            CheckResult "$logFile"
+#            CheckEclWatchBuildResult "$logFile"
+#            exit 1
+            MyExit "-1"
         fi
     fi
 
@@ -858,11 +908,13 @@ else
     WritePlainLog "Build: failed!" "$logFile"
     echo "Build: failed" > ../build.summary
     
-    CheckResult "$logFile"
-    CheckEclWatchBuildResult "$logFile"
-    ReportTimes "$logFile"
-
-    exit 1
+#    CheckResult "$logFile"
+#    CheckEclWatchBuildResult "$logFile"
+#    WritePlainLog "ReportTimes." "$logFile"
+#    ReportTimes "$logFile"
+#
+#    exit 1
+    MyExit "-1"
 fi
 
 WritePlainLog "ReportTimes." "$logFile"

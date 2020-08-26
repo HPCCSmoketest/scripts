@@ -88,6 +88,23 @@ else
     PKG_REM_CMD="rpm -e --nodeps "
 fi
 
+#
+#----------------------------------------------------
+#
+# Get system info 
+#
+
+SYSTEM_ID=$( cat /etc/*-release | egrep -i "^PRETTY_NAME" | cut -d= -f2 | tr -d '"' )
+if [[ "${SYSTEM_ID}" == "" ]]
+then
+    SYSTEM_ID=$( cat /etc/*-release | head -1 )
+fi
+
+SYSTEM_ID=${SYSTEM_ID// (*)/}
+SYSTEM_ID=${SYSTEM_ID// /_}
+SYSTEM_ID=${SYSTEM_ID//./_}
+
+
 
 
 #
@@ -183,7 +200,7 @@ CheckResult()
 {
     logFile=$1
     #cmd=" egrep '\s[E|e]rror([s]*[\:\s]|\s[0-9]*[^a^o])|ValidationException:|undefined reference|No such file or directory|not found'"
-    cmd=" egrep '\s[E|e]rror([s]*[\:\s]|\s[0-9]*[^a^o])|ValidationException:|undefined reference|No such file or directory|CMake Error'"
+    cmd=" egrep '\s[E|e]rror([s]*[\:\s]|\s[0-9]*[^a^o])|ValidationException:|undefined reference|No such file or directory|CMake Error|Cannot find module'"
     #numberOfError=$( grep '[E|e]rror[\:\s][0-9]*' -c $logFile ) 
     numberOfError=$( eval ${cmd} -c $logFile )
     WritePlainLog "Error(s): ${numberOfError}" "$logFile"
