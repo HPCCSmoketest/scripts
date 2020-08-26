@@ -2636,7 +2636,7 @@ def doTest():
         testRes = collectECLWatchBuildErrors()
     elif testMode == 3:
         #unicodestring = '\xa0'
-        result = u'Build: failed \xc2\xae\n'
+        result = u'Build: failed \n' # '\xc2\xae\n'
         result += "Error(s): 7\n"
         result += u"/mnt/disk1/home/vamosax/smoketest/smoketest-8652/HPCC-Platform/roxie/ccd/ccdfile.cpp:595:27: error: expected initializer before ‘-’ token\n"
         result += u"/mnt/disk1/home/vamosax/smoketest/smoketest-8652/HPCC-Platform/roxie/ccd/ccdfile.cpp:596:13: error: ‘fileSize’ was not declared in this scope\n"
@@ -2653,7 +2653,7 @@ def doTest():
         result += "-- Configuring incomplete, errors occurred!\n"
         """
         
-        result = "Build: failed \xc2\xae\n"
+        result = "Build: failed\n ' # \xc2\xae\n"
         result += "../../Release/libs/libccd.so: undefined reference to `RowFilter::extractFilter(unsigned int)'\n"
         result += "../../Release/libs/libccd.so: undefined reference to `RowFilter::addFilter(IFieldFilter const&)'\n"
         result += "../../Release/libs/libccd.so: undefined reference to `RowFilter::recalcFieldsRequired()'\n"
@@ -2663,7 +2663,7 @@ def doTest():
         result += "../../Release/libs/libccd.so: undefined reference to `RowFilter::matches(RtlRow const&) const'\n"
         result += "Error(s): 7"
         
-        msg= u'Automated Smoketest \n  \xe2\x80\x98 Test \xe2\x80\x99 \n'
+        msg= u'Automated Smoketest \n ' #'  \xe2\x80\x98 Test \xe2\x80\x99 \n'
             
         testRes = processResult(result,  msg, '')
         
