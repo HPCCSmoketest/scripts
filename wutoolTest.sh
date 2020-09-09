@@ -383,5 +383,38 @@ done
 
 rm ./WatchDog.pid
 
+# Check if any core file generated. If yes, create stack trace with gdb
+
+NUM_OF_WUTOOLTEST_CORES=( $(find . -name 'core_wutool*' -type f -exec printf "%s\n" '{}' \; ) )
+
+if [ ${#NUM_OF_WUTOOLTEST_CORES[@]} -ne 0 ]
+then
+    WriteLog "${#NUM_OF_WUTOOLTEST_CORES[@]} wutool test core files found." "$WUTOOLTEST_EXECUTION_LOG_FILE"
+
+    cp ${WUTOOLTEST_BIN} .
+
+    for core in ${NUM_OF_WUTOOLTEST_CORES[@]}
+    do
+        # To enable the core file will be downloadable for any user
+        sudo chmod 0755 $core
+        WriteLog "Generate backtrace for $core." "$WUTOOLTEST_EXECUTION_LOG_FILE"
+        gdb --batch --quiet -ex "set interactive-mode off" -ex "thread apply all bt" -ex "quit" ${WUTOOLTEST_BIN} $core >> "$core.trace" 2>&1
+
+        echo "Backtrace of $core" >> wutoolTests.summary
+        cat "$core.trace" >> wutoolTests.summary
+        echo "" >> wutoolTests.summary
+
+    done
+
+    # Archive core files
+    for c in ${NUM_OF_WUTOOLTEST_CORES[@]}; do echo $c; echo $c.trace; done | zip -m "wutooltest-core-archive-$TEST_DATE" -@ >> "wutooltest-core-archive-$TEST_DATE.log"
+
+    zip -u -m "wutooltest-core-archive-$TEST_DATE" ${WUTOOLTEST_BIN}
+
+else
+    WriteLog "No core file generated." "$WUTOOLTEST_EXECUTION_LOG_FILE"
+fi
+
+
 WriteLog "End." "$WUTOOLTEST_EXECUTION_LOG_FILE"
 

@@ -184,10 +184,11 @@ tag=$( aws ec2 create-tags --resources ${instanceId} ${volumeId} \
         2>&1 )
 WriteLog "Tag: ${tag}" "$LOG_FILE"
         
-WriteLog "Wait ~2 minutes for initialise instance" "$LOG_FILE"
+WriteLog "Wait for a while for initialise instance" "$LOG_FILE"
 sleep 1m
 
-tryCount=8
+tryCount=15
+instanceIsUp=0
  
 while [[ $tryCount -ne 0 ]] 
 do
@@ -196,16 +197,16 @@ do
     retCode=$?
     WriteLog "Return code: $retCode, res: $res" "$LOG_FILE"
 
-    [ $retCode -eq 0 ] && break
+    [ $retCode -eq 0 ] && (instanceIsUp=1; break;)
 
     sleep 20
     tryCount=$(( $tryCount-1 )) 
 
 done
 
-if [[ $tryCount -ne 0 ]] 
+if [[ $instanceIsUp -eq 1 ]] 
 then
-
+    WriteLog "Instance is up and accessible via ssh." "$LOG_FILE"
     WriteLog "Upload token.dat files into smoketest directory" "$LOG_FILE"
     res=$( rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/token.dat centos@${instancePublicIp}:/home/centos/smoketest/ 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
@@ -291,7 +292,7 @@ then
             timeOut=$( echo "$smoketestIsRunning" | egrep 'timed out' | wc -l);
             if [[ $timeOut -eq 0 ]]
             then
-                WriteLog "Sssh error, try again" "$LOG_FILE"
+                WriteLog "Ssh error, try again" "$LOG_FILE"
                 smoketestIsRunning=1
             else
                 WriteLog "Ssh timed out, chek if the instance is still running" "$LOG_FILE"
@@ -359,6 +360,10 @@ then
     
     WriteLog "Remove /home/centos/smoketest/${INSTANCE_NAME}/HPCC-Platform /home/centos/smoketest/${INSTANCE_NAME}/build directory" "$LOG_FILE"
     res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "rm -rf /home/centos/smoketest/${INSTANCE_NAME}/HPCC-Platform /home/centos/smoketest/${INSTANCE_NAME}/build" 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+    
+    WriteLog "Check if there is any core files in /home/centos/smoketest/${INSTANCE_NAME} and make them readable for everyone" "$LOG_FILE"
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "find /home/centos/smoketest/${INSTANCE_NAME}/ -iname 'core*' -type f -print -exec sudo chmod 0755 '{}' \;" 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
     
     WriteLog "Download files from /home/centos/smoketest/${INSTANCE_NAME} directory" "$LOG_FILE"

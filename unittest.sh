@@ -4,7 +4,7 @@ PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
 UNITTEST_LIST_PARAMS="-l"
 UNITTEST_EXEC_PARAMS="-e"
-TIMEOUT=90
+TIMEOUT=180 #90
 #echo "param:'"$1"'
 if [ "$1." != "." ]
 then
@@ -248,7 +248,9 @@ ERRORS=0
 TIMEOUT=0
 summary_log=''
 IFS=$'\n'
-results=($( cat ${UNITTEST_RESULT_FILE} | egrep -i '\<ok|run:|excep|[[:digit:]]+\)\stest|\-\s'  | egrep -v 'Digisign IException thrown' ))
+#results=($( cat ${UNITTEST_RESULT_FILE} | egrep -i '\<ok|run:|excep|[[:digit:]]+\)\stest|\-\s'  | egrep -v 'Digisign IException thrown' ))
+results=("$( cat ${UNITTEST_RESULT_FILE} | egrep -i '\<ok|run:|excep|[[:digit:]]+\)\stest|\-\s|timeout'  | egrep -v 'Digisign IException thrown|iorate|RSA|ConfigMgr' ) ")
+
 for res in ${results[@]}
 #cat ${UNITTEST_RESULT_FILE} | egrep -i '^ok|Run:' | while read res
 do
@@ -360,13 +362,15 @@ then
 
     cp ${UNITTEST_BIN_PATH}/${UNITTEST_BIN} .
 
-    for  core in ${NUM_OF_UNITTEST_CORES[@]}
+    for core in ${NUM_OF_UNITTEST_CORES[@]}
     do
+        # To enable the core file will be downloadable for any user
+        sudo chmod 0755 $core
         WriteLog "Generate backtrace for $core." "$UNITTEST_LOG_FILE"
         gdb --batch --quiet -ex "set interactive-mode off" -ex "thread apply all bt" -ex "quit" ${UNITTEST_BIN_PATH}/${UNITTEST_BIN} $core >> "$core.trace" 2>&1
 
-    echo "Backtrace of $core" >> unittests.summary
-    cat "$core.trace" >> unittests.summary
+        echo "Backtrace of $core" >> unittests.summary
+        cat "$core.trace" >> unittests.summary
         echo "" >> unittests.summary
 
     done
