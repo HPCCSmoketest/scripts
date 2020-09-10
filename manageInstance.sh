@@ -159,6 +159,14 @@ fi
 instanceInfo=$( aws ec2 describe-instances --instance-ids ${instanceId} 2>&1 | egrep -i 'instan|status|public|volume' )
 WriteLog "Instance info: $instanceInfo" "$LOG_FILE"
 
+if [[ $instanceInfo =~ "InvalidInstanceID.NotFound" ]]
+then
+   WriteLog "Instance creation failed, exit" "$LOG_FILE"
+   # Give a chance to re-try.
+   [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary ]] && rm ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
+   MyExit "-1" "Error:${instanceInfo}, exit" "$instance" "${INSTANCE_NAME}" "${C_ID}"
+
+fi
 instancePublicIp=$( echo "$instanceInfo" | egrep 'PublicIpAddress' | tr -d '", ' | cut -d : -f 2 )
 WriteLog "Public IP: ${instancePublicIp}" "$LOG_FILE"
 
@@ -197,7 +205,11 @@ do
     retCode=$?
     WriteLog "Return code: $retCode, res: $res" "$LOG_FILE"
 
-    [ $retCode -eq 0 ] && (instanceIsUp=1; break;)
+    if [[ ${retCode} -eq 0 ]]
+    then 
+        instanceIsUp=1
+        break
+    fi
 
     sleep 20
     tryCount=$(( $tryCount-1 )) 
