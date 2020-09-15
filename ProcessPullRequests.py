@@ -2083,6 +2083,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 
             if (retcode != 0) and ('Merge conflict' not in result) and ('Adding as' not in result):
                 noBuildReason = "Error in git command, should skip build and test."
+                resultFile.write("\tError in git command, should skip build and test.\n")
             else:    
                 # Status
                 print("\tgit status")
@@ -2093,6 +2094,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             
             if ('Unmerged paths:' in result) and ('added by us:' in result):
                 print("\tThere is one or more unmerged path. It can come from the not up-to-date base branch, skip it")
+                resultFile.write("\tThere is one or more unmerged path. It can come from the not up-to-date base branch, skip it\n")
                 result = ""
                 
             
@@ -2350,8 +2352,8 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
         resultFile.write("\tElapsed time:"+str(endTimestamp-startTimestamp)+" sec.\n")
         
         resultFile.close()
-        if not isBuild and os.path.exists(resultFileName):
-            os.unlink(resultFileName)
+#        if not isBuild and os.path.exists(resultFileName):
+#            os.unlink(resultFileName)
         
         os.chdir(smoketestHome)
         

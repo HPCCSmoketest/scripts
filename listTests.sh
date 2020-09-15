@@ -12,6 +12,7 @@ else
     testDay=$( date "+%y-%m-%d")
 fi
 
+[[ ! -d ~/smoketest/ScheduleInfos ]] && mkdir -p ~/smoketest/ScheduleInfos
 
 if [[ -d ~/smoketest/ScheduleInfos ]]
 then
@@ -34,8 +35,23 @@ echo "-----------------------------------------";
 echo "List of scheduled test:"; 
 echo "======================="
 
-res=$( find OldPrs/PR-*/ PR-*/ -iname 'scheduler*-'"$testDay"'*.test' -exec /usr/bin/bash -c "cat '{}' |  egrep -i 'Instance name|Commit Id|Instance Id' | cut -d' ' -f5 | tr -d \' | paste -d, -s - | cut -d',' -f1,2,3 --output ', ' | awk -F \",\" '{ print $3 }' " \; )
-[[ -n "$res" ]] && echo "$res" || echo "None"
+#res=$( find OldPrs/PR-*/ PR-*/ -iname 'scheduler*-'"$testDay"'*.test' -exec bash -c "cat '{}' |  egrep -i 'Instance name|Commit Id|Instance Id|An error' | cut -d' ' -f5 | tr -d \' | paste -d, -s - | cut -d',' -f1,2,3 --output ', ' | awk -F \",\" '{ print $3 }' " \; )
+cnt=0
+find OldPrs/PR-*/ PR-*/ -iname 'scheduler*-'"$testDay"'*.test' -print | while read fn
+do  
+    cnt=$(( $cnt + 1 ))
+    #echo "$fn"
+    #set -x
+    item=$(cat $fn | egrep -i 'Instance name|Commit Id|Instance Id' | cut -d' ' -f5 | tr -d \' | paste -d, -s - | cut -d',' -f1,2,3 --output ', ' )
+    [[ -z "$item" ]] && item=$( cat $fn | egrep -i 'Instancename: |CommitId: |:Instance Id|An error' | cut -d' ' -f4,6 | tr -d \' | sed 's/commitId=//' | paste -d, -s - | cut -d',' -f1,2,3 --output ', ' ) 
+    [[ -z "$item" ]] && item=$( cat $fn | egrep -i 'Schedule |sha ' | cut -d ' ' -f1,2,3,4,5 | tr -d \' | tr -d ':' | tr -s ' \t' | paste -d, -s -  ) 
+
+    echo "$cnt, $item"
+    set +x
+done
+
+#[[ $cnt -eq 0 ]] && echo "None"
+#[[ -n "$res" ]] && echo "$res" || echo "None"
 
 echo "-----------------------------------------"
 echo ""
@@ -45,15 +61,16 @@ echo ""
 echo "From closed PRs:"
 echo "................"
 
-res=$( find OldPrs/PR-*/ -iname 'result-'"$testDay"'*.log' -type f -printf "\n" -print -exec /usr/bin/bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - " \; )
+res=$( find OldPrs/PR-*/ -iname 'result-'"$testDay"'*.log' -type f -printf "\n" -print -exec bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed 's/ : /: /g' | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' " \; )
 [[ -n "$res" ]] && echo "$res" || echo "None"
 
 echo ""
 
 echo "From open PRs:"
 echo ".............."
-res=$( find PR-*/ -iname 'result-'"$testDay"'*.log' -type f -printf "\n" -print -exec /usr/bin/bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - " \; ; )
+res=$( find PR-*/ -iname 'result-'"$testDay"'*.log' -type f -printf "\n" -print -exec bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed 's/ : /: /g' | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' " \; )
 [[ -n "$res" ]] && echo "$res" || echo "None"
+
 
 echo "-----------------------------------------"
 

@@ -2149,6 +2149,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 
             if (retcode != 0) and ('Merge conflict' not in result):
                 noBuildReason = "Error in git command, should skip build and test."
+                resultFile.write("\tError in git command, should skip build and test.\n")
             else:    
                 # Status
                 print("\tgit status")
@@ -2407,8 +2408,8 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
         resultFile.write("\tElapsed time:"+str(endTimestamp-startTimestamp)+" sec.\n")
         
         resultFile.close()
-        if not isBuild and os.path.exists(resultFileName):
-            os.unlink(resultFileName)
+#        if not isBuild and os.path.exists(resultFileName):
+#            os.unlink(resultFileName)
         
         os.chdir(smoketestHome)
         
