@@ -63,11 +63,11 @@ echo "................"
 
 #res=$( find OldPrs/PR-*/ -iname 'result-'"$testDay"'*.log' -type f -printf "\n" -print -exec bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed 's/ : /: /g' | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' " \; )
 #[[ -n "$res" ]] && echo "$res" || echo "None"
-fns=( $( find OldPrs/PR-*/ -iname 'result-'"$testDay"'*.log' -type f  -print0  ) )
+fns=( $( find OldPrs/PR-*/ -iname 'result-'"$testDay"'*.log' -type f  -print  ) )
 for fn in ${fns[@]}
 do
    #echo "$fn"
-    item=$(egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :|In PR-' PR-14108/result-20-09-15-20-34-06.log | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' )
+    item=$(egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :|In PR-' $fn | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' )
     [[ -z "$item" ]] && echo -e "$fn\n\tNONE" || echo "$item"
 done
 [[ ${#fns[@]} -eq 0 ]] && echo "None"
@@ -79,11 +79,11 @@ echo ".............."
 #res=$( find PR-*/ -iname 'result-'"$testDay"'*.log' -type f -printf "\n" -print -exec bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed 's/ : /: /g' | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' " \; )
 #[[ -n "$res" ]] && echo "$res" || echo "None"
 
-fns=( $( find PR-*/ -iname 'result-'"$testDay"'*.log' -type f  -print0  ) )
+fns=( $( find PR-*/ -iname 'result-'"$testDay"'*.log' -type f  -print  ) )
 for fn in ${fns[@]}
 do
-   #echo "$fn"
-    item=$(egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :|In PR-' PR-14108/result-20-09-15-20-34-06.log | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' )
+    #echo "fn: $fn"
+    item=$(egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :|In PR-' $fn | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' )
     [[ -z "$item" ]] && echo -e "$fn\n\tNONE" || echo "$item"
 done
 
