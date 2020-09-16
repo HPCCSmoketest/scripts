@@ -16,7 +16,7 @@ fi
 
 if [[ -d ~/smoketest/ScheduleInfos ]]
 then
-    find OldPrs/PR-*/ PR-*/ -iname 'scheduler-*.test' -o -iname 'result*.log' | zip -u ScheduleInfos/Smoketest-logs.zip -@
+    find OldPrs/PR-*/ PR-*/ -mtime -1 -iname 'scheduler-*.test' -o -iname 'result*.log' | zip -u ScheduleInfos/Smoketest-logs.zip -@
 
 #    pushd ~/smoketest/ScheduleInfos; 
 #    rsync -va ../PR-*/scheduler-*.test ../PR-*/result*.log . ; 
@@ -61,16 +61,33 @@ echo ""
 echo "From closed PRs:"
 echo "................"
 
-res=$( find OldPrs/PR-*/ -iname 'result-'"$testDay"'*.log' -type f -printf "\n" -print -exec bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed 's/ : /: /g' | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' " \; )
-[[ -n "$res" ]] && echo "$res" || echo "None"
-
+#res=$( find OldPrs/PR-*/ -iname 'result-'"$testDay"'*.log' -type f -printf "\n" -print -exec bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed 's/ : /: /g' | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' " \; )
+#[[ -n "$res" ]] && echo "$res" || echo "None"
+fns=( $( find OldPrs/PR-*/ -iname 'result-'"$testDay"'*.log' -type f  -print0  ) )
+for fn in ${fns[@]}
+do
+   #echo "$fn"
+    item=$(egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :|In PR-' PR-14108/result-20-09-15-20-34-06.log | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' )
+    [[ -z "$item" ]] && echo -e "$fn\n\tNONE" || echo "$item"
+done
+[[ ${#fns[@]} -eq 0 ]] && echo "None"
+    
 echo ""
 
 echo "From open PRs:"
 echo ".............."
-res=$( find PR-*/ -iname 'result-'"$testDay"'*.log' -type f -printf "\n" -print -exec bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed 's/ : /: /g' | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' " \; )
-[[ -n "$res" ]] && echo "$res" || echo "None"
+#res=$( find PR-*/ -iname 'result-'"$testDay"'*.log' -type f -printf "\n" -print -exec bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed 's/ : /: /g' | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' " \; )
+#[[ -n "$res" ]] && echo "$res" || echo "None"
 
+fns=( $( find PR-*/ -iname 'result-'"$testDay"'*.log' -type f  -print0  ) )
+for fn in ${fns[@]}
+do
+   #echo "$fn"
+    item=$(egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :|In PR-' PR-14108/result-20-09-15-20-34-06.log | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' )
+    [[ -z "$item" ]] && echo -e "$fn\n\tNONE" || echo "$item"
+done
+
+[[ ${#fns[@]} -eq 0 ]] && echo "None"
 
 echo "-----------------------------------------"
 
