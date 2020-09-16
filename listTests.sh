@@ -66,7 +66,8 @@ echo "................"
 fns=( $( find OldPrs/PR-*/ -iname 'result-'"$testDay"'*.log' -type f  -print  ) )
 for fn in ${fns[@]}
 do
-   #echo "$fn"
+    #echo "$fn"
+    #                                                                                                            remove tabs, multi spaces   put all in one    remove leading spaces                  remove second PR num and label            truncate commit id to 8 chars and reassemble the  record
     item=$(egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :|In PR-' $fn | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' | sed -r 's/(.*) ((sha: \w{8,8})([a-zA-Z0-9]+)), (.*)/\1 \3, \5/' )
     [[ -z "$item" ]] && echo -e "$fn\n\tNONE" || echo "$item"
 done
