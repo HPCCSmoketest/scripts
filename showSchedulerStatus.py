@@ -120,7 +120,7 @@ def update():
                                     myProc3 = subprocess.Popen([" egrep -i -A1 'Suite:' " + logfiles[0] + " | tail -n 2 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                                     result3 = myProc3.stdout.read() + myProc3.stderr.read()
                                     if len(result3) > 0:
-                                        prefix = ["E: ", ", N: "]
+                                        prefix = ["E: ", ", T: "]
                                         index = 0
                                         result3Items = result3.split('\n')
                                         for item in result3Items:
