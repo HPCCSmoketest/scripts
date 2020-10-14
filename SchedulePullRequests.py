@@ -2441,6 +2441,7 @@ def consumerTask(prId, pr, cmd, testInfo, resultFileName):
 #    time.sleep(wait)
     
     # Real
+    retcode='0'
     try:
         myProc = subprocess.Popen([ cmd ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
         (result,  retcode) = formatResult(myProc, resultFile)
@@ -2468,7 +2469,7 @@ def consumerTask(prId, pr, cmd, testInfo, resultFileName):
 #    buildSummaryFile.close()
     
     resultFile.close()
-    print("[%s] finished." % (threading.current_thread().name))
+    print("[%s] finished with retCode: %s." % (threading.current_thread().name), retcode )
     
 def ScheduleOpenPulls(prs,  numOfPrToTest):
     global testPrNo

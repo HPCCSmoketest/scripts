@@ -153,6 +153,8 @@ if [[ -z "$instanceId" ]]
 then
    WriteLog "Instance creation failed, exit" "$LOG_FILE"
    WriteLog "$instance" > ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
+   # Give a chance to re-try.
+   [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary ]] && rm ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
    MyExit "-1" "Instance creation failed, exit" "$instance" "${INSTANCE_NAME}" "${C_ID}"
 fi
 
@@ -209,6 +211,17 @@ do
     then 
         instanceIsUp=1
         break
+    else
+        isTerminated=$( aws ec2 describe-instances --filters "Name=tag:PR,Values=${INSTANCE_NAME}" --query "Reservations[].Instances[].State[].Name" | egrep -c 'terminated|stopped'  )
+        if [[ $isTerminated -ne 0 ]]
+        then
+            WriteLog "Instance is terminated, exit" "$LOG_FILE"
+            if [[ ! -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary ]] 
+            then
+                WriteLog "Instance is terminated, exit." "${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary"
+            fi
+            MyExit "-3" "Instance is terminated, exit." "No further informations" "${INSTANCE_NAME}" "${C_ID}"
+        fi
     fi
 
     sleep 20
