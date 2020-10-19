@@ -30,7 +30,7 @@ then
 #    popd > /dev/null
 fi
 
-echo "Tests on $testDay :"; 
+echo "Tests on $(date -d ${testDay} +%A), $testDay :"; 
 echo "-----------------------------------------"; 
 echo "List of scheduled test:"; 
 echo "======================="
