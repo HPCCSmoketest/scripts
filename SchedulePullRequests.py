@@ -1204,9 +1204,9 @@ def CleanUpClosedPulls(knownPullRequests, smoketestHome):
                     print("\tResult: "+result)
                                
     if newlyClosedPrs == 0:
-        print("\nNo PR closed from last run.")
+        print("\nNo PR closed from last run.\n")
     else:
-        print("\n%s PR(s) are closed and moved to OldPrs directory" % ( str(newlyClosedPrs) ))
+        print("\n%s PR(s) are closed and moved to OldPrs directory.\n" % ( str(newlyClosedPrs) ))
 
 def formatResult(proc, resultFile = None, echo = True):
     (stdout, stderr) = proc.communicate()
