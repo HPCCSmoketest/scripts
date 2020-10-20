@@ -2438,28 +2438,29 @@ def HandleSkippedPulls(prSkipped):
             os.mkdir(testDir)
         
         os.chdir(testDir)
-        ##startTimestamp = time.time()
+        #startTimestamp = time.time()
         isAlreadyCommented = True
         if not os.path.exists('build.summary'):
+            print("build.summary not exists in %d." % (testDir))
             buildSummary = open('build.summary', "w")
             buildSummary.write("Skipped");
             buildSummary.close()
             isAlreadyCommented =  False
         else:
-            # Ensure to report and use the lastes commit id
-            msg = "\tGet the current commit id for PR-%d" % (prid)
-            print(msg)
+            print("build.summary exists.")
             #resultFile.write(msg + "\n")            
                             
             buildSummary = open('build.summary', "r")
             lines = buildSummary.readlines()
             buildSummary.close()
             if "Skipped" in lines:
+                print("Already '%s'." % (lines))
                 # Check the sha.dat
                 shaFile = open('sha.dat',  "rb")
                 sha = shaFile.readline()
                 shaFile.close()
                 if sha != prSkipped[prid]['sha']:
+                    print("Old commit id (%s) and the current (%s) is not match." % (sha, prSkipped[prid]['sha']))
                     # There is a new comit store its id add comment the PR again 
                     outFile = open('sha.dat',  "wb")
                     outFile.write( prSkipped[prid]['sha'])
@@ -3449,6 +3450,8 @@ if __name__ == '__main__':
         if prSkipped:
             HandleSkippedPulls(prSkipped)
             pass
+        else:
+            print("There is not skipped PR")
             
         if prs:
             try:
@@ -3467,7 +3470,9 @@ if __name__ == '__main__':
                 print '-'*60
                 # To ensure we will go back to the Smokatest directory
                 os.chdir(smoketestHome)
-
+        else:
+            print("Tere is not PR to process.")
+            
         endScriptTimestamp = time.time()
         print("End:"+time.asctime())
         ellaps = endScriptTimestamp-startScriptTimestamp
