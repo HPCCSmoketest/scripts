@@ -1130,13 +1130,17 @@ def GetOpenPulls(knownPullRequests):
     else:
         print("Number of PRs to build                 : %2d" % (buildPr))
     
-    queue = {}
+    prQueue = {}
+    prSkipped = {}
     for pr in prs:
         if prs[pr]['inQueue']:
-            queue[pr] = prs[pr]
+            prQueue[pr] = prs[pr]
+            
+        if prs[pr]['excludeFromTest']:
+            prSkipped[pr] = prs[pr]
             
     #return (prs, buildPr)
-    return (queue, buildPr)
+    return (prQueue, buildPr, prSkipped)
 
 def CleanUpClosedPulls(knownPullRequests, smoketestHome):
     # Clear old smoketets/pull request branches?
@@ -2424,6 +2428,66 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
         
     os.chdir(cwd)
     
+def HandleSkippedPulls(prSkipped):
+    curDir =  os.getcwd()
+    sortedPrs = sorted(prSkipped)
+    for prid in sortedPrs:
+        print("Handle skipped PR-%s" % (prid))
+        testDir = prSkipped[prid]['testDir']
+        if not os.path.exists(testDir):
+            os.mkdir(testDir)
+        
+        os.chdir(testDir)
+        ##startTimestamp = time.time()
+        isAlreadyCommented = True
+        if not os.path.exists('build.summary'):
+            buildSummary = open('build.summary', "w")
+            buildSummary.write("Skipped");
+            buildSummary.close()
+            isAlreadyCommented =  False
+        else:
+            # Ensure to report and use the lastes commit id
+            msg = "\tGet the current commit id for PR-%d" % (prid)
+            print(msg)
+            #resultFile.write(msg + "\n")            
+                            
+            buildSummary = open('build.summary', "r")
+            lines = buildSummary.readlines()
+            buildSummary.close()
+            if "Skipped" in lines:
+                # Check the sha.dat
+                shaFile = open('sha.dat',  "rb")
+                sha = shaFile.readline()
+                shaFile.close()
+                if sha != prSkipped[prid]['sha']:
+                    # There is a new comit store its id add comment the PR again 
+                    outFile = open('sha.dat',  "wb")
+                    outFile.write( prSkipped[prid]['sha'])
+                    outFile.close()# store commit crc
+                    isAlreadyCommented =  False
+            else:
+               isAlreadyCommented =  False
+        
+        if  not isAlreadyCommented:
+            msg="Process of PR-%s, label: %s is skipped.\\nThe reason is: It is related to containerised environment only.\\nCommit ID: %s\\nOS: %s" % ( str(prid), prSkipped[prid]['label'], prSkipped[prid]['sha'],  sysId.replace('\n', '\\n'))
+            addCommentCmd = prSkipped[prid]['addComment']['cmd'] +'\'{"body":"'+msg+'"}\' '+prSkipped[prid]['addComment']['url']
+                
+#            resultFile.write("\tAdd comment to pull request\n\tComment Cmd:\n")
+#            resultFile.write("------------------------------------------------------\n")
+#            resultFile.write(addCommentCmd+"\n")
+#            resultFile.write("------------------------------------------------------\n")
+            if addGitComment:
+                print("\tAdd comment to pull request")
+                uploadGitHubComment(addCommentCmd)
+            else:
+                print("\tGitHub commenting disabled")
+        else:
+            print("\tAlready commented as 'Skipped'.")
+    
+        os.chdir(curDir)
+        
+    pass
+    
 def consumerTask(prId, pr, cmd, testInfo, resultFileName):
     resultFile = open(resultFileName,  "a", 0)
     cwd = os.getcwd()
@@ -2473,14 +2537,15 @@ def consumerTask(prId, pr, cmd, testInfo, resultFileName):
     
 def ScheduleOpenPulls(prs,  numOfPrToTest):
     global testPrNo
+    testPrNoId = int(testPrNo)
     prSequnceNumber = 0
     #curDir =  os.getcwd()
     isSelectedPrOpen = False
     sortedPrs = sorted(prs)
     for prid in sortedPrs:
 
-        if (testPrNo != str(0)):
-            if testPrNo != str(prid):
+        if testPrNoId != 0:
+            if testPrNoId != prid:
                 continue
             else:
                 isSelectedPrOpen = True
@@ -2535,7 +2600,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
         isBuild=False
         buildFailed = False
         testFailed = False
-        if not os.path.exists('build.summary') or (testPrNo == str(prid)) or ( addGitComment and not os.path.exists('messageId.dat')):
+        if not os.path.exists('build.summary') or (testPrNoId == prid) or ( addGitComment and not os.path.exists('messageId.dat')):
             
 #            # Ensure to report and use the lastes commit id
 #            msg = "\tGet the current commit id for PR-%d" % (prid)
@@ -2894,11 +2959,11 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
         if testOnlyOnePR:
             print("It was one PR build attempt.")
             break;
-    if (testPrNo != str(0)) and not isSelectedPrOpen:
-        if skipDraftPr and (testPrNo != str(prid)):
-            print("\nThe PR-%s is in draft state and testing a draft PR is disabled." % (testPrNo))
+    if (testPrNoId != 0) or  not isSelectedPrOpen:
+        if skipDraftPr and (testPrNoId != prid):
+            print("\nThe PR-%s is in draft state and testing a draft PR is disabled." % (testPrNoId))
         else:
-            print("\nIt seems the PR-%s is already closed." % (testPrNo))
+            print("\nIt seems the PR-%s is skipped or draft or already closed." % (testPrNoId))
         
     # Until this point all open PR is checked/scheduled
     isNotThere = True
@@ -3369,7 +3434,7 @@ if __name__ == '__main__':
         #smoketestHome = os.getcwd()
         #knownPullRequests = glob.glob("smoketest-*") + glob.glob("PR-*")
         knownPullRequests = glob.glob("PR-*")
-        (prs, numOfPrToTest) = GetOpenPulls(knownPullRequests)
+        (prs, numOfPrToTest, prSkipped) = GetOpenPulls(knownPullRequests)
 
         #print prs
         CleanUpClosedPulls(knownPullRequests,  smoketestHome)
@@ -3380,7 +3445,11 @@ if __name__ == '__main__':
 #            if not threads[key]['thread'].is_alive():
 #                print("--- Finished key:%s, remove"  % (key))
 #                del threads[key]
-#                
+#        
+        if prSkipped:
+            HandleSkippedPulls(prSkipped)
+            pass
+            
         if prs:
             try:
                 # TODO Should check if there is enough time to finish all tests today.
