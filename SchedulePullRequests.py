@@ -2441,7 +2441,7 @@ def HandleSkippedPulls(prSkipped):
         #startTimestamp = time.time()
         isAlreadyCommented = True
         if not os.path.exists('build.summary'):
-            print("build.summary not exists in %d." % (testDir))
+            print("build.summary not exists in %s." % (testDir))
             buildSummary = open('build.summary', "w")
             buildSummary.write("Skipped");
             buildSummary.close()
@@ -2467,7 +2467,7 @@ def HandleSkippedPulls(prSkipped):
                     outFile.close()# store commit crc
                     isAlreadyCommented =  False
             else:
-                print("build.summary exists in %d but it's content not as expected. Correct it." % (testDir))
+                print("build.summary exists in %s but it's content not as expected. Correct it." % (testDir))
                 buildSummary = open('build.summary', "w")
                 buildSummary.write("Skipped");
                 buildSummary.close()
