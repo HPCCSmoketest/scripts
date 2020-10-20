@@ -2467,7 +2467,11 @@ def HandleSkippedPulls(prSkipped):
                     outFile.close()# store commit crc
                     isAlreadyCommented =  False
             else:
-               isAlreadyCommented =  False
+                print("build.summary exists in %d but it's content not as expected. Correct it." % (testDir))
+                buildSummary = open('build.summary', "w")
+                buildSummary.write("Skipped");
+                buildSummary.close()
+                isAlreadyCommented =  False
         
         if  not isAlreadyCommented:
             msg="Process of PR-%s, label: %s is skipped.\\nThe reason is: It is related to containerised environment only.\\nCommit ID: %s\\nOS: %s" % ( str(prid), prSkipped[prid]['label'], prSkipped[prid]['sha'],  sysId.replace('\n', '\\n'))
