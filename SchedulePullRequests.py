@@ -2451,7 +2451,7 @@ def HandleSkippedPulls(prSkipped):
             #resultFile.write(msg + "\n")            
                             
             buildSummary = open('build.summary', "r")
-            lines = buildSummary.readlines()
+            lines = buildSummary.readline()
             buildSummary.close()
             if "Skipped" in lines:
                 print("Already '%s'." % (lines))
