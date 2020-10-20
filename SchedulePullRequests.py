@@ -1204,9 +1204,9 @@ def CleanUpClosedPulls(knownPullRequests, smoketestHome):
                     print("\tResult: "+result)
                                
     if newlyClosedPrs == 0:
-        print("No PR closed from last run.")
+        print("\nNo PR closed from last run.")
     else:
-        print(str(newlyClosedPrs) +" PR(s) are closed and moved to OldPrs directory")
+        print("\n%s PR(s) are closed and moved to OldPrs directory" % ( str(newlyClosedPrs) ))
 
 def formatResult(proc, resultFile = None, echo = True):
     (stdout, stderr) = proc.communicate()
@@ -2486,7 +2486,8 @@ def HandleSkippedPulls(prSkipped):
             print("\tAlready commented as 'Skipped'.")
     
         os.chdir(curDir)
-        
+    
+    print("\n")    
     pass
     
 def consumerTask(prId, pr, cmd, testInfo, resultFileName):
@@ -3451,7 +3452,7 @@ if __name__ == '__main__':
             HandleSkippedPulls(prSkipped)
             pass
         else:
-            print("There is not skipped PR")
+            print("There is not skipped PR\n")
             
         if prs:
             try:
@@ -3471,7 +3472,7 @@ if __name__ == '__main__':
                 # To ensure we will go back to the Smokatest directory
                 os.chdir(smoketestHome)
         else:
-            print("Tere is not PR to process.")
+            print("Tere is not PR to process.\n")
             
         endScriptTimestamp = time.time()
         print("End:"+time.asctime())
