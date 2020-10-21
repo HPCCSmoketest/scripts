@@ -2539,7 +2539,7 @@ def consumerTask(prId, pr, cmd, testInfo, resultFileName):
 #    buildSummaryFile.close()
     
     resultFile.close()
-    print("[%s] finished with retCode: %s." % (threading.current_thread().name), retcode )
+    print("[%s] finished with retCode: %s." % (threading.current_thread().name, retcode ))
     
 def ScheduleOpenPulls(prs,  numOfPrToTest):
     global testPrNo
@@ -2965,7 +2965,9 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
         if testOnlyOnePR:
             print("It was one PR build attempt.")
             break;
-    if (testPrNoId != 0) or  not isSelectedPrOpen:
+            
+    # TODO this must sorted out
+    if (testPrNoId != 0) and not isSelectedPrOpen:
         if skipDraftPr and (testPrNoId != prid):
             print("\nThe PR-%s is in draft state and testing a draft PR is disabled." % (testPrNoId))
         else:
