@@ -2504,13 +2504,6 @@ def consumerTask(prId, pr, cmd, testInfo, resultFileName):
     testInfo['runWutoolTests'] = str(prs[prId]['runWutoolTests'])
     testInfo['buildEclWatch'] = str(prs[prId]['buildEclWatch'])
     
-    # The task
-    # Dumy for teting
-#    wait = random.randint(55,  300)
-#    print("[%s] wait for %d sec to finish " % (threading.current_thread().name, wait))
-#    time.sleep(wait)
-    
-    # Real
     retcode='0'
     try:
         myProc = subprocess.Popen([ cmd ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -2521,9 +2514,6 @@ def consumerTask(prId, pr, cmd, testInfo, resultFileName):
         resultFile.write(msg + '\n')
         pass
         
-#    print("[%s] result :%s." % (threading.current_thread().name, "<" + result + ">" ))
-    
-#    resultFile.write(result)
     # End game
     elapsTime = str(time.time()-testInfo['startTimestamp'])
     testInfo['elapsTime'] = str(elapsTime)
