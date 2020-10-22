@@ -37,7 +37,7 @@ echo "======================="
 
 #res=$( find OldPrs/PR-*/ PR-*/ -iname 'scheduler*-'"$testDay"'*.test' -exec bash -c "cat '{}' |  egrep -i 'Instance name|Commit Id|Instance Id|An error' | cut -d' ' -f5 | tr -d \' | paste -d, -s - | cut -d',' -f1,2,3 --output ', ' | awk -F \",\" '{ print $3 }' " \; )
 cnt=0
-find OldPrs/PR-*/ PR-*/ -iname 'scheduler*-'"$testDay"'*.test' -print | while read fn
+find OldPrs/PR-*/ PR-*/ -iname 'scheduler-'"$testDay"'*.test' -print | while read fn
 do  
     cnt=$(( $cnt + 1 ))
     #echo "$fn"
