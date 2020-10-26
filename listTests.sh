@@ -45,8 +45,9 @@ do
     item=$(cat $fn | egrep -i 'Instance name|Commit Id|Instance Id' | cut -d' ' -f5 | tr -d \' | paste -d, -s - | cut -d',' -f1,2,3 --output ', ' )
     [[ -z "$item" ]] && item=$( cat $fn | egrep -i 'Instancename: |CommitId: |:Instance Id|An error' | cut -d' ' -f4,6 | tr -d \' | sed 's/commitId=//' | paste -d, -s - | cut -d',' -f1,2,3 --output ', ' ) 
     [[ -z "$item" ]] && item=$( cat $fn | egrep -i 'Schedule |sha ' | cut -d ' ' -f1,2,3,4,5 | tr -d \' | tr -d ':' | tr -s ' \t' | paste -d, -s -  ) 
-
-    echo "$cnt, $item"
+    
+    timestamp=$( cat $fn | egrep 'Start:' | tr -d '\t' )
+    echo "$cnt, $item ($timestamp)"
     set +x
 done
 
@@ -69,7 +70,9 @@ do
     #echo "$fn"
     #                                                                                                            remove tabs, multi spaces   put all in one    remove leading spaces                  remove second PR num and label            truncate commit id to 8 chars and reassemble the  record
     item=$(egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :|In PR-' $fn | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' | sed -r 's/(.*) ((sha: \w{8,8})([a-zA-Z0-9]+)), (.*)/\1 \3, \5/' )
-    [[ -z "$item" ]] && echo -e "$fn\n\tNONE" || echo "$item"
+
+    timestamp=$( egrep 'Finished:' $fn | tr -d '\t' | cut -d ' ' -f 1,2,3 | tr -d ',' )
+    [[ -z "$item" ]] && echo -e "$fn\n\tNONE" || echo "$item ($timestamp)"
 done
 [[ ${#fns[@]} -eq 0 ]] && echo "None"
     
@@ -85,7 +88,9 @@ for fn in ${fns[@]}
 do
     #echo "fn: $fn"
     item=$(egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :|In PR-' $fn | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' | sed -r 's/(.*) ((sha: \w{8,8})([a-zA-Z0-9]+)), (.*)/\1 \3, \5/' )
-    [[ -z "$item" ]] && echo -e "$fn\n\tNONE" || echo "$item"
+
+    timestamp=$( egrep 'Finished:' $fn | tr -d '\t' | cut -d ' ' -f 1,2,3 | tr -d ',' )
+    [[ -z "$item" ]] && echo -e "$fn\n\tNONE" || echo "$item ($timestamp)"
 done
 
 [[ ${#fns[@]} -eq 0 ]] && echo "None"

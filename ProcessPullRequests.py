@@ -1221,6 +1221,20 @@ def CatchUpMaster():
 #        result = myProc.stdout.read() + myProc.stderr.read()
 #        #results = result.split('\n')
 #        print("\t"+result)
+
+        # Get the latest Regression Test Engine
+        print("\tGet the latest Regression Test Engine from the master branch")
+        myProc = subprocess.Popen(["git checkout master"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+        formatResult(myProc)
+        
+        if not os.path.exists('../rte'):
+            os.mkdir('../rte')
+        
+        myProc = subprocess.Popen(["cp -v testing/regress/ecl-test* ../rte/"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+        formatResult(myProc)
+        myProc = subprocess.Popen(["cp -v -r testing/regress/hpcc ../rte/hpcc"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+        formatResult(myProc)
+        print("\t\tDone")
             
     except OSError as e:
         print("OS error:" + str(e) + " - " + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )

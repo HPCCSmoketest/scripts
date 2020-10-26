@@ -626,6 +626,7 @@ def GetPullReqCommitId(prid):
     
 def GetOpenPulls(knownPullRequests):
     prs={}
+    prSkipped = {}
     openPRs = 0
     newPRs = 0
     buildPr = 0
@@ -715,7 +716,7 @@ def GetOpenPulls(knownPullRequests):
         # Empty the knownPullRequest list ot avoid the further processing 
         # they are closed and move them out
         del knownPullRequests[:]
-        return (prs, buildPr)
+        return (prs, buildPr, prSkipped)
     except Exception as ex:
         print("Unable to get pulls "+ str(ex))
         print("Result: " + str(result))
@@ -723,7 +724,7 @@ def GetOpenPulls(knownPullRequests):
         # Empty the knownPullRequest list ot avoid the further processing  
         # they are closed and move them out
         del knownPullRequests[:]
-        return (prs, buildPr)
+        return (prs, buildPr, prSkipped)
     finally:
         pass
 
@@ -739,7 +740,7 @@ def GetOpenPulls(knownPullRequests):
         # Empty the knownPullRequest list ot avoid the further processing 
         # they are closed and move them out
         del knownPullRequests[:]
-        return (prs, buildPr)
+        return (prs, buildPr, prSkipped)
         
     for pr in pulls:
         prid = pr['number']
@@ -1131,7 +1132,6 @@ def GetOpenPulls(knownPullRequests):
         print("Number of PRs to build                 : %2d" % (buildPr))
     
     prQueue = {}
-    prSkipped = {}
     for pr in prs:
         if prs[pr]['inQueue']:
             prQueue[pr] = prs[pr]

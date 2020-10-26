@@ -9,10 +9,9 @@ INSTANCE_NAME="PR-12701"
 DOCS_BUILD=0
 KEEP_FILES=0
 DRY_RUN=0
-AVERAGE_SESSION_TIME=0.75 # Hours
-GUILLOTINE=$( echo " 2 * $AVERAGE_SESSION_TIME * 60" | bc |  xargs printf "%.0f" ) # minutes ( 2 x AVERAGE_SESSION_TIME)
-printf "AVERAGE_SESSION_TIME = %f hours, GUILLOTINE = %d minutes" "$AVERAGE_SESSION_TIME" "$GUILLOTINE"
- 
+AVERAGE_SESSION_TIME=0.75 # Hours for m4.4xlarge instance
+AVERAGE_SESSION_TIME=1.2 # Hours for m4.2xlarge instance
+
 while [ $# -gt 0 ]
 do
     param=$1
@@ -41,11 +40,15 @@ do
                 echo "Commit ID: ${COMMIT_ID}"
                 ;;
                 
-                
         dryRun) DRY_RUN=1
                 echo "Dry run."
                 ;;
                 
+        sessionTime*)  AVERAGE_SESSION_TIME=${param//sessionTime=/}
+                ;;
+                
+        *)  echo "Unknown parameter: ${param}."
+                ;;
     esac
     shift
 done
@@ -67,6 +70,9 @@ PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools python-pip
 
 echo "Packages to install: ${PACKAGES_TO_INSTALL}"
 sudo yum install -y ${PACKAGES_TO_INSTALL}
+
+GUILLOTINE=$( echo " 2 * $AVERAGE_SESSION_TIME * 60" | bc |  xargs printf "%.0f" ) # minutes ( 2 x AVERAGE_SESSION_TIME)
+printf "AVERAGE_SESSION_TIME = %f hours, GUILLOTINE = %d minutes\n" "$AVERAGE_SESSION_TIME" "$GUILLOTINE"
 
 [ ! -d smoketest ] && mkdir smoketest
 
@@ -114,7 +120,7 @@ fi
 
 # Before self destruction initiate it would be nice to kill (send Ctrl-C/Ctrl-Break signal to) Regression Test Engine to put some log into the PR
 BREAK_TIME=20 # $(( ${GUILLOTINE} - 10 ))
-BREAK_TIME=$(( ${GUILLOTINE} - 10 ))
+BREAK_TIME=$(( ${GUILLOTINE} * 8 / 10 ))
 ( crontab -l; echo ""; echo "# Send Ctrl - C to Regression Test Engine after ${BREAK_TIME} minutes"; echo $( date -d " + ${BREAK_TIME} minutes" "+%M %H %d %m") " * REGRESSION_TEST_ENGINE_PID=\$( pgrep -f ecl-test ); while [[ -z \"\$REGRESSION_TEST_ENGINE_PID\" ]] ; do date; sleep 10; REGRESSION_TEST_ENGINE_PID=\$( pgrep -f ecl-test ); done; echo \$REGRESSION_TEST_ENGINE_PID; sudo kill -2 \${REGRESSION_TEST_ENGINE_PID}; sleep 10; sudo kill -2 \${REGRESSION_TEST_ENGINE_PID}; " ) | crontab
 
 # Install, prepare and stat Bokeh

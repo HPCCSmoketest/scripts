@@ -9,6 +9,8 @@ PR_ROOT=${pwd}
 SOURCE_ROOT=${PR_ROOT}/HPCC-Platform
 BUILD_TYPE=RelWithDebInfo
 #BUILD_TYPE=Debug
+RTE_DIR=$( dirname $PR_ROOT)/rte
+RESULT_DIR=${PR_ROOT}/HPCCSystems-regression
 TEST_DIR=${SOURCE_ROOT}/testing/regress
 ESP_TEST_DIR=${SOURCE_ROOT}/testing/esp/wudetails
 TARGET_DIR=""
@@ -252,6 +254,14 @@ cd ${PR_ROOT}
 
 #git submodule update --init --recursive
 
+#-------------------------------------------------
+#
+# Set core file generation and be named core_[program].[pid]
+#
+WritePlainLog "Forceing standard core to be generated in same directory" "$logFile"
+res=$(echo 'core_%e.%p' | sudo tee /proc/sys/kernel/core_pattern)
+WritePlainLog "res:${res}" "$logFile"
+WritePlainLog "Current core generation is: $(cat /proc/sys/kernel/core_pattern)" "$logFile"
 #-------------------------------------------------
 #
 # Patch system/jlib/jthread.hpp to build in c++11 
@@ -674,20 +684,25 @@ then
 
             # Patch ecl-test.json to put log inside the smoketest-xxxx directory
             mv ecl-test.json ecl-test_json.bak
-            sed -e 's/~\/HPCCSystems\-regression/\.\.\/\.\.\/\.\.\/HPCCSystems\-regression/'        \
+            RESULT_DIR_ESC=${RESULT_DIR//\//\\\/}  #Replace '/' to '\/'
+            sed sed -e 's/"regressionDir"\w*: "\(.*\)"/"regressionDir" : "'"${RESULT_DIR_ESC}"'"/'   \
+                -e 's/"logDir"\w*: "\(.*\)"/"logDir" : "'"${RESULT_DIR_ESC}"'\/log"/'  \
                 -e 's/"timeout":"\(.*\)"/"timeout":"'"${REGRESSION_TIMEOUT}"'"/' \
                 -e 's/"maxAttemptCount":"\(.*\)"/"maxAttemptCount":"1"/'   ./ecl-test_json.bak > ./ecl-test.json
         
-            WritePlainLog "Regression path in ecl-test.json:\n$(sed -n 's/\(HPCCSystems\-regression\)/\1/p' ./ecl-test.json)" "$logFile"
+            WritePlainLog "Regression path in ecl-test.json:\n$(sed -n 's/\(regressionDir\)/\1/p' ./ecl-test.json)" "$logFile"
+            WritePlainLog "Regression log path             :\n$(sed -n 's/\(logDir\)/\1/p' ./ecl-test.json)" "$logFile"
             WritePlainLog "OPT path in ecl-test.json       :\n$(sed -n 's/\(\/opt\/\)/\1/p' ./ecl-test.json)" "$logFile"
             WritePlainLog "$(ls -ld /var/lib/HPCCSystems/hpcc-data/*)" "$logFile"
             
+            popd
+            WritePlainLog "pushd ${RTE_DIR}" "$logFile"
+            pushd ${RTE_DIR}
             # Setup should run first
-            cmd="./ecl-test setup -t all --loglevel ${LOGLEVEL} --timeout ${SETUP_TIMEOUT} --pq ${PARALLEL_QUERIES} ${ENABLE_STACK_TRACE}"
+            cmd="./ecl-test setup -t all --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${SETUP_TIMEOUT} --pq ${PARALLEL_QUERIES} ${ENABLE_STACK_TRACE}"
             WriteMilestone "Regression setup" "$logFile"
             WritePlainLog "${cmd}" "$logFile"
             
-            #${cmd} 2>&1  | tee -a $logFile
             ${cmd} >> $logFile 2>&1
             
             [[ -f ${PR_ROOT}/setup.summary ]] && rm ${PR_ROOT}/setup.summary
@@ -714,10 +729,10 @@ then
                     if [[ ${REGRESSION_TEST} == "*" ]]
                     then
                         # Run whole Regression Suite
-                        cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
+                        cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
                     else
                         # Query the selected tests or whole suite if '*' in REGRESSION_TEST
-                        cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
+                        cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
                     fi
                 
                     WritePlainLog "cmd: ${cmd}" "$logFile"
@@ -845,8 +860,8 @@ then
             WritePlainLog "componenet:/opt/HPCCSystems/bin/${compname} core: $core" "$logFile"
             res=$( sudo gdb --batch --quiet -ex "set interactive-mode off" -ex "echo \nBacktrace for all threads\n==========================" -ex "thread apply all bt" -ex "echo \n Registers:\n==========================\n" -ex "info reg" -ex "echo \n Disas:\n==========================\n" -ex "disas" -ex "quit" "/opt/HPCCSystems/bin/${compname}" $core | sudo tee $core.trace 2>&1 )
             sudo chmode 0777 $core*
-            WritePlainLog "Trace: $core.trace  generated\n gdb res: ${res}" "$logFile"
-            WritePlainLog "Files: $( sudo ls -l $core* ) " "$logfile"
+            WritePlainLog "Trace: $core.trace  generated" "$logFile"
+            #WritePlainLog "Files: $( sudo ls -l $core* ) " "$logFile"
             #sudo zip ${HPCC_CORE_ARCHIVE} $c >> ${HPCC_CORE_ARCHIVE}.log
         done
 
@@ -861,12 +876,35 @@ then
         res=$( sudo find /var/lib/HPCCSystems/ -iname '*.trace' -type f -print 2>&1 )
         WritePlainLog "res: ${res}" "$logFile"
         
-        sudo find /var/lib/HPCCSystems/ -iname '*.trace' -type f -print -exec sudo cp '{}' $PR_ROOT/. \;
+        sudo find /var/lib/HPCCSystems/ -iname '*.trace' -type f -print -exec sudo cp -v '{}' $PR_ROOT/. \;
 
         sudo find /var/lib/HPCCSystems/ -iname '*.trace' -type f -print | sudo zip ${HPCC_CORE_ARCHIVE} -@ >> ${HPCC_CORE_ARCHIVE}.log
-        
 
         echo 'Done.' >> ${HPCC_CORE_ARCHIVE}.log
+        WritePlainLog "Done." "$logFile"
+        
+        WritePlainLog "Store trace file(s) from ${PR_ROOT} into the related ZAP file " "$logFile"
+        pushd ${PR_ROOT}
+       
+        find . -iname '*.trace' -type f -print | while read trc
+        do 
+            WritePlainLog "Core trace file: $trc" "$logFile"
+
+            wuid=$( cat $trc | egrep 'was generated' | sed -e 's/.*\(W2[0-9].*\)\s.*/\1/')
+            WritePlainLog "wuid:$wuid" "$logFile"
+
+            zap=$(find HPCCSystems-regression/zap/ -iname '*'"$wuid"'*' -type f -print)
+            if [[ -n "$zap" ]]
+            then
+                WritePlainLog "ZAP file: $zap" "$logFile"
+                res=$( zip -v -u $zap $trc 2>&1)
+                WritePlainLog "res: ${res}" "$logFile"
+            else
+                WritePlainLog "ZAP file not found." "$logFile"
+            fi
+        done
+
+        popd
         WritePlainLog "Done." "$logFile"
 
     else
@@ -877,18 +915,6 @@ then
         #echo " " >>${HPCC_CORE_ARCHIVE}.log
     fi
 
-    WritePlainLog "Store trace file(s) from ${TEST_LOG_DIR} into the related ZAP file " "$logFile"
-    pushd ${PR_ROOT}/HPCCSystems-regression/log 
-
-    res=$( find . -iname 'W20*.trace' -type f -print | tr -d './' | tr '-' ' ' | awk {'print $1"-"$2'} | while read myid; do  find ../zap/ -iname 'ZAPReport_'"$myid"'_*.zip' -type f -print  | while read zap; do echo "id:${myid}, zap:$zap"; zip -u $zap $myid*.trace; done ; done; )
-    WritePlainLog "res: ${res}" "$logFile"
-
-    res=$( find . -iname 'W20*.trace' -type f -print | tr -d './' | tr '-' ' ' | awk {'print $1"-"$2"-"$3'} | while read myid; do  find ../zap/ -iname 'ZAPReport_'"$myid"'_*.zip' -type f -print  | while read zap; do echo "id:${myid}, zap:$zap"; zip -u $zap $myid*.trace; done ; done; )
-    WritePlainLog "res: ${res}" "$logFile"
-
-    popd
-    WritePlainLog "Done." "$logFile"
-    
     # Only for debug purpose
     #zip ${HPCC_LOG_ARCHIVE} -r /var/lib/HPCCSystems/myeclagent/temp/* >> ${HPCC_LOG_ARCHIVE}.log 2>&1
 

@@ -117,13 +117,18 @@ done
 
 if [[ -z ${DRY_RUN} ]]
 then
-    INSTANCE_TYPE="m4.4xlarge"      # 0.888 USD per Hour (16 Cores, 64 GB RAM)
+   # (I hope)  Temporarily change instance type from m4.4xlarge to m4.3xlarge, based on the 
+   # instance creation error from 21st of Ocober 2020
+    #INSTANCE_TYPE="m4.4xlarge"      # 0.888 USD per Hour (16 Cores, 64 GB RAM)
+    INSTANCE_TYPE="m4.2xlarge"      # 0.444 USD per Hour (8 Cores, 32 GB RAM)
+    AVERAGE_SESSION_TIME=1.2         # Hours for m4.2xlarge instance
     #INSTANCE_TYPE="m4.10xlarge"    # 2.22 USD per Hour (40 Cores, 163GB RAM)
     #INSTANCE_TYPE="m4.16xlarge"    # 3.552 USD per Hour (64 Cores, 256 GB RAM)
     instanceDiskVolumeSize=20       # GB
 else
     INSTANCE_TYPE="t2.micro"
     instanceDiskVolumeSize=8        # GB    
+    AVERAGE_SESSION_TIME=0.1 # Hours
 fi
 
 
@@ -265,7 +270,7 @@ then
     WriteLog "Res: $res" "$LOG_FILE"
 
     WriteLog "Execute init.sh" "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT} ${COMMIT_ID} ${DRY_RUN}" 2>&1 )
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT} ${COMMIT_ID} ${DRY_RUN} -sessionTime=${AVERAGE_SESSION_TIME}" 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
 
     WriteLog "Check user directory" "$LOG_FILE"
