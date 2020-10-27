@@ -258,7 +258,7 @@ then
 
 
     WriteLog "Upload init.sh" "$LOG_FILE"
-    res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init.sh centos@${instancePublicIp}:/home/centos/ 2>1& )
+    res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init.sh centos@${instancePublicIp}:/home/centos/ 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
 
 #    WriteLog "Set it to executable" "$LOG_FILE"
@@ -310,7 +310,7 @@ then
     sleep ${INIT_WAIT}
     smoketestIsRunning=1
     checkCount=0
-    emergencyLogDownloadThreshold=$( echo " $AVERAGE_SESSION_TIME * 4 / 3 * 60" | bc |  xargs printf "%.0f" ) # 60  # minutes
+    emergencyLogDownloadThreshold=$( echo " 60 * $AVERAGE_SESSION_TIME * 4 / 3" | bc ) # 60  # minutes
     WriteLog "emergencyLogDownloadThreshold: $emergencyLogDownloadThreshold minutes"  "$LOG_FILE"
     
     while [[ $smoketestIsRunning -eq 1 ]]

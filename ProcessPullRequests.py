@@ -921,7 +921,7 @@ def GetOpenPulls(knownPullRequests):
                     prs[prid]['sourcefiles'].append(changedFile)
                 elif '.gitmodules' == changedFile:
                     prs[prid]['newSubmodule'] = True
-                elif changedFile.startswith('esp/src/'):
+                elif changedFile.startswith('esp/src/') or changedFile.startswith('esp/files/'):
                     # Build ECLWatch if and only if something changed in its source
                     prs[prid]['buildEclWatch'] = True
                     
