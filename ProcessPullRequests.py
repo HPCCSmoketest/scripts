@@ -1750,7 +1750,8 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                 # with list of errors (if any)
                 (testRes,  isCoreFlesReported) = CollectResults('HPCCSystems-regression/log', testfiles, prid)
                 if not runFullRegression:
-                    tempMsg = '\n'.join(testRes)
+                    #tempMsg = '\n'.join(testRes)
+                    tempMsg = testRes
                 else:
                     tempMsg = testRes
             else:
