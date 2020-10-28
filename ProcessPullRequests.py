@@ -2024,7 +2024,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             testPrNo  = '0'
             isBuild = True
             
-            msg="Process of PR-%s, label: %s starts now.\\nThe reason of this test is: %s.\\nCommit ID: %s\\nEstimated completion time is ~%.1f hour(s)\\n%s" % ( str(prid), prs[prid]['label'], prs[prid]['reason'], prs[prid]['sha'], prs[prid]['sessionTime'],  sysId.replace('\n', '\\n'))
+            msg="Process of PR-%s, label: %s starts now.\\nThe reason of this test is: %s.\\nCommit ID: %s\\nEstimated completion time is ~%.2f hour(s)\\n%s" % ( str(prid), prs[prid]['label'], prs[prid]['reason'], prs[prid]['sha'], prs[prid]['sessionTime'],  sysId.replace('\n', '\\n'))
             addCommentCmd = prs[prid]['addComment']['cmd'] +'\'{"body":"'+msg+'"}\' '+prs[prid]['addComment']['url']
             
             print("\tAdd comment to pull request")
