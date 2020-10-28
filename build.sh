@@ -9,7 +9,8 @@ PR_ROOT=${pwd}
 SOURCE_ROOT=${PR_ROOT}/HPCC-Platform
 BUILD_TYPE=RelWithDebInfo
 #BUILD_TYPE=Debug
-RTE_DIR=$( dirname $PR_ROOT)/rte
+COMMON_RTE_DIR=$( dirname $PR_ROOT)/rte
+RTE_DIR=$PR_ROOT/rte
 RESULT_DIR=${PR_ROOT}/HPCCSystems-regression
 TEST_DIR=${SOURCE_ROOT}/testing/regress
 ESP_TEST_DIR=${SOURCE_ROOT}/testing/esp/wudetails
@@ -396,11 +397,15 @@ BUILD_SUCCESS=true
 #make -j 16 -d package >> $logFile 2>&1
 CMD="make -j ${NUMBER_OF_BUILD_THREADS}"
 
+#HAVE_PKG=$( find $PR_ROOT/ -maxdepth 1 -iname '*'"$PKG_EXT" -type f -print | wc -l)
 
 WritePlainLog "cmd: ${CMD}  ($(date +%Y-%m-%d_%H-%M-%S))" "$logFile"
 TIME_STAMP=$(date +%s)
 #${CMD} 2>&1 | tee -a $logFile
-${CMD} >> $logFile 2>&1
+if [[ $HAVE_PKG -eq 0 ]]
+then
+    ${CMD} >> $logFile 2>&1
+fi
  
 
 if [ $? -ne 0 ]
@@ -676,8 +681,23 @@ then
         
         if [ -n "$REGRESSION_TEST" ]
         then
-            WritePlainLog "pushd ${TEST_DIR}" "$logFile"
-            pushd ${TEST_DIR}
+            #WritePlainLog "pushd ${TEST_DIR}" "$logFile"
+            #pushd ${TEST_DIR}
+            
+            # Clean -up rte dir if exists
+            [[ -d $RTE_DIR ]] && rm -rf $RTE_DIR
+            
+            # If we haven't  local RTE dir?
+            if [[ ! -d $RTE_DIR ]]
+            then 
+                mkdir -p $RTE_DIR
+                res=$( cp -rv $COMMON_RTE_DIR/* $RTE_DIR/ 2>&1)
+                WritePlainLog "res: ${res}" "$logFile"
+            fi
+            
+            # We should update the config in RTE dir
+            WritePlainLog "pushd ${RTE_DIR}" "$logFile"
+            pushd ${RTE_DIR}
             #pwd2=$(PR_ROOT )
             #echo "pwd:${pwd2}"
             #echo "pwd:${pwd2}" >> $logFile 2>&1
@@ -695,11 +715,12 @@ then
             WritePlainLog "OPT path in ecl-test.json       :\n$(sed -n 's/\(\/opt\/\)/\1/p' ./ecl-test.json)" "$logFile"
             WritePlainLog "$(ls -ld /var/lib/HPCCSystems/hpcc-data/*)" "$logFile"
             
-            popd
-            WritePlainLog "pushd ${RTE_DIR}" "$logFile"
-            pushd ${RTE_DIR}
+            #popd
+            #WritePlainLog "pushd ${RTE_DIR}" "$logFile"
+            #pushd ${RTE_DIR}
             # Setup should run first
-            cmd="./ecl-test setup -t all --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${SETUP_TIMEOUT} --pq ${PARALLEL_QUERIES} ${ENABLE_STACK_TRACE}"
+            #cmd="./ecl-test setup -t all --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${SETUP_TIMEOUT} --pq ${PARALLEL_QUERIES} ${ENABLE_STACK_TRACE}"
+            cmd="./ecl-test setup -t all --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${SETUP_TIMEOUT} --pq ${PARALLEL_QUERIES} ${ENABLE_STACK_TRACE}"
             WriteMilestone "Regression setup" "$logFile"
             WritePlainLog "${cmd}" "$logFile"
             
@@ -729,10 +750,12 @@ then
                     if [[ ${REGRESSION_TEST} == "*" ]]
                     then
                         # Run whole Regression Suite
-                        cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
+                        #cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
+                        cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
                     else
                         # Query the selected tests or whole suite if '*' in REGRESSION_TEST
-                        cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
+                        #cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
+                        cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
                     fi
                 
                     WritePlainLog "cmd: ${cmd}" "$logFile"
