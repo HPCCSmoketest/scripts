@@ -303,7 +303,7 @@ WritePlainLog()
     IFS=$'\n'
     for i in $1
     do
-        echo "$i"
+        echo -e "$i"
         if [ "$2." == "." ]
         then
             TIMESTAMP=$( date "+%Y-%m-%d %H:%M:%S")
@@ -313,7 +313,7 @@ WritePlainLog()
             i="$( echo $i | tr -s ' ' )"
             # Replace '\n' with a new line
             i=${i//\\n/$'\n'}
-            echo "$i" >> $2
+            echo -e "$i" >> $2
         fi
     done
 )

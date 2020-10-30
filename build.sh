@@ -82,6 +82,12 @@ then
 fi
 WritePlainLog "BUILD_ROOT:$BUILD_ROOT" "$resultFile"
 
+HAVE_PKG=$( find $PR_ROOT/ -maxdepth 1 -iname '*'"$PKG_EXT" -type f -print | wc -l)
+#CAN NOT BE USED in real Smoketest envireonment! Set it and export into the environment
+#SKIP_BUILD=1
+[[ -z $SKIP_BUILD ]] && SKIP_BUILD=0
+WritePlainLog "HAVE_PKG: $HAVE_PKG\nSKIP_BUILD:$SKIP_BUILD" "$logFile"
+
 #
 #----------------------------------------------------
 #
@@ -330,7 +336,12 @@ CMAKE_CMD+=$' -DCENTOS_6_BOOST=ON'
 CMAKE_CMD+=$' -D CMAKE_ECLIPSE_MAKE_ARGUMENTS=-30 ../HPCC-Platform'
 WritePlainLog "CMAKE_CMD:'${CMAKE_CMD}'\\n" "$logFile"
 
-eval ${CMAKE_CMD} >> $logFile 2>&1
+if [[ ($HAVE_PKG -eq 0) || ($SKIP_BUILD = 0) ]]
+then
+    eval ${CMAKE_CMD} >> $logFile 2>&1
+else
+    WritePlainLog "We have and use install package so keep makefile generation." "$logFile"
+fi
 
 # -- Current release version is hpccsystems-platform_community-5.1.0-trunk0Debugquantal_amd64
 
@@ -353,6 +364,13 @@ WritePlainLog "Makefiles created ($(date +%Y-%m-%d_%H-%M-%S) $PREP_TIME sec )" "
 # ------------------------------------------------
 # ECLWatch build dependencies and Lint check
 #
+if [[ ($HAVE_PKG -eq 0) || ($SKIP_BUILD = 0) ]]
+then
+    WritePlainLog "Keep ECLWatch build as is." "$logFile"
+else
+    ECLWATCH_BUILD_STRATEGY=SKIP
+    WritePlainLog "Skip ECLWatch build with ECLWATCH_BUILD_STRATEGY = $ECLWATCH_BUILD_STRATEGY." "$logFile"
+fi
 
 if [[ ${NEW_ECLWATCH_BUILD_MODE} -eq 0 ]]
 then
@@ -397,14 +415,15 @@ BUILD_SUCCESS=true
 #make -j 16 -d package >> $logFile 2>&1
 CMD="make -j ${NUMBER_OF_BUILD_THREADS}"
 
-#HAVE_PKG=$( find $PR_ROOT/ -maxdepth 1 -iname '*'"$PKG_EXT" -type f -print | wc -l)
-
-WritePlainLog "cmd: ${CMD}  ($(date +%Y-%m-%d_%H-%M-%S))" "$logFile"
 TIME_STAMP=$(date +%s)
 #${CMD} 2>&1 | tee -a $logFile
-if [[ $HAVE_PKG -eq 0 ]]
+if [[ ($HAVE_PKG -eq 0) || ($SKIP_BUILD = 0) ]]
 then
+    WritePlainLog "cmd: ${CMD}  ($(date +%Y-%m-%d_%H-%M-%S))" "$logFile"
     ${CMD} >> $logFile 2>&1
+else
+    WritePlainLog "We have a package and want to skip build -> not build use existing one" "$logFile"
+    WritePlainLog "!!!! This feature only for testing Smoketest engine and CAN NOT BE USED in real Smoketest envireonment !!!!" "$logFile"
 fi
  
 
@@ -475,9 +494,16 @@ WritePlainLog "Build end ($(date +%Y-%m-%d_%H-%M-%S) $BUILD_TIME sec )" "$logFil
 TIME_STAMP=$(date +%s)
 
 WriteMilestone "Package generation" "$logFile"
-CMD="make -j ${NUMBER_OF_BUILD_THREADS} package"
-WritePlainLog "cmd: ${CMD}" "$logFile"
-${CMD} >> $logFile 2>&1
+WritePlainLog "HAVE_PKG: $HAVE_PKG\nSKIP_BUILD:$SKIP_BUILD" "$logFile"
+if [[ ($HAVE_PKG -eq 0) || ($SKIP_BUILD = 0) ]]
+then
+    CMD="make -j ${NUMBER_OF_BUILD_THREADS} package"
+    WritePlainLog "cmd: ${CMD}" "$logFile"
+    ${CMD} >> $logFile 2>&1
+else
+    WritePlainLog "Skip package generation and use existing one" "$logFile"
+     cp -v ../*${PKG_EXT} .
+fi
 
 PACKAGE_TIME=$(( $(date +%s) - $TIME_STAMP ))
 WritePlainLog "Package end ($(date +%Y-%m-%d_%H-%M-%S)  $PACKAGE_TIME sec )" "$logFile"
@@ -487,7 +513,12 @@ WritePlainLog "packageExt: '$PKG_EXT', installCMD: '$PKG_INST_CMD'." "$logFile"
 
 #hpccpackage=$( grep 'Current release version' ${logFile} | cut -c 31- )".deb"
 hpccpackage=$( grep 'Current release version' ${logFile} | cut -c 31- )${PKG_EXT}
-
+if [[ ! -f $hpccpackage ]]
+then 
+    echo "nincs ( $( pwd))"
+    hpccpackage=$( find . -maxdepth 1 -iname '*'"${PKG_EXT}" -type f -print )
+    echo "hpccpackage:$hpccpackage"
+fi
 WritePlainLog "HPCC package: ${hpccpackage}" "$logFile"
 
 WritePlainLog "Check the build result" "$logFile"

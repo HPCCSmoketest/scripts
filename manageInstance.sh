@@ -122,6 +122,11 @@ then
     #INSTANCE_TYPE="m4.4xlarge"      # 0.888 USD per Hour (16 Cores, 64 GB RAM)
     INSTANCE_TYPE="m4.2xlarge"      # 0.444 USD per Hour (8 Cores, 32 GB RAM)
     AVERAGE_SESSION_TIME=1.2         # Hours for m4.2xlarge instance
+
+    # An experiment from 2020-10-29
+    INSTANCE_TYPE="m5.4xlarge"      # 0.856 USD per Hour (16 Cores, 64 GB RAM)
+    AVERAGE_SESSION_TIME=0.75       # Hours for m5.2xlarge instance
+
     #INSTANCE_TYPE="m4.10xlarge"    # 2.22 USD per Hour (40 Cores, 163GB RAM)
     #INSTANCE_TYPE="m4.16xlarge"    # 3.552 USD per Hour (64 Cores, 256 GB RAM)
     instanceDiskVolumeSize=20       # GB
