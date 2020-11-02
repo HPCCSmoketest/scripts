@@ -64,15 +64,16 @@ echo "................"
 
 #res=$( find OldPrs/PR-*/ -iname 'result-'"$testDay"'*.log' -type f -printf "\n" -print -exec bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed 's/ : /: /g' | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' " \; )
 #[[ -n "$res" ]] && echo "$res" || echo "None"
+cnt=0
 fns=( $( find OldPrs/PR-*/ -iname 'result-'"$testDay"'*.log' -type f  -print  ) )
 for fn in ${fns[@]}
 do
-    #echo "$fn"
+    cnt=$(( $cnt + 1 ))
     #                                                                                                            remove tabs, multi spaces   put all in one    remove leading spaces                  remove second PR num and label            truncate commit id to 8 chars and reassemble the  record
-    item=$(egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :|In PR-' $fn | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' | sed -r 's/(.*) ((sha: \w{8,8})([a-zA-Z0-9]+)), (.*)/\1 \3, \5/' )
+    item=$(egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :|In PR-' $fn | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' -e 's/^[0-9]*\/[0-9]*\.\s//g' | sed -r 's/(.*) ((sha: \w{8,8})([a-zA-Z0-9]+)), (.*)/\1 \3, \5/' )
 
     timestamp=$( egrep 'Finished:' $fn | tr -d '\t' | cut -d ' ' -f 1,2,3 | tr -d ',' )
-    [[ -z "$item" ]] && echo -e "$fn\n\tNONE" || echo "$item ($timestamp)"
+    [[ -z "$item" ]] && echo -e "$fn\n\tNONE" || echo "$cnt, $item ($timestamp)"
 done
 [[ ${#fns[@]} -eq 0 ]] && echo "None"
     
@@ -82,15 +83,16 @@ echo "From open PRs:"
 echo ".............."
 #res=$( find PR-*/ -iname 'result-'"$testDay"'*.log' -type f -printf "\n" -print -exec bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed 's/ : /: /g' | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' " \; )
 #[[ -n "$res" ]] && echo "$res" || echo "None"
-
+cnt=0
 fns=( $( find PR-*/ -iname 'result-'"$testDay"'*.log' -type f  -print  ) )
 for fn in ${fns[@]}
 do
-    #echo "fn: $fn"
-    item=$(egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :|In PR-' $fn | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' | sed -r 's/(.*) ((sha: \w{8,8})([a-zA-Z0-9]+)), (.*)/\1 \3, \5/' )
+    cnt=$(( $cnt + 1 ))
+    
+    item=$(egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :|In PR-' $fn | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' -e 's/^[0-9]*\/[0-9]*\.\s//g' | sed -r 's/(.*) ((sha: \w{8,8})([a-zA-Z0-9]+)), (.*)/\1 \3, \5/' )
 
     timestamp=$( egrep 'Finished:' $fn | tr -d '\t' | cut -d ' ' -f 1,2,3 | tr -d ',' )
-    [[ -z "$item" ]] && echo -e "$fn\n\tNONE" || echo "$item ($timestamp)"
+    [[ -z "$item" ]] && echo -e "$fn\n\tNONE" || echo "$cnt, $item ($timestamp)"
 done
 
 [[ ${#fns[@]} -eq 0 ]] && echo "None"

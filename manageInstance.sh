@@ -189,7 +189,7 @@ tag=$( aws ec2 create-tags --resources ${instanceId} ${volumeId} \
            --tags Key=market,Value=in-house-test \
                   Key=product,Value=hpcc-platform \
                   Key=application,Value=q-and-a \
-                  Key=Name,Value=${INSTANCE_NAME} \
+                  Key=Name,Value=Smoketest-${INSTANCE_NAME} \
                   Key=project,Value=smoketest \
                   Key=service,Value=s3bucket \
                   Key=lifecycle,Value=dev \
