@@ -432,8 +432,8 @@ then
     WriteLog "Wait 10 seconds before terminate" "$LOG_FILE"
     sleep 10
 else
-    WriteLog "Wait 4 minutes before terminate" "$LOG_FILE"
-    sleep 4m
+    WriteLog "Wait 20 seconds before terminate" "$LOG_FILE"
+    sleep 20
 fi
 
 terminate=$( aws ec2 terminate-instances --instance-ids ${instanceId} 2>&1 )
