@@ -705,7 +705,7 @@ def GetOpenPulls(knownPullRequests):
         return (prs, buildPr)
     except Exception as ex:
         print("Unable to get pulls "+ str(ex.reason))
-        print("Result: " + str(result))
+        #print("Result: " + str(result))
         # Something bad happened when try to get open pulls data 
         # Empty the knownPullRequest list ot avoid the further processing  
         # they are closed and move them out
