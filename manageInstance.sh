@@ -69,7 +69,7 @@ ADD_GIT_COMMENT=0
 INSTANCE_NAME="PR-12701"
 DRY_RUN=''  #"-dryRun"
 AVERAGE_SESSION_TIME=0.75 # Hours
-
+TIME_STAMPT=$( date "+%y-%m-%d_%H-%M-%S" )
 APP_ID=$(hostname)
 
 while [ $# -gt 0 ]
@@ -114,6 +114,8 @@ do
     esac
     shift
 done
+
+LOG_FILE="${SMOKETEST_HOME}/${INSTANCE_NAME}/instance-${INSTANCE_NAME}-${C_ID}-${TIME_STAMPT}.info"
 
 if [[ -z ${DRY_RUN} ]]
 then
@@ -433,8 +435,8 @@ then
     WriteLog "Wait 10 seconds before terminate" "$LOG_FILE"
     sleep 10
 else
-    WriteLog "Wait 20 seconds before terminate" "$LOG_FILE"
-    sleep 20
+    WriteLog "Wait 4 minutes before terminate" "$LOG_FILE"
+    sleep 4m
 fi
 
 terminate=$( aws ec2 terminate-instances --instance-ids ${instanceId} 2>&1 )
