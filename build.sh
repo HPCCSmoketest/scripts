@@ -253,8 +253,17 @@ cd ${PR_ROOT}
 
 #-------------------------------------------------
 #
-# Update submodule
-#cd $SOURCE_ROOT
+# Clone OBT 
+
+OBT_DIR="${PR_ROOT}/OBT"
+[ -d $OBT_DIR ] && rm -rf $OBT_DIR
+
+WritePlainLog "Cloning OBT into $OBT_DIR..." "$logFile"
+pushd ${PR_ROOT}
+git clone https://github.com/AttilaVamos/OBT.git >> ${logFile} 2>&1
+popd
+WritePlainLog "Done." "$logFile"
+
 
 #echo "Update Git submodules"
 #echo "Update Git submodules" >> $logFile 2>&1
@@ -807,6 +816,21 @@ then
                     fi
                 fi
             fi
+            # Get tests stat
+            if [[ -f $OBT_DIR/QueryStat2.py ]]
+            then
+                WritePlainLog "Get tests stat..." "$logFile"
+                CMD="$OBT_DIR/QueryStat2.py -p $PR_ROOT/ -d '' -a --timestamp "
+                WritePlainLog "  CMD: '$CMD'" "$logFile"
+                ${CMD} >> ${logFile} 2>&1
+                retCode=$( echo $? )
+                WritePlainLog "  RetCode: $retCode" "$logFile"
+                WritePlainLog "  Files: $( ls -l perfstat* )" "$logFile"
+                WritePlainLog "Done." "$logFile"
+            else
+                WritePlainLog "$OBT_DIR/QueryStat2.py not found. Skip perfromance result collection " "$logFile"
+            fi
+            
             #setupPassed=0
             #WritePlainLog "Setup failed." "$logFile"
             inSuiteErrorLog=$( cat $logFile | sed -n "/\[Error\]/,/Suite destructor./p" )
