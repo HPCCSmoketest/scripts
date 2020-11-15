@@ -71,17 +71,18 @@ DRY_RUN=''  #"-dryRun"
 AVERAGE_SESSION_TIME=0.75 # Hours
 TIME_STAMPT=$( date "+%y-%m-%d_%H-%M-%S" )
 APP_ID=$(hostname)
+BASE_TEST=''
 
 while [ $# -gt 0 ]
 do
     param=$1
-    param=${param//-/}
+    param=${param#-}
     WriteLog "Param: ${param}" "$LOG_FILE"
     case $param in
     
         instance*)  INSTANCE_NAME=${param//instanceName=/}
                 INSTANCE_NAME=${INSTANCE_NAME//\"/}
-                INSTANCE_NAME=${INSTANCE_NAME//PR/PR-}
+                #INSTANCE_NAME=${INSTANCE_NAME//PR/PR-}
                 WriteLog "Instancename: '${INSTANCE_NAME}'" "$LOG_FILE"
                 ;;
                 
@@ -109,6 +110,13 @@ do
                 
         appId) APP_ID=${param}
                 WriteLog "App ID: ${APP_ID}" "$LOG_FILE"
+                ;;
+                
+        baseTest*) BASE_TEST=${param}
+                WriteLog "Base test: ${BASE_TEST}" "$LOG_FILE"
+#                BASE_TAG=${param//baseTest=/}
+#                BASE_TAG=${BASE_TAG//\"/}
+#                WriteLog "Execute base test with tag: ${BASE_TAG}" "$LOG_FILE"
                 ;;
         
     esac
@@ -138,6 +146,11 @@ else
     AVERAGE_SESSION_TIME=0.1 # Hours
 fi
 
+
+if [[ -n "$BASE_TEST" ]]
+then
+    WriteLog "Execute base test with tag: ${INSTANCE_NAME}" "$LOG_FILE"
+fi
 
 SSH_KEYFILE="~/HPCC-Platform-Smoketest.pem"
 SSH_OPTIONS="-oConnectionAttempts=3 -oConnectTimeout=20 -oStrictHostKeyChecking=no"
@@ -225,7 +238,7 @@ do
         instanceIsUp=1
         break
     else
-        isTerminated=$( aws ec2 describe-instances --filters "Name=tag:PR,Values=${INSTANCE_NAME}" --query "Reservations[].Instances[].State[].Name" | egrep -c 'terminated|stopped'  )
+        isTerminated=$( aws ec2 describe-instances --instance-ids ${instanceId} --filters "Name=tag:PR,Values=${INSTANCE_NAME}" --query "Reservations[].Instances[].State[].Name" | egrep -c 'terminated|stopped'  )
         if [[ $isTerminated -ne 0 ]]
         then
             WriteLog "Instance is terminated, exit" "$LOG_FILE"
@@ -262,6 +275,14 @@ then
             res=$( rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/environment.xml centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/ 2>&1)
             WriteLog "Res: $res" "$LOG_FILE"
         fi
+        
+        #To test build.sh  in instance without deploy it via GitHub
+        if [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.new ]]
+        then
+            WriteLog "Upload build.new file into instance ~/smoketest directory" "$LOG_FILE"
+            res=$( rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.new centos@${instancePublicIp}:/home/centos/smoketest/ 2>&1)
+            WriteLog "Res: $res" "$LOG_FILE"
+        fi
     fi
 
 
@@ -278,7 +299,7 @@ then
     WriteLog "Res: $res" "$LOG_FILE"
 
     WriteLog "Execute init.sh" "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT} ${COMMIT_ID} ${DRY_RUN} -sessionTime=${AVERAGE_SESSION_TIME}" 2>&1 )
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT} ${COMMIT_ID} ${DRY_RUN} -sessionTime=${AVERAGE_SESSION_TIME} ${BASE_TEST}" 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
 
     WriteLog "Check user directory" "$LOG_FILE"
@@ -323,7 +344,13 @@ then
     
     while [[ $smoketestIsRunning -eq 1 ]]
     do
-        smoketestIsRunning=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "pgrep smoketest | wc -l"  2>&1 )
+        # Should use BASE_TEST to check smoketest or build.sh
+        if [[ -z "$BASE_TEST" ]]
+        then
+            smoketestIsRunning=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "pgrep smoketest | wc -l"  2>&1 )
+        else
+            smoketestIsRunning=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "pgrep build.sh | wc -l"  2>&1 )
+        fi
         if [[ $? -ne 0 ]]
         then
             # Something is wrong, try to find out what
@@ -334,7 +361,7 @@ then
                 smoketestIsRunning=1
             else
                 WriteLog "Ssh timed out, chek if the instance is still running" "$LOG_FILE"
-                isTerminated=$( aws ec2 describe-instances --filters "Name=tag:PR,Values=${INSTANCE_NAME}" --query "Reservations[].Instances[].State[].Name" | egrep -c 'terminated|stopped'  )
+                isTerminated=$( aws ec2 describe-instances --instance-ids ${instanceId} --filters "Name=tag:PR,Values=${INSTANCE_NAME}" --query "Reservations[].Instances[].State[].Name" | egrep -c 'terminated|stopped'  )
                 if [[ $isTerminated -ne 0 ]]
                 then
                     WriteLog "Instance is terminated, exit" "$LOG_FILE"
@@ -405,7 +432,7 @@ then
     WriteLog "Res: $res" "$LOG_FILE"
     
     WriteLog "Download files from /home/centos/smoketest/${INSTANCE_NAME} directory" "$LOG_FILE"
-    res=$( rsync -va --timeout=60 --exclude=*.rpm --exclude=*.sh --exclude=*.py --exclude=*.txt -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME} ${SMOKETEST_HOME}/ 2>&1 )
+    res=$( rsync -va --timeout=60 --exclude=*.rpm --exclude=*.sh --exclude=*.py --exclude=*.txt --exclude=HPCCSystems-regression --exclude=OBT --exclude=rte -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
     
     WriteLog "Download /home/centos/smoketest/SmoketestInfo.csv file" "$LOG_FILE"
@@ -423,6 +450,10 @@ then
     res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
     
+    WriteLog "Check and download email from Cron..." "$LOG_FILE"
+    res=$(  rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/var/mail/centos ${SMOKETEST_HOME}/${INSTANCE_NAME}/centos-$(date '+%y-%m-%d_%H-%M-%S').mail 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+    
 else
     WriteLog "The try count exhausted before the instance became up and running." "$LOG_FILE"
     WriteLog "The try count exhausted before the instance became up and running." "${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary"
@@ -435,8 +466,11 @@ then
     WriteLog "Wait 10 seconds before terminate" "$LOG_FILE"
     sleep 10
 else
-    WriteLog "Wait 4 minutes before terminate" "$LOG_FILE"
-    sleep 4m
+#    WriteLog "Wait 4 minutes before terminate" "$LOG_FILE"
+#    sleep 4m 
+    
+    WriteLog "Wait 20 seconds before terminate" "$LOG_FILE"
+    sleep 20
 fi
 
 terminate=$( aws ec2 terminate-instances --instance-ids ${instanceId} 2>&1 )
@@ -445,7 +479,7 @@ WriteLog "Terminate: ${terminate}" "$LOG_FILE"
 sleep 10
 
 WriteLog "Instance:" "$LOG_FILE"
-res=$( aws ec2 describe-instances --filters "Name=tag:PR,Values=${INSTANCE_NAME}" "Name=tag:Commit,Values=${C_ID}" | egrep -i 'instan|status|public' 2>&1 )
+res=$( aws ec2 describe-instances --instance-ids ${instanceId} --filters "Name=tag:PR,Values=${INSTANCE_NAME}" "Name=tag:Commit,Values=${C_ID}" | egrep -i 'instan|status|public' 2>&1 )
 WriteLog "Res: $res" "$LOG_FILE"
 
 WriteLog "End." "$LOG_FILE"
