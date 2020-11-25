@@ -125,6 +125,7 @@ ENABLE_SPARK=0
 SUPPRESS_SPARK=1
 MAKE_WSSQL=0
 ENABLE_STACK_TRACE=''
+RTE_CHANGED=0
 
 while [ $# -gt 0 ]
 do
@@ -181,8 +182,16 @@ do
                 
         newEclWatchBuildMode*)
                 NEW_ECLWATCH_BUILD_MODE=${param//newEclWatchBuildMode=True/1}
-                NEW_ECLWATCH_BUILD_MODE=${NEW_ECLWATCH_BUILD_MODE//newEclWatchBuildMode=Falsee/0}
+                NEW_ECLWATCH_BUILD_MODE=${NEW_ECLWATCH_BUILD_MODE//newEclWatchBuildMode=False/0}
                 WritePlainLog "New ECLWatch build mode:${NEW_ECLWATCH_BUILD_MODE}" "$logFile"
+                ;;
+                
+        rteChanged*)
+                RTE_CHANGED=${param//rteChanged=True/1}
+                RTE_CHANGED=${RTE_CHANGED//rteChanged=False/0}
+                WritePlainLog "RTE Changed: ${RTE_CHANGED}" "$logFile"
+                ;;
+            
     esac
     shift
 done
@@ -726,13 +735,28 @@ then
             
             # Clean -up rte dir if exists
             [[ -d $RTE_DIR ]] && rm -rf $RTE_DIR
-            
-            # If we haven't  local RTE dir?
-            if [[ ! -d $RTE_DIR ]]
-            then 
-                mkdir -p $RTE_DIR
-                res=$( cp -rv $COMMON_RTE_DIR/* $RTE_DIR/ 2>&1)
-                WritePlainLog "res: ${res}" "$logFile"
+                
+            if [[ $RTE_CHANGED == 0 ]]
+            then
+                # Get the official version
+                # If we haven't  local RTE dir?
+                if [[ ! -d $RTE_DIR ]]
+                then 
+                    mkdir -p $RTE_DIR
+                    res=$( cp -rv $COMMON_RTE_DIR/* $RTE_DIR/ 2>&1)
+                    WritePlainLog "res: ${res}" "$logFile"
+                fi
+            else
+                # RTE changed (in this PR) get it from local source tree
+                if [[ ! -d $RTE_DIR ]]
+                then 
+                    mkdir -p $RTE_DIR
+                    res=$( cp -v $TEST_DIR/ecl-test* $RTE_DIR/ 2>&1)
+                    WritePlainLog "res: ${res}" "$logFile"
+                    res=$( cp -rv $TEST_DIR/hpcc $RTE_DIR/hpcc 2>&1)
+                    WritePlainLog "res: ${res}" "$logFile"
+                fi
+                
             fi
             
             # We should update the config in RTE dir

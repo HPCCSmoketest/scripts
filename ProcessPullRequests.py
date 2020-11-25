@@ -768,6 +768,7 @@ def GetOpenPulls(knownPullRequests):
         prs[prid]['buildOnly'] = False
         prs[prid]['sessionTime'] = averageSessionTime   # default, average full test competion time
         prs[prid]['enableStackTrace'] = True
+        prs[prid]['rteChanged'] = False
         
         testDir = 'smoketest-'+str(prid)
         # mkdir smoketest-<PRID>
@@ -912,6 +913,7 @@ def GetOpenPulls(knownPullRequests):
                     if changedFile.endswith('.py'):
                         # Something changed in the engine should test it
                         prs[prid]['testfiles'].append('testing/regress/ecl/teststdlibrary.ecl')
+                        prs[prid]['rteChanged'] = True
                 elif changedFile.startswith('ecllibrary/teststd/') or changedFile.startswith('ecllibrary/std/') :
                     if changedFile.endswith('.ecl'):
                         prs[prid]['testfiles'].append('testing/regress/ecl/teststdlibrary.ecl')
@@ -2214,6 +2216,8 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                     cmd += " -keepFiles=" + str(keepFiles)
                     cmd += " -enableStackTrace=" + str(prs[prid]['enableStackTrace'])
                     cmd += " -newEclWatchBuildMode=" + str(prs[prid]['newEclWatchBuildMode'])
+                    if prs[prid]['rteChanged'] == True :
+                        cmd += " -rteChanged=" + str(prs[prid]['rteChanged'])
                     
                     resultFile.write("\t" + cmd + "\n")
                     myProc = subprocess.Popen([ cmd ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
