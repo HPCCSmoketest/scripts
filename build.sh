@@ -772,7 +772,7 @@ then
             sed sed -e 's/"regressionDir"\w*: "\(.*\)"/"regressionDir" : "'"${RESULT_DIR_ESC}"'"/'   \
                 -e 's/"logDir"\w*: "\(.*\)"/"logDir" : "'"${RESULT_DIR_ESC}"'\/log"/'  \
                 -e 's/"timeout":"\(.*\)"/"timeout":"'"${REGRESSION_TIMEOUT}"'"/' \
-                -e 's/"maxAttemptCount":"\(.*\)"/"maxAttemptCount":"1"/'   ./ecl-test_json.bak > ./ecl-test.json
+                -e 's/"maxAttemptCount":"\(.*\)"/"maxAttemptCount":"'"${REGRESSION_MAX_ATTEMPT_COUNT}"'"/'   ./ecl-test_json.bak > ./ecl-test.json
         
             WritePlainLog "Regression path in ecl-test.json:\n$(sed -n 's/\(regressionDir\)/\1/p' ./ecl-test.json)" "$logFile"
             WritePlainLog "Regression log path             :\n$(sed -n 's/\(logDir\)/\1/p' ./ecl-test.json)" "$logFile"
@@ -815,11 +815,11 @@ then
                     then
                         # Run whole Regression Suite
                         #cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
-                        cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
+                        cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
                     else
                         # Query the selected tests or whole suite if '*' in REGRESSION_TEST
                         #cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
-                        cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
+                        cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
                     fi
                 
                     WritePlainLog "cmd: ${cmd}" "$logFile"

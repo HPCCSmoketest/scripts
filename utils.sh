@@ -50,6 +50,8 @@ fi
 # the current environment like number of CPU/core, BOGO mips, mem core ration, disk speed, etc
 SETUP_TIMEOUT=120
 REGRESSION_TIMEOUT=720
+REGRESSION_MAX_ATTEMPT_COUNT=2
+THOR_CONNECT_TIMEOUT="-fthorConnectTimeout=36000"
 if [[ ${BOGO_MIPS_OF_CPUS} -lt 4500 ]] 
 then
     SETUP_TIMEOUT=720
@@ -61,7 +63,8 @@ TARGET=all
 
 GLOBAL_EXCLUSION="-e 3rdparty"
 GLOBAL_EXCLUSION="-e=embedded,3rdparty"
-GLOBAL_EXCLUSION="--ef pipefail.ecl,layouttrans_disabled.ecl -e=embedded,3rdparty"
+#GLOBAL_EXCLUSION="--ef pipefail.ecl,layouttrans_disabled.ecl -e=embedded,3rdparty"
+GLOBAL_EXCLUSION="--ef pipefail.ecl -e=embedded,3rdparty"
 PYTHON_PLUGIN=''
 
 #
