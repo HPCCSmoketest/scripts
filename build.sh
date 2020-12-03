@@ -27,10 +27,10 @@ HPCC_CORE_ARCHIVE=$PR_ROOT/HPCCSystems-cores-$date
 #----------------------------------------------------
 #
 
-cp -f ../utils.sh .
+cp -vf ../utils.sh .
 . ./utils.sh
 
-cp -f ../checkDiskSpace.sh .
+cp -vf ../checkDiskSpace.sh .
 
 #
 #----------------------------------------------------
@@ -666,10 +666,10 @@ then
         pushd ${PR_ROOT}
         # Always copy the timestampLogger.sh and WatchDog.py to ensure using the latest one
         WritePlainLog "Copy latest version of timestampLogger.sh" "$logFile"
-        cp -f ../timestampLogger.sh .
+        cp -vf ../timestampLogger.sh .
         
         WritePlainLog "Copy latest version of WatchDog.py" "$logFile"
-        cp -f ../WatchDog.py .
+        cp -vf ../WatchDog.py .
         
         WritePlainLog "cwd: $( popd )" "$logFile"
         
@@ -699,7 +699,7 @@ then
             WritePlainLog "pushd ${PR_ROOT}" "$logFile"
             pushd ${PR_ROOT}
             
-            cp -f ../unittest.sh .
+            cp -vf ../unittest.sh .
 
             cmd="./unittest.sh"
             WriteMilestone "Unittests" "$logFile"
@@ -716,7 +716,7 @@ then
         then
             WritePlainLog "pushd ${PR_ROOT}" "$logFile"
             pushd ${PR_ROOT}
-            cp -f ../wutoolTest.sh .
+            cp -vf ../wutoolTest.sh .
             
             cmd="./wutoolTest.sh"
             WriteMilestone "WUTooltest" "$logFile"
