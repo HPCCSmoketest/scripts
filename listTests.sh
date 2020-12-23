@@ -42,12 +42,18 @@ do
     cnt=$(( $cnt + 1 ))
     #echo "$fn"
     #set -x
-    item=$(cat $fn | egrep -i 'Instance name|Commit Id|Instance Id' | cut -d' ' -f5 | tr -d \' | paste -d, -s - | cut -d',' -f1,2,3 --output ', ' )
+    item=$(cat $fn | egrep -i 'Instance name|Commit Id|Instance Id' | cut -d' ' -f5 | tr -d \' | paste -d, -s - | cut -d',' -f1,2,3 --output ',' )
     [[ -z "$item" ]] && item=$( cat $fn | egrep -i 'Instancename: |CommitId: |:Instance Id|An error' | cut -d' ' -f4,6 | tr -d \' | sed 's/commitId=//' | paste -d, -s - | cut -d',' -f1,2,3 --output ', ' ) 
     [[ -z "$item" ]] && item=$( cat $fn | egrep -i 'Schedule |sha ' | cut -d ' ' -f1,2,3,4,5 | tr -d \' | tr -d ':' | tr -s ' \t' | paste -d, -s -  ) 
     
     timestamp=$( cat $fn | egrep 'Start:' | tr -d '\t' )
-    echo "$cnt, $item ($timestamp)"
+    #echo "$cnt, $item ($timestamp)"
+    
+    IFS=',' read -ra arr <<< "$item"
+    #echo "${arr[@]}"
+
+    echo "$cnt,${arr[1]},${arr[2]},${arr[0]},$timestamp"
+
     set +x
 done
 
