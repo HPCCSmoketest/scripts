@@ -1,0 +1,47 @@
+#!/bin/bash
+
+PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+#set -x
+
+echo "Start $0 ..."
+cw=$(pwd)
+logFile="${HOME}/smoketest/update/update-"$( date "+%Y-%m-%d" )".log"
+LONG_DATE=$( date "+%Y-%m-%d %H:%M:%S" )
+
+echo "Update started @ ${LONG_DATE}" >> ${logFile}
+
+
+if [ -d scripts ]
+then
+   echo " Delete scripts directory to force cloning every time." >> ${logFile}
+   rm -rf scripts
+fi
+
+/usr/local/bin/git clone https://github.com/HPCCSmoketest/scripts.git >> ${logFile} 2>&1
+
+if [ -d scripts ]
+then
+    pushd scripts
+    # Not necessary if we cloning it every time
+    #/usr/local/bin/git pull  >> ${logFile} 2>&1
+
+    cp -v *.sh ../  >> ${logFile} 2>&1
+    cp -v *.py ../  >> ${logFile} 2>&1
+    #cp -v GistLogHandler.py ../  >> ${logFile} 2>&1
+    #cp -v ProcessPullRequests.py ../  >> ${logFile} 2>&1
+    #cp -v showStatus.py ../  >> ${logFile} 2>&1
+    #cp -v WatchDog.py ../  >> ${logFile} 2>&1
+
+    echo "Update finished." >> ${logFile} 2>&1
+    chmod +x ../init.sh
+
+    popd
+else
+    echo "Update failed."  >> ${logFile} 2>&1
+fi
+
+echo "End @ "$( date "+%Y-%m-%d %H:%M:%S" )"."   >> ${logFile} 2>&1
+echo "------------------------------------------" >> ${logFile} 2>&1
+echo ""   >> ${logFile} 2>&1
+
+bash -c " sleep 1; echo \"self update\"; cp update.proc update.sh "
