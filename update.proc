@@ -27,6 +27,7 @@ then
 
     cp -v *.sh ../  >> ${logFile} 2>&1
     cp -v *.py ../  >> ${logFile} 2>&1
+    cp -v update.proc ../ >> ${logFile} 2>&1
     #cp -v GistLogHandler.py ../  >> ${logFile} 2>&1
     #cp -v ProcessPullRequests.py ../  >> ${logFile} 2>&1
     #cp -v showStatus.py ../  >> ${logFile} 2>&1
