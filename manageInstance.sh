@@ -458,6 +458,11 @@ else
     WriteLog "The try count exhausted before the instance became up and running." "$LOG_FILE"
     WriteLog "The try count exhausted before the instance became up and running." "${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary"
     WriteLog "$instance" "${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary"
+    if [[ -n "$instanceId" ]]
+    then
+        terminate=$( aws ec2 terminate-instances --instance-ids ${instanceId} 2>&1 )
+        WriteLog "Terminate: ${terminate}" "$LOG_FILE"
+    fi
     MyExit "-2" "The try count exhausted before the instance became up and running." "$instance" "${INSTANCE_NAME}" "${C_ID}"
 fi
 
