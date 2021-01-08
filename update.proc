@@ -17,7 +17,7 @@ then
    rm -rf scripts
 fi
 
-/usr/local/bin/git clone https://github.com/HPCCSmoketest/scripts.git >> ${logFile} 2>&1
+git clone https://github.com/HPCCSmoketest/scripts.git >> ${logFile} 2>&1
 
 if [ -d scripts ]
 then
