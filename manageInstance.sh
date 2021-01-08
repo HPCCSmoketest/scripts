@@ -30,7 +30,7 @@ WriteLog "res: ${res}" "$LOG_FILE"
 #
 #------------------------------
 #
-# Main Function
+# Functions
 #
 
 MyExit()
@@ -55,6 +55,23 @@ MyExit()
     (echo "At $(date "+%Y.%m.%d %H:%M:%S") session (instance ID: ${runningInstanceID} on IP: ${publicIP}) exited with error code: $errorCode."; echo "${errorMsg}"; echo "${terminate}" ) | mailx -s "Abnormal end of session $instanceName ($commitId) on ${publicIP}" attila.vamos@gmail.com,attila.vamos@lexisnexisrisk.com
 
     exit $errorCode
+}
+
+CompressAndDownload()
+{
+    WriteLog "Compress and download HPCCSystems logs..." "$LOG_FILE"
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "[ -d /var/log/HPCCSystems ] && ( zip -u /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-$(date '+%y-%m-%d_%H-%M-%S') -r /var/log/HPCCSystems/* > /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1 ) || echo \"There is no /var/log/HPCCSystems/ directory.\" " 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+    
+    WriteLog "Compress and download pullRequests*.json file(s)..." "$LOG_FILE"
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "zip -u /home/centos/smoketest/pullRequests-$(date '+%y-%m-%d_%H-%M-%S') /home/centos/smoketest/pullRequests*.json > /home/centos/smoketest/pullRequests-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1 " 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/pullRequests-* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
 }
 
 #
@@ -122,6 +139,8 @@ do
     esac
     shift
 done
+
+[[ ! -d ${SMOKETEST_HOME}/${INSTANCE_NAME} ]] && mkdir ${SMOKETEST_HOME}/${INSTANCE_NAME}
 
 LOG_FILE="${SMOKETEST_HOME}/${INSTANCE_NAME}/instance-${INSTANCE_NAME}-${C_ID}-${TIME_STAMPT}.info"
 
@@ -388,13 +407,7 @@ then
                 res=$( rsync -va --timeout=60 --exclude=*.rpm --exclude=*.sh --exclude=*.py --exclude=*.txt --exclude=HPCCSystems-regression --exclude=OBT --exclude=rte --exclude=*.xml --exclude=build --exclude=HPCC-Platform -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
                 WriteLog "Res: $res" "$LOG_FILE"
                 
-                WriteLog "Compress and download HPCCSystems logs..." "$LOG_FILE"
-                res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "[ -d /var/log/HPCCSystems ] && ( zip -u /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-$(date '+%y-%m-%d_%H-%M-%S') -r /var/log/HPCCSystems/* > /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1 ) || echo \"There is no /var/log/HPCCSystems/ directory.\" " 2>&1 )
-                WriteLog "Res: $res" "$LOG_FILE"
-                
-                res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
-                WriteLog "Res: $res" "$LOG_FILE"
-                
+                CompressAndDownload
             fi
 
         fi
@@ -442,18 +455,13 @@ then
     WriteLog "Download /home/centos/smoketest/prp-$(date '+%Y-%m-%d').log file" "$LOG_FILE"
     res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/prp-$(date '+%Y-%m-%d').log ${SMOKETEST_HOME}/${INSTANCE_NAME}/prp-$(date '+%Y-%m-%d')-${INSTANCE_NAME}-${instancePublicIp}.log 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
-    
-    WriteLog "Compress and download HPCCSystems logs..." "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "[ -d /var/log/HPCCSystems ] && ( zip -u /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-$(date '+%y-%m-%d_%H-%M-%S') -r /var/log/HPCCSystems/* > /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1 ) || echo \"There is no /var/log/HPCCSystems/ directory.\" " 2>&1 )
-    WriteLog "Res: $res" "$LOG_FILE"
 
-    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
-    WriteLog "Res: $res" "$LOG_FILE"
-    
     WriteLog "Check and download email from Cron..." "$LOG_FILE"
     res=$(  rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/var/mail/centos ${SMOKETEST_HOME}/${INSTANCE_NAME}/centos-$(date '+%y-%m-%d_%H-%M-%S').mail 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
     
+    CompressAndDownload
+
 else
     WriteLog "The try count exhausted before the instance became up and running." "$LOG_FILE"
     WriteLog "The try count exhausted before the instance became up and running." "${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary"

@@ -52,6 +52,8 @@ do
     IFS=',' read -ra arr <<< "$item"
     #echo "${arr[@]}"
 
+    [[ -z "${arr[1]}" ]] && arr[1]=$(dirname $fn)  # PR name is missing in instance file, replace it from the directory name
+
     echo "$cnt,${arr[1]},${arr[2]},${arr[0]},$timestamp"
 
     set +x
