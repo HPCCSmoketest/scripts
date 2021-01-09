@@ -72,7 +72,7 @@ enabled = 1
 gpgcheck = 0
 DATASTAX_ENTRIES
 
-curl --silent --location https://rpm.nodesource.com/setup_12.x | sudo bash -
+curl --silent --location https://rpm.nodesource.com/setup_14.x | sudo bash -
 
 PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools python-pip bc psmisc nodejs"
 #if [ $DOCS_BUILD -eq 1 ]
@@ -83,6 +83,8 @@ PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools python-pip
 
 echo "Packages to install: ${PACKAGES_TO_INSTALL}"
 sudo yum install -y ${PACKAGES_TO_INSTALL}
+
+echo "Node version: $(node --version)"
 
 GUILLOTINE=$( echo " 2 * $AVERAGE_SESSION_TIME * 60" | bc |  xargs printf "%.0f" ) # minutes ( 2 x AVERAGE_SESSION_TIME)
 printf "AVERAGE_SESSION_TIME = %f hours, GUILLOTINE = %d minutes\n" "$AVERAGE_SESSION_TIME" "$GUILLOTINE"
