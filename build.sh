@@ -18,6 +18,14 @@ TARGET_DIR=""
 
 date=$(date +%Y-%m-%d_%H-%M-%S);
 logFile=$PR_ROOT/${BUILD_TYPE}"_Build_"$date".log";
+
+PARALLEL_REGRESSION_TEST=0
+hthorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Hthor_"$date".log";
+HTHOR_PQ=5
+thorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Thor_"$date".log";
+THOR_PQ=10
+roxieTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Roxie_"$date".log";
+ROXIE_PQ=5
 resultFile=$PR_ROOT/${BUILD_TYPE}"_result_"$date".log";
 
 HPCC_LOG_ARCHIVE=$PR_ROOT/HPCCSystems-logs-$date
@@ -811,21 +819,54 @@ then
                     retVal=0
                     WriteMilestone "Regression test" "$logFile"
                     WritePlainLog "Regression Suite test case(s): '${REGRESSION_TEST}'" "$logFile"
-                    if [[ ${REGRESSION_TEST} == "*" ]]
+                    
+                    WritePlainLog "Parallel regression test: '${PARALLEL_REGRESSION_TEST}'" "$logFile"
+                    if [[ ${PARALLEL_REGRESSION_TEST} -eq 0 ]]
                     then
-                        # Run whole Regression Suite
-                        #cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
-                        cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
+                        if [[ ${REGRESSION_TEST} == "*" ]]
+                        then
+                            # Run whole Regression Suite
+                            #cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
+                            cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
+                        else
+                            # Query the selected tests or whole suite if '*' in REGRESSION_TEST
+                            #cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
+                            cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
+                        fi
+                    
+                        WritePlainLog "cmd: ${cmd}" "$logFile"
+                        #${cmd} 2>&1  | tee -a $logFile
+                        ${cmd} >> $logFile 2>&1 
+                        retVal=$?
                     else
-                        # Query the selected tests or whole suite if '*' in REGRESSION_TEST
-                        #cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
-                        cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
-                    fi
-                
-                    WritePlainLog "cmd: ${cmd}" "$logFile"
-                    #${cmd} 2>&1  | tee -a $logFile
-                    ${cmd} >> $logFile 2>&1 
-                    retVal=$?
+                        WritePlainLog "Parallel regression test started..." "$logFile"
+                        WritePlainLog  "Start hthor regression ..." "$logFile"
+                        hthorCmd="./ecl-test run -t hthor ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} ${STORED_PARAMS} --generateStackTrace --pq $HTHOR_PQ"
+                        exec   ${hthorCmd} > $hthorTestLogFile 2>&1 &
+
+                        WritePlainLog "Start thor regression..." "$logFile"
+                        thorCmd="./ecl-test run -t thor ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} ${STORED_PARAMS} --generateStackTrace --pq $THOR_PQ"
+                        exec ${thorCmd}  > $thorTestLogFile 2>&1 &
+
+                        WritePlainLog "Start roxie regression..." "$logFile"
+                        roxieCmd="./ecl-test run -t roxie ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} ${STORED_PARAMS} --generateStackTrace --pq $ROXIE_PQ"
+                        exec ${roxieCmd} > $roxieTestLogFile 2>&1 &
+
+                        WritePlainLog "Wait for processes finished." "$logFile"
+
+                        wait 
+                        retVal=$?
+                        
+                        echo "${hthorCmd}" >> $logFile
+                        cat $hthorTestLogFile  >> $logFile
+                        
+                        echo "${thorCmd}" >> $logFile
+                        cat $thorTestLogFile  >> $logFile
+                        
+                        echo "${roxieCmd}" >> $logFile
+                        cat $roxieTestLogFile >> $logFile
+                        
+                    fi    
                     hasError=$( cat $logFile | grep -c '\[Error\]' )
                     if [[ $retVal == 0  && $hasError == 0 && setupPassed == 1 ]]
                     then

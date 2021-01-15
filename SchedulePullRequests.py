@@ -788,7 +788,17 @@ def GetOpenPulls(knownPullRequests):
         if not os.path.exists(testDir):
             testDir = 'PR-'+str(prid)
             if not os.path.exists(testDir):
-                os.mkdir(testDir)
+                if not os.path.exists('OldPrs/'+testDir):
+                    os.mkdir(testDir)
+                else:
+                    # PR reopend or GitHub plays funny
+                    # mv archived PR back from OldPrs directory
+                    print ("Move closed "+ testDir + " directory from OldPrs/ back to smoketest directory.")
+                    myProc = subprocess.Popen(["mv -f " + 'OldPrs/'+ testDir +" ."],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                    (myStdout,  myStderr) = myProc.communicate()
+                    result = "returncode:" + str(myProc.returncode) + ", stdout:'" + myStdout + "', stderr:'" + myStderr.replace('\n','') + "'."
+                    print("Result: "+result)
+                    pass
 
         try:
             myPrint("testDir: " + testDir)
