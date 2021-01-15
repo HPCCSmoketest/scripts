@@ -2517,7 +2517,7 @@ def consumerTask(prId, pr, cmd, testInfo, resultFileName):
     retcode='0'
     try:
         myProc = subprocess.Popen([ cmd ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-        (result,  retcode) = formatResult(myProc, resultFile)
+        (result,  retcode) = formatResult(myProc, resultFile, False)
     except:
         msg = "Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" 
         print(msg)
