@@ -19,11 +19,11 @@ TARGET_DIR=""
 date=$(date +%Y-%m-%d_%H-%M-%S);
 logFile=$PR_ROOT/${BUILD_TYPE}"_Build_"$date".log";
 
-PARALLEL_REGRESSION_TEST=0
+PARALLEL_REGRESSION_TEST=1
 hthorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Hthor_"$date".log";
 HTHOR_PQ=5
 thorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Thor_"$date".log";
-THOR_PQ=10
+THOR_PQ=15
 roxieTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Roxie_"$date".log";
 ROXIE_PQ=5
 resultFile=$PR_ROOT/${BUILD_TYPE}"_result_"$date".log";
