@@ -729,7 +729,14 @@ def GetOpenPulls(knownPullRequests):
         return (prs, buildPr)
         
     for pr in pulls:
-        prid = pr['number']
+        try:
+            prid = pr['number']
+        except:
+            # Something happened in GitHub,  the reply is not as expected.
+            print("Missing pr['number'] from pr(%s)" % (repr(pr)))
+            continue
+            pass
+            
         prs[prid] = {'user':pr['user']['login'], 'code_base':pr['base']['ref'],  'label':pr['head']['ref'].encode('ascii','replace'),
                             'sha':pr['head']['sha'], 'title':pr['title'], 'draft':False }
         

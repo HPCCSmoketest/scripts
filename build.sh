@@ -44,6 +44,11 @@ cp -vf ../checkDiskSpace.sh .
 #----------------------------------------------------
 #
 
+# Check it we have enough CPU/Cores to parallel engine execution
+# NUMBER_OF_CPUS > (HTHOR_PQ + THOR_PQ + HTHOR_PQ)
+# if not then PARALLEL_REGRESSION_TEST=0
+
+
 # Archive previous session's logs.
 
 WritePlainLog "Sytem ID: ${SYSTEM_ID}" "$logFile"
