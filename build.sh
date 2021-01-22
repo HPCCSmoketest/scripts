@@ -755,12 +755,14 @@ then
                 # If we haven't  local RTE dir?
                 if [[ ! -d $RTE_DIR ]]
                 then 
-                    mkdir -p $RTE_DIR
-                    res=$( cp -rv $COMMON_RTE_DIR/* $RTE_DIR/ 2>&1)
+                    WritePlainLog "Get the official version from GitHub" "$logFile"
+                    #mkdir -p $RTE_DIR
+                    #res=$( cp -rv $COMMON_RTE_DIR/* $RTE_DIR/ 2>&1)
+                    res=$( git clone  https://github.com/AttilaVamos/RTE.git $RTE_DIR )
                     WritePlainLog "res: ${res}" "$logFile"
                 fi
             else
-                # RTE changed (in this PR) get it from local source tree
+                WritePlainLog "RTE changed (in this PR) get it from local source tree" "$logFile"
                 if [[ ! -d $RTE_DIR ]]
                 then 
                     mkdir -p $RTE_DIR
@@ -791,6 +793,37 @@ then
             WritePlainLog "Regression log path             :\n$(sed -n 's/\(logDir\)/\1/p' ./ecl-test.json)" "$logFile"
             WritePlainLog "OPT path in ecl-test.json       :\n$(sed -n 's/\(\/opt\/\)/\1/p' ./ecl-test.json)" "$logFile"
             WritePlainLog "$(ls -ld /var/lib/HPCCSystems/hpcc-data/*)" "$logFile"
+            
+            #
+            #-----------------------------------------------------
+            # Patch regression suite tests if it needed to prevent extra long execuion tme
+            # See utlis.sh "Individual timeouts" section
+            if [[ -n $TIMEOUTS ]]
+            then
+                COUNT=${#TIMEOUTS[@]}
+                WritePlainLog "There is $COUNT test case need individual timeout setting" "$logFile"
+                for((testIndex=0; testIndex<$COUNT; testIndex++))
+                do
+                    TEST=(${!TIMEOUTS[$testIndex]})
+                    WritePlainLog "\tPatch ${TEST[0]} with ${TEST[1]} sec timeout" "$logFile"
+                    file="$TEST_DIR/ecl/${TEST[0]}"
+                    timeout=${TEST[1]}
+                    # Check if test already has '//timeout' tag
+                    if [[ $( egrep -c '\/\/timeout' $file ) -eq 0 ]]
+                    then
+                        # it has not, add one at the beginning of the file
+                        mv -fv $file $file-back
+                        echo "// Patched by the Smoketest on $( date '+%Y.%m.%d %H:%M:%S')" > $file
+                        echo "//timeout $timeout" >> $file
+                        cat $file-back >> $file
+                        
+                    else
+                        # yes it has, change it
+                        cp -fv $file $file-back
+                        sed -e 's/^\/\/timeout \(.*\).*$/\/\/ Patched by the Smoketest on '"$( date '+%Y.%m.%d %H:%M:%S')"'\n\/\/timeout '"$timeout"'/g' $file > $file-patched && mv -f $file-patched $file
+                    fi
+                done
+            fi
             
             #popd
             #WritePlainLog "pushd ${RTE_DIR}" "$logFile"
@@ -873,7 +906,8 @@ then
                         
                     fi    
                     hasError=$( cat $logFile | grep -c '\[Error\]' )
-                    if [[ $retVal == 0  && $hasError == 0 && setupPassed == 1 ]]
+                    WritePlainLog "retVal: ${retVal}, hasError:${hasError}, setupPassed: ${setupPassed}" "$logFile"
+                    if [[ $retVal == 0  && $hasError == 0 && $setupPassed == 1 ]]
                     then
                         # Collect results
                         ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "hthor" "$logFile"

@@ -58,6 +58,12 @@ then
     REGRESSION_TIMEOUT=-1
 fi
 
+# Individual timeouts 
+TEST_1=( "schedule1.ecl" "90" )
+TEST_2=( "workflow_9c.ecl" "60" )
+
+TIMEOUTS=( TEST_1[@] TEST_2[@] )
+
 TARGET=all
 #TARGET=hthor
 
@@ -428,7 +434,7 @@ cleanUpLeftovers()
     fi
     
     # Check if HPCC Systems is installed
-    IS_INSTALLED=$( sudo ${PKG_QRY_CMD} hpccsystems-platform | egrep '[h]pcc')
+    IS_INSTALLED=$( sudo ${PKG_QRY_CMD} hpccsystems-platform | egrep '[h]pcc' | tr -s ' ' | cut -d$' ' -f2 )
     if [[ "$IS_INSTALLED." != "." ]]
     then
         WritePlainLog "${IS_INSTALLED} is installed, remove" "$logFile"

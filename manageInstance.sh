@@ -240,7 +240,7 @@ tag=$( aws ec2 create-tags --resources ${instanceId} ${volumeId} \
 WriteLog "Tag: ${tag}" "$LOG_FILE"
         
 WriteLog "Wait for a while for initialise instance" "$LOG_FILE"
-sleep 1m
+sleep 20
 
 tryCount=15
 instanceIsUp=0
