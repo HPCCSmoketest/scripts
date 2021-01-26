@@ -72,9 +72,11 @@ enabled = 1
 gpgcheck = 0
 DATASTAX_ENTRIES
 
+sudo yum remove -y nodejs python3-pip
+
 curl --silent --location https://rpm.nodesource.com/setup_14.x | sudo bash -
 
-PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools python-pip bc psmisc nodejs"
+PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools python3-pip bc psmisc nodejs"
 #if [ $DOCS_BUILD -eq 1 ]
 #then
     wget http://mirror.centos.org/centos/7/os/x86_64/Packages/fop-1.1-6.el7.noarch.rpm
@@ -201,11 +203,11 @@ BREAK_TIME=20 # $(( ${GUILLOTINE} - 10 ))
 BREAK_TIME=$(( ${GUILLOTINE} * 8 / 10 ))
 ( crontab -l; echo ""; echo "# Send Ctrl - C to Regression Test Engine after ${BREAK_TIME} minutes"; echo $( date -d " + ${BREAK_TIME} minutes" "+%M %H %d %m") " * REGRESSION_TEST_ENGINE_PID=\$( pgrep -f ecl-test ); while [[ -z \"\$REGRESSION_TEST_ENGINE_PID\" ]] ; do date; sleep 10; REGRESSION_TEST_ENGINE_PID=\$( pgrep -f ecl-test ); done; echo \$REGRESSION_TEST_ENGINE_PID; sudo kill -SIGINT -\${REGRESSION_TEST_ENGINE_PID}; sleep 10; sudo kill -2 \${REGRESSION_TEST_ENGINE_PID}; " ) | crontab
 
-# Install, prepare and stat Bokeh
+# Install, prepare and start Bokeh
 echo install Bokeh
-sudo pip install --upgrade pip
+sudo pip3 install --upgrade pip
 sudo yum remove -y pyparsing
-sudo pip install pandas bokeh pyproj
+pip install pandas bokeh pyproj
 
 echo "Prepare Bokeh"
 cd ~/smoketest
