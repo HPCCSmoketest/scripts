@@ -222,7 +222,7 @@ echo "http://$PUBLIC_HOSTNAME:5006" > bokeh.url
 
 echo "Start Bokeh"
 chmod +x ./startBokeh.sh
-exec ./startBokeh.sh &
+./startBokeh.sh &
 echo "Bokeh pid: $!"
 
 echo "End of init.sh"
