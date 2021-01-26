@@ -139,7 +139,7 @@ WriteEnvInfo()
 
     if [[ $NUMBER_OF_CPUS -ge 20 ]]
     then
-        PARALLEL_QUERIES=20 
+        PARALLEL_QUERIES=$NUMBER_OF_CPUS #20 
     else
        PARALLEL_QUERIES=$(( $NUMBER_OF_CPUS * 2 / 3 ))
     fi
