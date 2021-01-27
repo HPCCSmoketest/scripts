@@ -212,6 +212,8 @@ p3=$(which "pip3")
 echo "p3: '$p3'"
 sudo ${p3} install --upgrade pip
 sudo yum remove -y pyparsing
+p3=$(which "pip3")
+echo "p3: '$p3'"
 sudo ${p3} install pandas bokeh pyproj
 
 echo "Prepare Bokeh"
