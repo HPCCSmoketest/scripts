@@ -3,6 +3,9 @@
 PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
 
+export PATH=$PATH:/usr/local/bin:/bin:/usr/local/sbin:/sbin:/usr/sbin:
+echo "path: $PATH"
+
 PUBLIC_IP=$( curl http://checkip.amazonaws.com )
 PUBLIC_HOSTNAME=$( wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname )
 INSTANCE_NAME="PR-12701"
@@ -72,11 +75,11 @@ enabled = 1
 gpgcheck = 0
 DATASTAX_ENTRIES
 
-sudo yum remove -y nodejs python3-pip
+sudo yum remove -y nodejs # python3-pip
 
 curl --silent --location https://rpm.nodesource.com/setup_14.x | sudo bash -
 
-PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools python3-pip bc psmisc nodejs"
+PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools bc psmisc nodejs"
 #if [ $DOCS_BUILD -eq 1 ]
 #then
     wget http://mirror.centos.org/centos/7/os/x86_64/Packages/fop-1.1-6.el7.noarch.rpm
@@ -205,9 +208,11 @@ BREAK_TIME=$(( ${GUILLOTINE} * 8 / 10 ))
 
 # Install, prepare and start Bokeh
 echo install Bokeh
-sudo pip3 install --upgrade pip
+p3=$(which "pip3")
+echo "p3: '$p3'"
+sudo ${p3} install --upgrade pip
 sudo yum remove -y pyparsing
-pip install pandas bokeh pyproj
+sudo ${p3} install pandas bokeh pyproj
 
 echo "Prepare Bokeh"
 cd ~/smoketest
