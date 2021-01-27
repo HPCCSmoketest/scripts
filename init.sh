@@ -75,7 +75,7 @@ enabled = 1
 gpgcheck = 0
 DATASTAX_ENTRIES
 
-sudo yum remove -y nodejs # python3-pip
+sudo yum remove -y nodejs
 
 curl --silent --location https://rpm.nodesource.com/setup_14.x | sudo bash -
 
