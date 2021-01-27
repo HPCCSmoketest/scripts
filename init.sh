@@ -216,6 +216,9 @@ p3=$(which "pip3")
 echo "p3: '$p3'"
 sudo ${p3} install pandas bokeh pyproj
 
+bk=$(which 'bokeh')
+echo "bokeh: $bk"
+
 echo "Prepare Bokeh"
 cd ~/smoketest
 # Don't use Public IP, out network may refuse to connect to it
