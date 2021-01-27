@@ -12,7 +12,7 @@
 
 #importing libraries
 #from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource,  Selection
+from bokeh.models import ColumnDataSource #,  Selection
 from bokeh.io import curdoc
 from bokeh.models.callbacks import CustomJS
 #from bokeh.models.annotations import LabelSet
@@ -105,7 +105,13 @@ def update():
                                             subPhase += result3Items[1]+ " "
                                 
                             elif 'egression' in phase:
-                                myProc3 = subprocess.Popen([" egrep -i -A1 'Suite:' " + logfiles[0] + " | tail -n 2 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                                # Test if it is Parallel Engine environment
+                                logfiles2 = sorted(glob.glob(pr + '/*_Regress_*.log'))
+                                if len(logfiles2) == 3:
+                                    logFile=logfiles2[2] # Yes, it is, use RelWithDebInfo_Regress_Thor_YYYY-MM-DD_hh-mm-ss.log
+                                else:
+                                    logFile = logfiles[0]
+                                myProc3 = subprocess.Popen([" egrep -i -A1 'Suite:' " + logFile + " | tail -n 2 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                                 result3 = myProc3.stdout.read() + myProc3.stderr.read()
                                 if len(result3) > 0:
                                     prefix = ["E: ", ", T: "]
@@ -117,7 +123,7 @@ def update():
                                             subPhase += prefix[index] + items[1].strip()
                                             index += 1
                                     
-                                    myProc4 = subprocess.Popen([" egrep -i  -i '\[Action\]' " + logfiles[0] + " | tail -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                                    myProc4 = subprocess.Popen([" egrep -i  -i '\[Action\]' " + logFile + " | tail -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                                     result4 = myProc4.stdout.read() + myProc4.stderr.read()
                                     if len(result4) > 0:
                                         result4Items = result4.decode("utf-8").split(' ',  4)
@@ -132,7 +138,7 @@ def update():
                                         else:
                                             subPhase += "0 "
                                             
-                                    myProc5 = subprocess.Popen([" suite=$( egrep -i 'suite:' " + logfiles[0] + " | tail -n 1 ); suite=${suite//\[Action\]/};  section=$( sed -rn \"/$suite$/,/$suite$/p\" " + logfiles[0] + " ); echo \"$section\" | egrep -i -c ' Pass ';  echo \"$section\" | egrep -i -c ' Fail '; "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                                    myProc5 = subprocess.Popen([" suite=$( egrep -i 'suite:' " + logFile + " | tail -n 1 ); suite=${suite//\[Action\]/};  section=$( sed -rn \"/$suite$/,/$suite$/p\" " + logFile + " ); echo \"$section\" | egrep -i -c ' Pass ';  echo \"$section\" | egrep -i -c ' Fail '; "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                                     result5 = myProc5.stdout.read() + myProc5.stderr.read()
                                     if len(result5) > 0:
                                         prefix = [", P: ", ", F: "]
