@@ -99,7 +99,7 @@ def update():
                                 myProc3 = subprocess.Popen(["  egrep -i '\[[0-9 ]*\%\]' " + logfiles[0] + " | tail -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                                 result3 = myProc3.stdout.read() + myProc3.stderr.read()
                                 if len(result3) > 0:
-                                    result3Items = result3.replace('[', '').replace(']','').decode("utf-8") .split(' ',  2)
+                                    result3Items = result3.decode("utf-8").replace('[', '').replace(']','').split(' ',  2)
                                     
                                     if len(result3Items) >= 2:
                                             subPhase += result3Items[1]+ " "
