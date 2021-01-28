@@ -83,11 +83,17 @@ def update():
                         logFileTime = datetime.strptime(logFileTimeStr, "%Y-%m-%d_%H-%M-%S" )
                         if logFileTime >= startTime:
                             print("PR logfile:%s, " % (logfiles[0])),
-
-                            myProc2 = subprocess.Popen(["cat "+ logfiles[0] + " | egrep -i 'milestone' | tail -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                            result2 = myProc2.stdout.read() + myProc2.stderr.read()
+                            
+                            myProc2a = subprocess.Popen(["cat "+ logfiles[0] + " | egrep -i 'milestone' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                            result2a = (myProc2a.stdout.read() + myProc2a.stderr.read()).decode("utf-8").strip().split('\n')
+                            for item in result2a:
+                                result.append(item)
+                            
+                            #myProc2 = subprocess.Popen(["cat "+ logfiles[0] + " | egrep -i 'milestone' | tail -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                            #result2 = (myProc2.stdout.read() + myProc2.stderr.read()).decode("utf-8")
+                            result2 = result2a[-1]
                             if len(result2) > 0:
-                                items = result2.decode("utf-8").split(':', 1)
+                                items = result2.split(':', 1)
                                 if len(items) == 2:
                                     phase = items[1]
                             else:
