@@ -59,10 +59,12 @@ then
 fi
 
 # Individual timeouts 
+#               "testname" "timeout sec"
 TEST_1=( "schedule1.ecl" "90" )
 TEST_2=( "workflow_9c.ecl" "60" )
+TEST_3=( "workflow_contingency_8.ecl" "20" )
 
-TIMEOUTS=( TEST_1[@] TEST_2[@] )
+TIMEOUTS=( TEST_1[@] TEST_2[@] TEST_3[@] )
 
 TARGET=all
 #TARGET=hthor
