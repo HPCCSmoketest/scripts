@@ -86,13 +86,13 @@ def update():
                             
                             myProc2a = subprocess.Popen(["cat "+ logfiles[0] + " | egrep -i 'milestone' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                             result2a = (myProc2a.stdout.read() + myProc2a.stderr.read()).decode("utf-8").strip().split('\n')
-                            print(result2a)
+                            #print(result2a)
                             for item in result2a:
                                 result.append(item)
                             
-                            myProc2 = subprocess.Popen(["cat "+ logfiles[0] + " | egrep -i 'milestone' | tail -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                            result2 = (myProc2.stdout.read() + myProc2.stderr.read()).decode("utf-8")
-                            #result2 = result2a[-1]
+                            #myProc2 = subprocess.Popen(["cat "+ logfiles[0] + " | egrep -i 'milestone' | tail -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                            #result2 = (myProc2.stdout.read() + myProc2.stderr.read()).decode("utf-8")
+                            result2 = result2a[-1]
                             print(result2)
                             if len(result2) > 0:
                                 items = result2.split(':', 1)
@@ -115,49 +115,56 @@ def update():
                             elif 'egression' in phase:
                                 # Test if it is Parallel Engine environment
                                 logfiles2 = sorted(glob.glob(pr + '/*_Regress_*.log'))
-                                if len(logfiles2) == 3:
-                                    logFile=logfiles2[2] # Yes, it is, use RelWithDebInfo_Regress_Thor_YYYY-MM-DD_hh-mm-ss.log
-                                else:
-                                    logFile = logfiles[0]
-                                myProc3 = subprocess.Popen([" egrep -i -A1 'Suite:' " + logFile + " | tail -n 2 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                                result3 = myProc3.stdout.read() + myProc3.stderr.read()
-                                if len(result3) > 0:
-                                    prefix = ["E: ", ", T: "]
-                                    index = 0
-                                    result3Items = result3.decode("utf-8").split('\n')
-                                    for item in result3Items:
-                                        items = item.split(':', 1)
-                                        if len(items) == 2:
-                                            subPhase += prefix[index] + items[1].strip()
-                                            index += 1
+#                                if len(logfiles2) == 3:
+#                                    logFile=logfiles2[2] # Yes, it is, use RelWithDebInfo_Regress_Thor_YYYY-MM-DD_hh-mm-ss.log
+#                                else:
+#                                    logFile = logfiles[0]
+                                if len(logfiles2) == 0:
+                                    logfiles2.append(logfiles[0])
                                     
-                                    myProc4 = subprocess.Popen([" egrep -i  -i '\[Action\]' " + logFile + " | tail -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                                    result4 = myProc4.stdout.read() + myProc4.stderr.read()
-                                    if len(result4) > 0:
-                                        result4Items = result4.decode("utf-8").split(' ',  4)
-                                        if len(result4Items) >= 2:
-                                            # There are leading spaces before the test number and the split() generates empty items from them
-                                            # Should look for the first non empty
-                                            index = 1
-                                            while (result4Items[index] == ''):
+                                for logFile in logfiles2:
+                                    if len(subPhase) > 0:
+                                        subPhase +="<br>"
+                                        
+                                    myProc3 = subprocess.Popen([" egrep -i -A1 'Suite:' " + logFile + " | tail -n 2 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                                    result3 = myProc3.stdout.read() + myProc3.stderr.read()
+                                    if len(result3) > 0:
+                                        prefix = ["E: ", ", T: "]
+                                        index = 0
+                                        result3Items = result3.decode("utf-8").split('\n')
+                                        for item in result3Items:
+                                            items = item.split(':', 1)
+                                            if len(items) == 2:
+                                                subPhase += prefix[index] + items[1].strip()
                                                 index += 1
-                                            subPhase += ", R: " + result4Items[index].strip('.') + " "
-                                            
-                                        else:
-                                            subPhase += "0 "
-                                            
-                                    myProc5 = subprocess.Popen([" suite=$( egrep -i 'suite:' " + logFile + " | tail -n 1 ); suite=${suite//\[Action\]/};  section=$( sed -rn \"/$suite$/,/$suite$/p\" " + logFile + " ); echo \"$section\" | egrep -i -c ' Pass ';  echo \"$section\" | egrep -i -c ' Fail '; "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                                    result5 = myProc5.stdout.read() + myProc5.stderr.read()
-                                    if len(result5) > 0:
-                                        prefix = [", P: ", ", F: "]
-                                        result5Items = result5.decode("utf-8").split()
-                                        if len(result5Items) >= 1:
-                                            for index in range(len(result5Items)):
-                                                subPhase += prefix[index] + result5Items[index].strip('.')
-                                            
-                                        else:
-                                            subPhase += "/ - /-  "
-                                    
+                                        
+                                        myProc4 = subprocess.Popen([" egrep -i  -i '\[Action\]' " + logFile + " | tail -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                                        result4 = myProc4.stdout.read() + myProc4.stderr.read()
+                                        if len(result4) > 0:
+                                            result4Items = result4.decode("utf-8").split(' ',  4)
+                                            if len(result4Items) >= 2:
+                                                # There are leading spaces before the test number and the split() generates empty items from them
+                                                # Should look for the first non empty
+                                                index = 1
+                                                while (result4Items[index] == ''):
+                                                    index += 1
+                                                subPhase += ", R: " + result4Items[index].strip('.') + " "
+                                                
+                                            else:
+                                                subPhase += "0 "
+                                                
+                                        myProc5 = subprocess.Popen([" suite=$( egrep -i 'suite:' " + logFile + " | tail -n 1 ); suite=${suite//\[Action\]/};  section=$( sed -rn \"/$suite$/,/$suite$/p\" " + logFile + " ); echo \"$section\" | egrep -i -c ' Pass ';  echo \"$section\" | egrep -i -c ' Fail '; "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                                        result5 = myProc5.stdout.read() + myProc5.stderr.read()
+                                        if len(result5) > 0:
+                                            prefix = [", P: ", ", F: "]
+                                            result5Items = result5.decode("utf-8").split()
+                                            if len(result5Items) >= 1:
+                                                for index in range(len(result5Items)):
+                                                    subPhase += prefix[index] + result5Items[index].strip('.')
+                                                
+                                            else:
+                                                subPhase += "/ - /-  "
+                                        
                             if len(subPhase) > 0:
                                 subPhase = ' ( ' + subPhase + ') '
                                     
@@ -236,7 +243,7 @@ divCurrentEctHeader = Div(text="ECT:", width=50, height=15)
 divCurrentEct = Div(text=" ", width=150, height=20)
 
 divCurrentPhaseHeader = Div(text="Phase: ", width=50, height=15)
-divCurrentPhase = Div(text=" ", width=350, height=20)
+divCurrentPhase = Div(text=" ", width=350, height=50)
 
 def update_time():
     divTime.text = time.strftime("%H:%M:%S")
