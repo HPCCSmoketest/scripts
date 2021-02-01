@@ -178,7 +178,7 @@ WriteEnvInfo()
     echo "Regression timeout: $REGRESSION_TIMEOUT sec"
     echo "Regression timeout: $REGRESSION_TIMEOUT sec" >> $logFile
 
-}workflow_9c
+}
 
 ProcessLog()
 {
