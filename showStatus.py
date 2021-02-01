@@ -86,12 +86,14 @@ def update():
                             
                             myProc2a = subprocess.Popen(["cat "+ logfiles[0] + " | egrep -i 'milestone' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                             result2a = (myProc2a.stdout.read() + myProc2a.stderr.read()).decode("utf-8").strip().split('\n')
+                            print(result2a)
                             for item in result2a:
                                 result.append(item)
                             
-                            #myProc2 = subprocess.Popen(["cat "+ logfiles[0] + " | egrep -i 'milestone' | tail -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                            #result2 = (myProc2.stdout.read() + myProc2.stderr.read()).decode("utf-8")
-                            result2 = result2a[-1]
+                            myProc2 = subprocess.Popen(["cat "+ logfiles[0] + " | egrep -i 'milestone' | tail -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                            result2 = (myProc2.stdout.read() + myProc2.stderr.read()).decode("utf-8")
+                            #result2 = result2a[-1]
+                            print(result2)
                             if len(result2) > 0:
                                 items = result2.split(':', 1)
                                 if len(items) == 2:
