@@ -63,8 +63,9 @@ fi
 TEST_1=( "schedule1.ecl" "90" )
 TEST_2=( "workflow_9c.ecl" "90" )
 TEST_3=( "workflow_contingency_8.ecl" "20" )
+TEST_4=( "schedule2.ecl" "150" )
 
-TIMEOUTS=( TEST_1[@] TEST_2[@] TEST_3[@] )
+TIMEOUTS=( TEST_1[@] TEST_2[@] TEST_3[@]  TEST_4[@] )
 
 TARGET=all
 #TARGET=hthor
@@ -177,7 +178,7 @@ WriteEnvInfo()
     echo "Regression timeout: $REGRESSION_TIMEOUT sec"
     echo "Regression timeout: $REGRESSION_TIMEOUT sec" >> $logFile
 
-}
+}workflow_9c
 
 ProcessLog()
 {
