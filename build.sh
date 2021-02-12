@@ -88,37 +88,54 @@ MyExit ()
     
 }
 
+WaitThenKillProcess()
+{
+    WritePlainLog "WaitThenKillProcess() Process name: '$1', timeout: '$2'." "$logFile"
+    [[ -z "$1" ]] && return || PROCESS_NAME=$1
+    [[ -z "$2" ]] && TIMEOUT=30 || TIMEOUT=$2
+    
+    pids=$( pgrep  -f ${PROCESS_NAME} )
+    if [[ -n "${PIDS}" ]]
+    then
+        WritePlainLog "Wait ${TIMEOUT} sec for ${PROCESS_NAME} then kill '${pids}'." "$logFile"
+        sleep ${TIMEOUT}
+        sudo kill -KILL $pids
+    else
+        WritePlainLog "${PROCESS_NAME} not found in running processes." "$logFile"
+    fi
+}
+
+KillProcessThenWait()
+{
+    NAME=$1
+    PID=$2
+    [[ -z "$3" ]] && TIMEOUT=30 || TIMEOUT=$3
+    if [[ -n "${PID}" && -n "$(ps -p ${PID} -o pid= )" ]]
+    then
+        WritePlainLog "Send INT signal to $NAME ($PID)." "$logFile"
+        res=$(sudo  kill -INT  "${PID}" 2>&1)
+        WritePlainLog "Res:${res}" "$logFile"
+        WritePlainLog "Wait until $NAME process finish..." "$logFile"
+        sleep ${TIMEOUT}
+        WaitThenKillProcess "gdb" "$TIMEOUT"
+        WritePlainLog "Done." "$logFile"
+    else
+        WritePlainLog "No pid and/or process not alive." "$logFile"
+    fi
+}
+
 HandleSignal()
 {
-    if [ "${HTHOR_PID}" ]
-    then
-        WritePlainLog "Send INT signal to Hthor($HTHOR_PID)." "$logFile"
-        res=$( kill -INT  "${HTHOR_PID}" 2>&1)
-        WritePlainLog "Res:${res}" "$logFile"
-        WritePlainLog "Wait until Hthor finish..." "$logFile"
-        #wait ${HTHOR_PID}
-        #WritePlainLog "Done." "$logFile"
-    fi
+    WritePlainLog "Signal captured. Process it..." "$logFile"
     
-    if [ "${THOR_PID}" ]
-    then
-        WritePlainLog "Send INT signal to Thor($THOR_PID)." "$logFile"
-        res=$( kill -INT  "${THOR_PID}" 2>&1)
-        WritePlainLog "Res:${res}" "$logFile"
-        WritePlainLog "Wait until Thor finish..." "$logFile"
-        #wait ${THOR_PID}
-       # WritePlainLog "Done." "$logFile"
-    fi
+    TIME_FOR_ENGINE_TO_STOP=30
+    KillProcessThenWait  "Hthor" "${HTHOR_PID}" "${TIME_FOR_ENGINE_TO_STOP}"
     
-    if [ "${ROXIE_PID}" ]
-    then
-        WritePlainLog "Send INT signal to Roxie($ROXIE_PID)." "$logFile"
-        res=$( kill -INT  "${ROXIE_PID}" 2>&1)
-        WritePlainLog "Res:${res}" "$logFile"
-        WritePlainLog "Wait until Roxie finish..." "$logFile"
-        #wait ${ROXIE_PID}
-        #WritePlainLog "Done." "$logFile"
-    fi
+    KillProcessThenWait  "Thor" "${THOR_PID}" "${TIME_FOR_ENGINE_TO_STOP}"
+    
+    KillProcessThenWait  "Roxie" "${ROXIE_PID}" "${TIME_FOR_ENGINE_TO_STOP}"
+    
+    WaitThenKillProcess "gdb" "$TIMEOUT"
     
     wait ${HTHOR_PID} ${THOR_PID} ${ROXIE_PID}
     WritePlainLog "All done." "$logFile"
