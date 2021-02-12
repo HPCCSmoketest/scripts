@@ -22,10 +22,15 @@ logFile=$PR_ROOT/${BUILD_TYPE}"_Build_"$date".log";
 PARALLEL_REGRESSION_TEST=1
 hthorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Hthor_"$date".log";
 HTHOR_PQ=5
+unset HTHOR_PID
+
 thorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Thor_"$date".log";
 THOR_PQ=12
+unset THOR_PID
+
 roxieTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Roxie_"$date".log";
 ROXIE_PQ=5
+unset ROXIE_PID
 resultFile=$PR_ROOT/${BUILD_TYPE}"_result_"$date".log";
 
 HPCC_LOG_ARCHIVE=$PR_ROOT/HPCCSystems-logs-$date
@@ -82,6 +87,49 @@ MyExit ()
     exit $exitCode
     
 }
+
+HandleSignal()
+{
+    if [ "${HTHOR_PID}" ]
+    then
+        WritePlainLog "Send INT signal to Hthor($HTHOR_PID)." "$logFile"
+        res=$( kill -INT  "${HTHOR_PID}" 2>&1)
+        WritePlainLog "Res:${res}" "$logFile"
+        WritePlainLog "Wait until Hthor finish..." "$logFile"
+        #wait ${HTHOR_PID}
+        #WritePlainLog "Done." "$logFile"
+    fi
+    
+    if [ "${THOR_PID}" ]
+    then
+        WritePlainLog "Send INT signal to Thor($THOR_PID)." "$logFile"
+        res=$( kill -INT  "${THOR_PID}" 2>&1)
+        WritePlainLog "Res:${res}" "$logFile"
+        WritePlainLog "Wait until Thor finish..." "$logFile"
+        #wait ${THOR_PID}
+       # WritePlainLog "Done." "$logFile"
+    fi
+    
+    if [ "${ROXIE_PID}" ]
+    then
+        WritePlainLog "Send INT signal to Roxie($ROXIE_PID)." "$logFile"
+        res=$( kill -INT  "${ROXIE_PID}" 2>&1)
+        WritePlainLog "Res:${res}" "$logFile"
+        WritePlainLog "Wait until Roxie finish..." "$logFile"
+        #wait ${ROXIE_PID}
+        #WritePlainLog "Done." "$logFile"
+    fi
+    
+    wait ${HTHOR_PID} ${THOR_PID} ${ROXIE_PID}
+    WritePlainLog "All done." "$logFile"
+    
+    TEST_TIME=$(( $(date +%s) - $TIME_STAMP ))
+    
+    MyExit -5
+}
+
+trap "HandleSignal" TERM
+trap "HandleSignal" INT
 
 BUILD_ROOT=build
 if [ ! -d ${BUILD_ROOT} ]
@@ -881,15 +929,21 @@ then
                         WritePlainLog  "Start hthor regression ..." "$logFile"
                         hthorCmd="./ecl-test run -t hthor ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} ${STORED_PARAMS} --generateStackTrace --pq $HTHOR_PQ"
                         exec   ${hthorCmd} > $hthorTestLogFile 2>&1 &
+                        HTHOR_PID=$!
+                        WritePlainLog  "Hthor pid: $HTHOR_PID." "$logFile"
 
                         WritePlainLog "Start thor regression..." "$logFile"
                         thorCmd="./ecl-test run -t thor ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} ${STORED_PARAMS} --generateStackTrace --pq $THOR_PQ"
                         exec ${thorCmd}  > $thorTestLogFile 2>&1 &
-
+                        THOR_PID=$!
+                        WritePlainLog  "Thor pid: $THOR_PID." "$logFile"
+                        
                         WritePlainLog "Start roxie regression..." "$logFile"
                         roxieCmd="./ecl-test run -t roxie ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} ${STORED_PARAMS} --generateStackTrace --pq $ROXIE_PQ"
                         exec ${roxieCmd} > $roxieTestLogFile 2>&1 &
-
+                        ROXIE_PID=$!
+                        WritePlainLog  "Roxie pid: $ROXIE_PID." "$logFile"
+                        
                         WritePlainLog "Wait for processes finished." "$logFile"
 
                         wait 
