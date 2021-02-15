@@ -93,16 +93,29 @@ WaitThenKillProcess()
     WritePlainLog "WaitThenKillProcess() Process name: '$1', timeout: '$2'." "$logFile"
     [[ -z "$1" ]] && return || PROCESS_NAME=$1
     [[ -z "$2" ]] && TIMEOUT=30 || TIMEOUT=$2
+    [[ -z "$3" ]] && LOOPCOUNT=1 || LOOPCOUNT=$3
+    WritePlainLog "WaitThenKillProcess() timeout: '${TIMEOUT}', loop count : ${LOOPCOUNT}." "$logFile"
     
-    pids=$( pgrep  -f ${PROCESS_NAME} )
-    if [[ -n "${PIDS}" ]]
-    then
-        WritePlainLog "Wait ${TIMEOUT} sec for ${PROCESS_NAME} then kill '${pids}'." "$logFile"
+    while true
+    do
+        LOOPCOUNT=$((  ${LOOPCOUNT} - 1 ))
+        pids=$( pgrep  -f ${PROCESS_NAME} )
+        
+        if [[ -n "${pids}" ]]
+        then
+            WritePlainLog "Kill '${pids}'." "$logFile"
+            sudo kill -KILL $pids
+        else
+            WritePlainLog "${PROCESS_NAME} not found in running processes." "$logFile"
+        fi
+        
+        [[ ${LOOPCOUNT} -eq 0 ]] &&  break
+        
+        WritePlainLog "Wait ${TIMEOUT} sec for '${PROCESS_NAME}' in ${LOOPCOUNT} attempt." "$logFile"
         sleep ${TIMEOUT}
-        sudo kill -KILL $pids
-    else
-        WritePlainLog "${PROCESS_NAME} not found in running processes." "$logFile"
-    fi
+    done
+    
+    WritePlainLog "WaitThenKillProcess() done." "$logFile"
 }
 
 KillProcessThenWait()
@@ -128,14 +141,14 @@ HandleSignal()
 {
     WritePlainLog "Signal captured. Process it..." "$logFile"
     
-    TIME_FOR_ENGINE_TO_STOP=30
+    TIME_FOR_ENGINE_TO_STOP=60
     KillProcessThenWait  "Hthor" "${HTHOR_PID}" "${TIME_FOR_ENGINE_TO_STOP}"
     
     KillProcessThenWait  "Thor" "${THOR_PID}" "${TIME_FOR_ENGINE_TO_STOP}"
     
     KillProcessThenWait  "Roxie" "${ROXIE_PID}" "${TIME_FOR_ENGINE_TO_STOP}"
     
-    WaitThenKillProcess "gdb" "$TIMEOUT"
+    WaitThenKillProcess "gdb" "$TIMEOUT" "5"
     
     wait ${HTHOR_PID} ${THOR_PID} ${ROXIE_PID}
     WritePlainLog "All done." "$logFile"
@@ -612,7 +625,7 @@ hpccpackage=$( grep 'Current release version' ${logFile} | cut -c 31- )${PKG_EXT
 if [[ ! -f $hpccpackage ]]
 then 
     echo "nincs ( $( pwd))"
-    hpccpackage=$( find . -maxdepth 1 -iname '*'"${PKG_EXT}" -type f -print )
+    hpccpackage=$( find . -maxdepth 1 -iname '*'"${PKG_EXT}" -type f -print | sort -r | head -n 1)
     echo "hpccpackage:$hpccpackage"
 fi
 WritePlainLog "HPCC package: ${hpccpackage}" "$logFile"
