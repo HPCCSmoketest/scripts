@@ -21,15 +21,15 @@ logFile=$PR_ROOT/${BUILD_TYPE}"_Build_"$date".log";
 
 PARALLEL_REGRESSION_TEST=1
 hthorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Hthor_"$date".log";
-HTHOR_PQ=5
+HTHOR_PQ=4
 unset HTHOR_PID
 
 thorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Thor_"$date".log";
-THOR_PQ=12
+THOR_PQ=14
 unset THOR_PID
 
 roxieTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Roxie_"$date".log";
-ROXIE_PQ=5
+ROXIE_PQ=4
 unset ROXIE_PID
 resultFile=$PR_ROOT/${BUILD_TYPE}"_result_"$date".log";
 
@@ -687,8 +687,8 @@ then
         echo "Patch $TARGET_DIR/etc/HPCCSystems/environment.xml to set $THOR_SLAVES slave Thor system"
         sudo cp $TARGET_DIR/etc/HPCCSystems/environment.xml $TARGET_DIR/etc/HPCCSystems/environment.xml.bak
         sed -e 's/slavesPerNode="\(.*\)"/slavesPerNode="'"$THOR_SLAVES"'"/g'                                    \
-                 -e 's/maxEclccProcesses="\(.*\)"/maxEclccProcesses="'"$PARALLEL_QUERIES"'"/g'                  \
-                 -e 's/name="maxCompileThreads" value="\(.*\)"/name="maxCompileThreads" value="'"$PARALLEL_QUERIES"'"/g'                  \
+                 -e 's/maxEclccProcesses="\(.*\)"/maxEclccProcesses="'"$NUMBER_OF_CPUS"'"/g'                  \
+                 -e 's/name="maxCompileThreads" value="\(.*\)"/name="maxCompileThreads" value="'"$NUMBER_OF_CPUS"'"/g'                  \
                  "$TARGET_DIR/etc/HPCCSystems/environment.xml" > temp.xml && sudo mv -f temp.xml "$TARGET_DIR/etc/HPCCSystems/environment.xml"
     fi
     
