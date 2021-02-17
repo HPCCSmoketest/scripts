@@ -885,20 +885,25 @@ then
                     TEST=(${!TIMEOUTS[$testIndex]})
                     WritePlainLog "\tPatch ${TEST[0]} with ${TEST[1]} sec timeout" "$logFile"
                     file="$TEST_DIR/ecl/${TEST[0]}"
-                    timeout=${TEST[1]}
-                    # Check if test already has '//timeout' tag
-                    if [[ $( egrep -c '\/\/timeout' $file ) -eq 0 ]]
+                    if [[ -f ${file} ]]
                     then
-                        # it has not, add one at the beginning of the file
-                        mv -fv $file $file-back
-                        echo "// Patched by the Smoketest on $( date '+%Y.%m.%d %H:%M:%S')" > $file
-                        echo "//timeout $timeout" >> $file
-                        cat $file-back >> $file
-                        
+                        timeout=${TEST[1]}
+                        # Check if test already has '//timeout' tag
+                        if [[ $( egrep -c '\/\/timeout' $file ) -eq 0 ]]
+                        then
+                            # it has not, add one at the beginning of the file
+                            mv -fv $file $file-back
+                            echo "// Patched by the Smoketest on $( date '+%Y.%m.%d %H:%M:%S')" > $file
+                            echo "//timeout $timeout" >> $file
+                            cat $file-back >> $file
+                            
+                        else
+                            # yes it has, change it
+                            cp -fv $file $file-back
+                            sed -e 's/^\/\/timeout \(.*\).*$/\/\/ Patched by the Smoketest on '"$( date '+%Y.%m.%d %H:%M:%S')"'\n\/\/timeout '"$timeout"'/g' $file > $file-patched && mv -f $file-patched $file
+                        fi
                     else
-                        # yes it has, change it
-                        cp -fv $file $file-back
-                        sed -e 's/^\/\/timeout \(.*\).*$/\/\/ Patched by the Smoketest on '"$( date '+%Y.%m.%d %H:%M:%S')"'\n\/\/timeout '"$timeout"'/g' $file > $file-patched && mv -f $file-patched $file
+                        WritePlainLog "\t${file} file not exists, skip patching." "$logFile"
                     fi
                 done
             fi
