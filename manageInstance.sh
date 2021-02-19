@@ -79,9 +79,9 @@ CompressAndDownload()
     else
         WriteLog "Compress and download HPCCSystems-regression/log and zap directories ..." "$LOG_FILE"
         timeStamp="$(date '+%y-%m-%d_%H-%M-%S')"
-        res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "zip -u /home/centos/smoketest/HPCCSystems-regression-$timeStamp /home/centos/smoketest/HPCCSystems-regression/log/*  > /home/centos/smoketest/HPCCSystems-regression-$timeStamp.log 2>&1 " 2>&1 )
+        res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "zip -u /home/centos/smoketest/HPCCSystems-regression-$timeStamp /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression/log/*  > /home/centos/smoketest/HPCCSystems-regression-$timeStamp.log 2>&1 " 2>&1 )
         WriteLog "Res: $res" "$LOG_FILE"
-        res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "zip -u /home/centos/smoketest/HPCCSystems-regression-$timeStamp /home/centos/smoketest/HPCCSystems-regression/zap/*  > /home/centos/smoketest/HPCCSystems-regression-$timeStamp.log 2>&1 " 2>&1 )
+        res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "zip -u /home/centos/smoketest/HPCCSystems-regression-$timeStamp /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression/zap/*  > /home/centos/smoketest/HPCCSystems-regression-$timeStamp.log 2>&1 " 2>&1 )
         WriteLog "Res: $res" "$LOG_FILE"
 
         res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/HPCCSystems-regression-$timeStamp* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
@@ -322,6 +322,14 @@ then
             res=$( rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.new centos@${instancePublicIp}:/home/centos/smoketest/ 2>&1)
             WriteLog "Res: $res" "$LOG_FILE"
         fi
+        
+        #To test ECLWatch UI testing feature
+        if [[ -d ${SMOKETEST_HOME}/${INSTANCE_NAME}/eclwatch ]]
+        then
+            WriteLog "Upload eclwatch directory into instance ~/smoketest directory" "$LOG_FILE"
+            res=$( rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/eclwatch centos@${instancePublicIp}:/home/centos/smoketest/ 2>&1)
+            WriteLog "Res: $res" "$LOG_FILE"
+        fi
     fi
 
 
@@ -474,6 +482,10 @@ then
     
     WriteLog "Download /home/centos/smoketest/prp-$(date '+%Y-%m-%d').log file" "$LOG_FILE"
     res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/prp-$(date '+%Y-%m-%d').log ${SMOKETEST_HOME}/${INSTANCE_NAME}/prp-$(date '+%Y-%m-%d')-${INSTANCE_NAME}-${instancePublicIp}.log 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+
+    WriteLog "Download /home/centos/smoketest/eclwatch/eclWatchUiTest.log file" "$LOG_FILE"
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/eclwatch/eclWatchUiTest.log ${SMOKETEST_HOME}/${INSTANCE_NAME}/eclWatchUiTest-${C_ID}-$(date '+%Y-%m-%d').log 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
 
    
