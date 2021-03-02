@@ -721,10 +721,18 @@ def GetOpenPulls(knownPullRequests):
     # The result is '"mergeable": true,' or '"mergeable": false,'
     openPRs = len(pulls)
     print("Number of open PRs: %2d" % ( openPRs ))
-    if (openPRs == 0) or ( (openPRs > 0) and ('number' not in pulls[0])):
-        # Possible to get open pulls data failed and there is no PR data (only an error message in pullRequests.json file)
-        # Empty the knownPullRequest list ot avoid the further processing 
-        # they are closed and move them out
+    try:
+        if (openPRs == 0) or ( (openPRs > 0) and ('number' not in pulls[0])):
+            # Possible to get open pulls data failed and there is no PR data (only an error message in pullRequests.json file)
+            # Empty the knownPullRequest list ot avoid the further processing 
+            # they are closed and move them out
+            del knownPullRequests[:]
+            return (prs, buildPr)
+    except Exception as e:
+        print("Something wrong with the pulls[] "+ str(e))
+        print("Dump of pulls[]:")
+        print(pulls)
+        print("End.--------")
         del knownPullRequests[:]
         return (prs, buildPr)
         

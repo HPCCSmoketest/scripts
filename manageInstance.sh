@@ -235,6 +235,15 @@ then
 
 fi
 instancePublicIp=$( echo "$instanceInfo" | egrep 'PublicIpAddress' | tr -d '", ' | cut -d : -f 2 )
+
+if [[ -z "$instancePublicIp" ]]
+then
+   WriteLog "Instance has not public IP exit" "$LOG_FILE"
+   WriteLog "$instance" > ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
+   # Give a chance to re-try.
+   [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary ]] && rm ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
+   MyExit "-1" "Instance has not public IP, exit" "$instance" "${INSTANCE_NAME}" "${C_ID}"
+fi
 WriteLog "Public IP: ${instancePublicIp}" "$LOG_FILE"
 
 volumeId=$( echo "$instanceInfo" | egrep 'VolumeId' | tr -d '", ' | cut -d : -f 2 )
