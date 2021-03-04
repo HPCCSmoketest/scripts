@@ -242,6 +242,11 @@ then
    WriteLog "$instance" > ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
    # Give a chance to re-try.
    [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary ]] && rm ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
+   
+   # Terminate the isntance
+   terminate=$( aws ec2 terminate-instances --instance-ids ${instanceId} 2>&1 )
+   WriteLog "Terminate because no Public IP:\n ${terminate}" "$LOG_FILE"
+   
    MyExit "-1" "Instance has not public IP, exit" "$instance" "${INSTANCE_NAME}" "${C_ID}"
 fi
 WriteLog "Public IP: ${instancePublicIp}" "$LOG_FILE"
