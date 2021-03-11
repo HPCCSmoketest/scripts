@@ -127,6 +127,22 @@ done
 
 echo "-----------------------------------------"
 
+echo ""
+echo "List of RTE changes:"; 
+echo "===================="
+echo ""
+echo "From closed PRs:"
+echo "................"
+#find OldPrs/PR-* -iname 'RelWithDebInfo_Build*' -type f -exec egrep -H 'RTE changed' '{}' \;
+find OldPrs/PR-* -iname 'prp-*' -type f -exec egrep -H ' testing/regress/(ecl-|hpcc/)' '{}' \;
+
+echo ""
+echo "From open PRs:"
+echo "................"
+#find PR-*/ -iname 'RelWithDebInfo_Build*' -type f -exec egrep -H 'RTE changed' '{}' \;
+find PR-*/ -iname 'prp-*' -type f -exec egrep -H ' testing/regress/(ecl-|hpcc/)' '{}' \;
+echo "................"
+echo ""
 echo "End."
 
 # To create one line digest with all information what we need

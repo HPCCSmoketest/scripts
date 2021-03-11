@@ -989,7 +989,8 @@ def GetOpenPulls(knownPullRequests):
                     if changedFile.startswith('testing/regress/ecl/library'):
                         prs[prid]['testfiles'].append('testing/regress/ecl/aaalibrary*')
                 elif changedFile.startswith('testing/regress/'):
-                    if changedFile.endswith('.py'):
+                    if changedFile.endswith('.py') or changedFile.endswith('ecl-test'):
+                        print("RTE changed: %s" % (changedFile))
                         # Something changed in the engine should test it
                         prs[prid]['testfiles'].append('testing/regress/ecl/teststdlibrary.ecl')
                 elif changedFile.startswith('ecllibrary/teststd/') or changedFile.startswith('ecllibrary/std/') :

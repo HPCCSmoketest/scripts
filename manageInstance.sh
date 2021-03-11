@@ -502,6 +502,9 @@ then
     res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/eclwatch/eclWatchUiTest.log ${SMOKETEST_HOME}/${INSTANCE_NAME}/eclWatchUiTest-${C_ID}-$(date '+%Y-%m-%d').log 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
 
+    WriteLog "Download /home/centos/smoketest/${INSTANCE_NAME}/rte/ecl-test.json file" "$LOG_FILE"
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/rte/ecl-test.json ${SMOKETEST_HOME}/${INSTANCE_NAME}/ecl-test-${C_ID}-$(date '+%Y-%m-%d').json 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
    
     CompressAndDownload
 

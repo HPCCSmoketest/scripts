@@ -1,9 +1,26 @@
+
+usage()
+{
+    echo "Tool to list execution time statistic of passed test case(s)."
+    echo "Usage:"
+    echo ""
+    echo "runtimeOf.sh <testname> [<engine>] [-v] [-h]"
+    echo ""
+    echo "Where -v  Verbose, list log filename and log entry for the test"
+    echo "      -h  This help"
+    echo ""
+}
+
+
 if [[ -z $1 ]]
 then
-    echo "Tool to list passed test case(s) with execution time"
-    echo "Usage:"
-    echo "runtimeOf.sh <testname> [<engine>]"
+    usage
 else
+    if [[ "$1" == "-h" ]]
+    then
+        usage
+        exit
+    fi
     testName=$1
     shift
     verbose=0
@@ -15,6 +32,9 @@ else
         case $param in
             v) verbose=1
             ;;
+            h) usage
+                exit
+                ;;
             *) engine=$param
             ;;
         esac
