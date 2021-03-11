@@ -936,7 +936,7 @@ def GetOpenPulls(knownPullRequests):
                     if changedFile.startswith('testing/regress/ecl/library'):
                         prs[prid]['testfiles'].append('testing/regress/ecl/aaalibrary*')
                 elif changedFile.startswith('testing/regress/'):
-                    if changedFile.endswith('.py'):
+                    
                         # Something changed in the engine should test it
                         prs[prid]['testfiles'].append('testing/regress/ecl/teststdlibrary.ecl')
                         prs[prid]['rteChanged'] = True
@@ -1250,18 +1250,18 @@ def CatchUpMaster():
 #        #results = result.split('\n')
 #        print("\t"+result)
 
-        # Get the latest Regression Test Engine
-        print("\tGet the latest Regression Test Engine from the master branch")
-        myProc = subprocess.Popen(["git checkout master"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-        formatResult(myProc)
-        
-        if not os.path.exists('../rte'):
-            os.mkdir('../rte')
-        
-        myProc = subprocess.Popen(["cp -v testing/regress/ecl-test* ../rte/"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-        formatResult(myProc)
-        myProc = subprocess.Popen(["cp -v -r testing/regress/hpcc ../rte/hpcc"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-        formatResult(myProc)
+#        # Get the latest Regression Test Engine
+#        print("\tGet the latest Regression Test Engine from the master branch")
+#        myProc = subprocess.Popen(["git checkout master"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+#        formatResult(myProc)
+#        
+#        if not os.path.exists('../rte'):
+#            os.mkdir('../rte')
+#        
+#        myProc = subprocess.Popen(["cp -v testing/regress/ecl-test* ../rte/"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+#        formatResult(myProc)
+#        myProc = subprocess.Popen(["cp -v -r testing/regress/hpcc ../rte/hpcc"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+#        formatResult(myProc)
         print("\t\tDone")
             
     except OSError as e:
