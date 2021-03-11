@@ -9,7 +9,7 @@ PR_ROOT=${pwd}
 SOURCE_ROOT=${PR_ROOT}/HPCC-Platform
 BUILD_TYPE=RelWithDebInfo
 #BUILD_TYPE=Debug
-COMMON_RTE_DIR=$( dirname $PR_ROOT)/rte
+#COMMON_RTE_DIR=$( dirname $PR_ROOT)/rte
 RTE_DIR=$PR_ROOT/rte
 RESULT_DIR=${PR_ROOT}/HPCCSystems-regression
 TEST_DIR=${SOURCE_ROOT}/testing/regress
@@ -838,6 +838,11 @@ then
                     #res=$( cp -rv $COMMON_RTE_DIR/* $RTE_DIR/ 2>&1)
                     res=$( git clone  https://github.com/AttilaVamos/RTE.git $RTE_DIR )
                     WritePlainLog "res: ${res}" "$logFile"
+                    
+                    # Always use RTE config from PR source
+                    WritePlainLog "Copy '$TEST_DIR/ecl-test.json' into '$RTE_DIR'" "$logFile"
+                    res=$( cp -v $TEST_DIR/ecl-test.json $RTE_DIR/ 2>&1)
+                    WritePlainLog "res: ${res}" "$logFile"
                 fi
             else
                 WritePlainLog "RTE changed (in this PR) get it from local source tree" "$logFile"
@@ -862,7 +867,7 @@ then
             # Patch ecl-test.json to put log inside the smoketest-xxxx directory
             mv ecl-test.json ecl-test_json.bak
             RESULT_DIR_ESC=${RESULT_DIR//\//\\\/}  #Replace '/' to '\/'
-            sed sed -e 's/"regressionDir"\w*: "\(.*\)"/"regressionDir" : "'"${RESULT_DIR_ESC}"'"/'   \
+            sed -e 's/"regressionDir"\w*: "\(.*\)"/"regressionDir" : "'"${RESULT_DIR_ESC}"'"/'   \
                 -e 's/"logDir"\w*: "\(.*\)"/"logDir" : "'"${RESULT_DIR_ESC}"'\/log"/'  \
                 -e 's/"timeout":"\(.*\)"/"timeout":"'"${REGRESSION_TIMEOUT}"'"/' \
                 -e 's/"maxAttemptCount":"\(.*\)"/"maxAttemptCount":"'"${REGRESSION_MAX_ATTEMPT_COUNT}"'"/'   ./ecl-test_json.bak > ./ecl-test.json
