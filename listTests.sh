@@ -3,14 +3,46 @@
 PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
 
+usage ()
+{
+    echo "Tool to list Executed Smoketest session(s) on a current or give date"
+    echo "Usage:"
+    echo ""
+    echo "./listTests/sh [yy-mm-dd] [-rte] [-v] [-h]"
+    echo ""
+    echo "Where [yy-mm-dd]  The date for list tests"
+    echo "      -v          Verbose, list log filename and log entry for the test"
+    echo "      -h          This help"
+    echo "      -rte        List changes in RTE."
+    echo ""
+}
+
 clear
 
-if [[ -n $1 ]]
-then
-    testDay=$1
-else
-    testDay=$( date "+%y-%m-%d")
-fi
+testDay=$( date "+%y-%m-%d")
+verbose=0
+rte=0
+while [ $# -gt 0 ]
+do 
+    param=$1
+    #param=${param//-/}
+    param=${param#-}
+    case $param in
+        v) verbose=1
+        ;;
+        h) usage
+            exit
+            ;;
+        [0-9][0-9]-[[0-9][0-9]-[0-9][0-9]) testDay=$param
+            ;;
+        rte) rte=1
+            ;;
+        *)
+            ;;
+    esac
+    shift
+done
+
 
 [[ ! -d ~/smoketest/ScheduleInfos ]] && mkdir -p ~/smoketest/ScheduleInfos
 
@@ -30,7 +62,7 @@ then
 #    popd > /dev/null
 fi
 
-echo "Tests on $(date -d ${testDay} +%A), $testDay :"; 
+echo "Tests on $(date -d ${testDay} +%A), $testDay:"; 
 echo "-----------------------------------------"; 
 echo "List of scheduled test:"; 
 echo "======================="
@@ -64,16 +96,20 @@ do
     then
         [[ -z "${arr[0]}" ]] && arr[0]=$(dirname $fn)
 
-        echo "$cnt,${arr[0]},${arr[1]},${arr[2]},$timestamp ($version)"
-	a=("${arr[0]}" "${arr[1]}" "${arr[2]}")
+        printf "%s,%s,%s,%s" "$cnt" "${arr[0]}" "${arr[1]}" "${arr[2]}"
+      
+        a=("${arr[0]}" "${arr[1]}" "${arr[2]}")
 	
     else
         [[ -z "${arr[1]}" ]] && arr[1]=$(dirname $fn)
 
-        echo "$cnt,${arr[1]},${arr[2]},${arr[0]},$timestamp ($version)"
+        printf "%s,%s,%s,%s" "$cnt" "${arr[1]}" "${arr[2]}" "${arr[0]}"
+
         a=( "${arr[1]}" "${arr[2]}" "${arr[0]}" )
 
     fi
+    [[ $verbose -eq 1 ]] && printf ",%s,(%s)" "$timestamp" "$version"
+    printf "\n"
     PRs+=( a[@] )
 
     set +x
@@ -127,21 +163,24 @@ done
 
 echo "-----------------------------------------"
 
-echo ""
-echo "List of RTE changes:"; 
-echo "===================="
-echo ""
-echo "From closed PRs:"
-echo "................"
-#find OldPrs/PR-* -iname 'RelWithDebInfo_Build*' -type f -exec egrep -H 'RTE changed' '{}' \;
-find OldPrs/PR-* -iname 'prp-*' -type f -exec egrep -H ' testing/regress/(ecl-|hpcc/)' '{}' \;
+if [[ $rte -ne 0 ]]
+then
+    echo ""
+    echo "List of RTE changes:"; 
+    echo "===================="
+    echo ""
+    echo "From closed PRs:"
+    echo "................"
+    #find OldPrs/PR-* -iname 'RelWithDebInfo_Build*' -type f -exec egrep -H 'RTE changed' '{}' \;
+    find OldPrs/PR-* -iname 'prp-*' -type f -exec egrep -H ' testing/regress/(ecl-|hpcc/)' '{}' \;
 
-echo ""
-echo "From open PRs:"
-echo "................"
-#find PR-*/ -iname 'RelWithDebInfo_Build*' -type f -exec egrep -H 'RTE changed' '{}' \;
-find PR-*/ -iname 'prp-*' -type f -exec egrep -H ' testing/regress/(ecl-|hpcc/)' '{}' \;
-echo "................"
+    echo ""
+    echo "From open PRs:"
+    echo "................"
+    #find PR-*/ -iname 'RelWithDebInfo_Build*' -type f -exec egrep -H 'RTE changed' '{}' \;
+    find PR-*/ -iname 'prp-*' -type f -exec egrep -H ' testing/regress/(ecl-|hpcc/)' '{}' \;
+    echo "................"
+fi
 echo ""
 echo "End."
 
