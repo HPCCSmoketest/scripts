@@ -1181,6 +1181,7 @@ def CleanUpClosedPulls(knownPullRequests, smoketestHome):
             prIdStr=pullReqDir.replace('PR-', '')
             if prIdStr in threads:
                 # Yes, skip it
+                print ("\tIt is still in 'threads', skip it.")
                 continue
                 
             newlyClosedPrs +=1

@@ -137,7 +137,7 @@ do
     item=$(egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :|In PR-' $fn | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' -e 's/^[0-9]*\/[0-9]*\.\s//g' | sed -r 's/(.*) ((sha: \w{8,8})([a-zA-Z0-9]+)), (.*)/\1 \3, \5/' )
 
     timestamp=$( egrep 'Finished:' $fn | tr -d '\t' | cut -d ' ' -f 1,2,3 | tr -d ',' )
-    [[ -z "$item" ]] && echo -e "$fn\n\tNONE" || printf "%s, %s %s\n" "$cnt" "$item" $( [[ $verbose -eq 1 ]] && echo " ($timestamp)"|| echo "")
+    [[ -z "$item" ]] && echo -e "$fn\n\tNONE" ||  printf "%s, %s" "$cnt" "$item";  [[ $verbose -eq 1 ]] && printf " ( %s) " "$timestamp";  printf "\n"
 done
 [[ ${#fns[@]} -eq 0 ]] && echo "None"
     
