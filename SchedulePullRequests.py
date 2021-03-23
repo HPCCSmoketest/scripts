@@ -1175,14 +1175,20 @@ def CleanUpClosedPulls(knownPullRequests, smoketestHome):
     os.chdir(smoketestHome)
     newlyClosedPrs = 0;
     if 0 < len(knownPullRequests):
+        print("")
         # we have some closed PR
         for pullReqDir in knownPullRequests:
             # Is this pull request under the testing (but, it is closed meanwhile, therefore not in open pull requests)
             prIdStr=pullReqDir.replace('PR-', '')
             if prIdStr in threads:
                 # Yes, skip it
-                print ("\tIt is still in 'threads', skip it.")
-                continue
+                print("%s" % (pullReqDir) )
+                if threads[prIdStr]['thread'].is_alive():
+                    print("\tIt is still in 'threads' and alive skip it.")
+                    continue
+                else:
+                    print("\tIt is finished and closed, remove from 'threads'")
+                    del threads[prIdStr]
                 
             newlyClosedPrs +=1
             # to save disk space delete its HPCC-Platfrom and build directories.
@@ -1204,11 +1210,11 @@ def CleanUpClosedPulls(knownPullRequests, smoketestHome):
                     errorStr += str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")\n" 
                     print(errorStr)
                     
-            print ("Move "+ pullReqDir + " closed directory to OldPrs/ .")
+            print ("Move closed "+ pullReqDir + " directory to OldPrs/ .")
             myProc = subprocess.Popen(["mv -f " + pullReqDir +" OldPrs/"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             (myStdout,  myStderr) = myProc.communicate()
             result = "returncode:" + str(myProc.returncode) + ", stdout:'" + myStdout + "', stderr:'" + myStderr.replace('\n','') + "'."
-            print("Result: "+result)
+            print("\tResult: "+result)
             
             if myProc.returncode != 0 and 'cannot move' in myStderr:
                 # Handle the rare situation when PR directory already exists in OldPrs
