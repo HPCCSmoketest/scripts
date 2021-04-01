@@ -131,6 +131,8 @@ echo "Enable core generation."
 ulimit -c unlimited
 
 ulimit -a
+echo " "
+git --version
 
 # Using GitHub token the agent magic doesn't necessary 
 # Update agent pid
