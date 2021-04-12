@@ -67,8 +67,9 @@ echo "-----------------------------------------";
 echo "List of Skipped tests:"; 
 echo "======================"
 
-dayinsec=$(( 3600 * 24 ))
-testDayOffset=$(( ( $(date "+%s") / $dayinsec ) - ( $(date --date "$testDay" "+%s" ) / $dayinsec ) - 1 ))
+dayInSec=$(( 3600 * 24 ))
+testDayOffset=$(( ( $(date "+%s") / $dayInSec ) - ( $(date --date "$testDay 12:30" "+%s" ) / $dayInSec ) ))
+[[ $verbose -eq 1 ]] && (echo "testDayOffset: $testDayOffset"; echo "")
 
 find PR-*/ -daystart -mtime $testDayOffset -iname 'build.summary' -exec egrep -H -i 'skipped' {} \; | awk -F '/' '{print $1 }'
 echo "-----------------------------------------"; 
