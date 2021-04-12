@@ -2499,6 +2499,11 @@ def HandleSkippedPulls(prSkipped):
                     outFile.write( prSkipped[prid]['sha'])
                     outFile.close()# store commit crc
                     isAlreadyCommented =  False
+                    # Update build.summary timestamps with 'touch' command
+                    print("Update build.summary timestamp")
+                    myProc = subprocess.Popen(["touch build.summary"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                    result = formatResult(myProc, None)
+                    
             else:
                 print("build.summary exists in %s but it's content not as expected. Correct it." % (testDir))
                 buildSummary = open('build.summary', "w")

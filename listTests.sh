@@ -43,7 +43,6 @@ do
     shift
 done
 
-
 [[ ! -d ~/smoketest/ScheduleInfos ]] && mkdir -p ~/smoketest/ScheduleInfos
 
 if [[ -d ~/smoketest/ScheduleInfos ]]
@@ -64,6 +63,16 @@ fi
 
 echo "Tests on $(date -d ${testDay} +%A), $testDay:"; 
 echo "-----------------------------------------"; 
+
+echo "List of Skipped tests:"; 
+echo "======================"
+
+dayinsec=$(( 3600 * 24 ))
+testDayOffset=$(( ( $(date "+%s") / $dayinsec ) - ( $(date --date "$testDay" "+%s" ) / $dayinsec ) - 1 ))
+
+find PR-*/ -daystart -mtime $testDayOffset -iname 'build.summary' -exec egrep -H -i 'skipped' {} \; | awk -F '/' '{print $1 }'
+echo "-----------------------------------------"; 
+echo ""
 echo "List of scheduled test:"; 
 echo "======================="
 
