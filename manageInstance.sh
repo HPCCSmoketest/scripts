@@ -346,6 +346,15 @@ then
         fi
     fi
 
+    BOOST_PKG=$( find ~/ -iname 'boost_1_71*' -type f -size +100M -print | head -n 1 )
+    if [[ -n "$BOOST_PKG" ]]
+    then
+        WriteLog "Upload boost_1_71_0.tar.gz" "$LOG_FILE"
+        res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${BOOST_PKG} centos@${instancePublicIp}:/home/centos/ 2>&1 )
+        WriteLog "Res: $res" "$LOG_FILE"
+    else
+        WriteLog "The boost_1_71_0.tar.gz not found." "$LOG_FILE"
+    fi
 
     WriteLog "Upload init.sh" "$LOG_FILE"
     res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init.sh centos@${instancePublicIp}:/home/centos/ 2>&1 )

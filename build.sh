@@ -398,21 +398,23 @@ cd $PR_ROOT
 
 cd ${BUILD_ROOT}
 
-if [[ ( "${SYSTEM_ID}" =~ "Ubuntu_16_04" ) ]]
+#if [[ ( "${SYSTEM_ID}" =~ "Ubuntu_16_04" ) ]]
+if [[ -f $HOME/boost_1_71_0.tar.gz ]]
 then
     if [[ ! -f ${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz ]]
     then
         WritePlainLog "There is not '${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz' file." "$logFile"
-        #mkdir -p ${BUILD_ROOT}/downloads/
+        mkdir -p ${BUILD_ROOT}/downloads/
+        cp -v $HOME/boost_1_71_0.tar.gz ${BUILD_ROOT}/downloads/
         #wget -v  -O ${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz  https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
-        #WritePlainLog "$( ls -l ${BUILD_ROOT}/downloads/*.gz )" "$logFile"
+        WritePlainLog "$( ls -l ${BUILD_ROOT}/downloads/*.gz )" "$logFile"
         
-        MAKE_FILE="../HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake"
-        sed -e 's/TIMEOUT \(.*\)/TIMEOUT 60/g' ${MAKE_FILE} >temp.cmake && sudo mv -f temp.cmake ${MAKE_FILE}
-        WritePlainLog "There is $( egrep 'TIMEOUT' ${MAKE_FILE} )" "$logFile"
+        #MAKE_FILE="../HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake"
+        #sed -e 's/TIMEOUT \(.*\)/TIMEOUT 60/g' ${MAKE_FILE} >temp.cmake && sudo mv -f temp.cmake ${MAKE_FILE}
+        #WritePlainLog "There is $( egrep 'TIMEOUT' ${MAKE_FILE} )" "$logFile"
     fi
 else
-    WritePlainLog "This system is not PRP VM." "$logFile"
+    WritePlainLog "The boost_1_71_0.tar.gz not found." "$logFile"
 fi    
 
 
