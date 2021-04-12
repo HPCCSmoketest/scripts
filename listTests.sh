@@ -17,8 +17,6 @@ usage ()
     echo ""
 }
 
-clear
-
 testDay=$( date "+%y-%m-%d")
 verbose=0
 rte=0
@@ -61,8 +59,11 @@ then
 #    popd > /dev/null
 fi
 
+clear
+
 echo "Tests on $(date -d ${testDay} +%A), $testDay:"; 
 echo "-----------------------------------------"; 
+echo ""
 
 echo "List of Skipped tests:"; 
 echo "======================"
