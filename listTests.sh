@@ -130,7 +130,7 @@ do
     PRs+=( a[@] )
 
     set +x
-done < <(find OldPrs/PR-*/ PR-*/ -iname 'scheduler-'"$testDay"'*.test' -print)
+done < <(find OldPrs/PR-*/ PR-*/ -iname 'scheduler-'"$testDay"'*.test' -print | sort )
 
 #[[ $cnt -eq 0 ]] && echo "None"
 #[[ -n "$res" ]] && echo "$res" || echo "None"
@@ -146,7 +146,7 @@ echo "................"
 #res=$( find OldPrs/PR-*/ -iname 'result-'"$testDay"'*.log' -type f -printf "\n" -print -exec bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed 's/ : /: /g' | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' " \; )
 #[[ -n "$res" ]] && echo "$res" || echo "None"
 cnt=0
-fns=( $( find OldPrs/PR-*/ -iname 'result-'"$testDay"'*.log' -type f  -print  ) )
+fns=( $( find OldPrs/PR-*/ -iname 'result-'"$testDay"'*.log' -type f  -print  | sort ) )
 for fn in ${fns[@]}
 do
     cnt=$(( $cnt + 1 ))
@@ -165,7 +165,7 @@ echo ".............."
 #res=$( find PR-*/ -iname 'result-'"$testDay"'*.log' -type f -printf "\n" -print -exec bash -c "egrep '\s+Process PR-|\s+sha\s+:|\s+Summary\s+:|\s+pass :' '{}' | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed 's/ : /: /g' | sed -e 's/ : /: /' -e 's/,\(\s*\)/, /g' " \; )
 #[[ -n "$res" ]] && echo "$res" || echo "None"
 cnt=0
-fns=( $( find PR-*/ -iname 'result-'"$testDay"'*.log' -type f  -print  ) )
+fns=( $( find PR-*/ -iname 'result-'"$testDay"'*.log' -type f  -print | sort ) )
 for fn in ${fns[@]}
 do
     cnt=$(( $cnt + 1 ))
