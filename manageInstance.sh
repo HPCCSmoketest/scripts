@@ -94,6 +94,18 @@ CompressAndDownload()
     WriteLog "Res: $res" "$LOG_FILE"
 }
 
+CreateResultFile()
+{
+    MSG=$1
+    C_ID=$2
+    RESULT_FILE=${SMOKETEST_HOME}/${INSTANCE_NAME}/result-${TIME_STAMPT}.log
+    echo "${MSG}" > $RESULT_FILE
+    echo "1/1. Process ${INSTANCE_NAME}, label: ${MSG}" >> $RESULT_FILE 
+    echo " sha : ${C_ID} " >> $RESULT_FILE
+    echo " Summary : 0 sec (00:00:00) " >> $RESULT_FILE
+    echo " pass : False " >> $RESULT_FILE
+}
+
 #
 #------------------------------
 #
@@ -216,11 +228,15 @@ WriteLog "Instance ID: $instanceId" "$LOG_FILE"
 
 if [[ -z "$instanceId" ]]
 then
-   WriteLog "Instance creation failed, exit" "$LOG_FILE"
-   WriteLog "$instance" > ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
-   # Give a chance to re-try.
-   [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary ]] && rm ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
-   MyExit "-1" "Instance creation failed, exit" "$instance" "${INSTANCE_NAME}" "${C_ID}"
+    WriteLog "Instance creation failed, exit" "$LOG_FILE"
+    WriteLog "$instance" > ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
+    # Give a chance to re-try.
+    [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary ]] && rm ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
+
+    # Create result-yy-mm-dd_hh-mm-ss.log file to ensure it is appear in listtest.sh output   
+    CreateResultFile "Instance creation failed, exit" "${C_ID}"
+   
+    MyExit "-1" "Instance creation failed, exit" "$instance" "${INSTANCE_NAME}" "${C_ID}"
 fi
 
 instanceInfo=$( aws ec2 describe-instances --instance-ids ${instanceId} 2>&1 | egrep -i 'instan|status|public|volume' )
@@ -228,26 +244,33 @@ WriteLog "Instance info: $instanceInfo" "$LOG_FILE"
 
 if [[ $instanceInfo =~ "InvalidInstanceID.NotFound" ]]
 then
-   WriteLog "Instance creation failed, exit" "$LOG_FILE"
-   # Give a chance to re-try.
-   [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary ]] && rm ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
-   MyExit "-1" "Error:${instanceInfo}, exit" "$instance" "${INSTANCE_NAME}" "${C_ID}"
+    WriteLog "Instance creation failed, exit" "$LOG_FILE"
+    # Give a chance to re-try.
+    [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary ]] && rm ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
+   
+    # Create result-yy-mm-dd_hh-mm-ss.log file to ensure it is appear in listtest.sh output
+    CreateResultFile "Instance creation failed, exit" "${C_ID}"
+   
+    MyExit "-1" "Error:${instanceInfo}, exit" "$instance" "${INSTANCE_NAME}" "${C_ID}"
 
 fi
 instancePublicIp=$( echo "$instanceInfo" | egrep 'PublicIpAddress' | tr -d '", ' | cut -d : -f 2 )
 
 if [[ -z "$instancePublicIp" ]]
 then
-   WriteLog "Instance has not public IP exit" "$LOG_FILE"
-   WriteLog "$instance" > ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
-   # Give a chance to re-try.
-   [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary ]] && rm ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
+    WriteLog "Instance has not public IP exit" "$LOG_FILE"
+    WriteLog "$instance" > ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
+    # Give a chance to re-try.
+    [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary ]] && rm ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.summary
    
-   # Terminate the isntance
-   terminate=$( aws ec2 terminate-instances --instance-ids ${instanceId} 2>&1 )
-   WriteLog "Terminate because no Public IP:\n ${terminate}" "$LOG_FILE"
+    # Create result-yy-mm-dd_hh-mm-ss.log file to ensure it is appear in listtest.sh output
+    CreateResultFile "Instance has not public IP, exit" "${C_ID}"
    
-   MyExit "-1" "Instance has not public IP, exit" "$instance" "${INSTANCE_NAME}" "${C_ID}"
+    # Terminate the isntance
+    terminate=$( aws ec2 terminate-instances --instance-ids ${instanceId} 2>&1 )
+    WriteLog "Terminate because no Public IP:\n ${terminate}" "$LOG_FILE"
+   
+    MyExit "-1" "Instance has not public IP, exit" "$instance" "${INSTANCE_NAME}" "${C_ID}"
 fi
 WriteLog "Public IP: ${instancePublicIp}" "$LOG_FILE"
 
