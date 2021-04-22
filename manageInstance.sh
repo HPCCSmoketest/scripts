@@ -45,11 +45,14 @@ MyExit()
     runningInstanceID=$( aws ec2 describe-instances --filters "Name=tag:Name,Values=${instanceName}" "Name=tag:Commit,Values=${commitId}" --query "Reservations[].Instances[].InstanceId" --output text )
     publicIP=$( aws ec2 describe-instances --filters "Name=tag:Name,Values=${instanceName}" "Name=tag:Commit,Values=${commitId}" --query "Reservations[].Instances[].PublicIpAddress" --output text )
     [[ -z ${publicIP} ]] && publicIP="N/A"
+    WriteLog "MyExit(): Public IP: ${publicIP}" "$LOG_FILE"
     
     if [[ -n ${runningInstanceID} ]]
     then
         terminate=$( aws ec2 terminate-instances --instance-ids ${runningInstanceID} 2>&1 )
-        WriteLog "Terminate in MyExit() function:\n ${terminate}" "$LOG_FILE"
+        WriteLog "MyExit(): Terminate in instance result:\n ${terminate}" "$LOG_FILE"
+    else
+        WriteLog "MyExit(): Running instance ID not found." "$LOG_FILE"
     fi
 
     (echo "At $(date "+%Y.%m.%d %H:%M:%S") session (instance ID: ${runningInstanceID} on IP: ${publicIP}) exited with error code: $errorCode."; echo "${errorMsg}"; echo "${terminate}" ) | mailx -s "Abnormal end of session $instanceName ($commitId) on ${publicIP}" attila.vamos@gmail.com,attila.vamos@lexisnexisrisk.com
@@ -255,6 +258,20 @@ then
 
 fi
 instancePublicIp=$( echo "$instanceInfo" | egrep 'PublicIpAddress' | tr -d '", ' | cut -d : -f 2 )
+
+tryCount=5
+delay=10 # sec
+while [[ -z "$instancePublicIp" ]]
+do
+    WriteLog "Instance has not public IP yet, wait for ${delay} sec and try again." "$LOG_FILE"
+    sleep ${delay}
+    instanceInfo=$( aws ec2 describe-instances --instance-ids ${instanceId} 2>&1 | egrep -i 'instan|status|public|volume' )
+    WriteLog "Instance info: $instanceInfo" "$LOG_FILE"
+    instancePublicIp=$( echo "$instanceInfo" | egrep 'PublicIpAddress' | tr -d '", ' | cut -d : -f 2 )
+    WriteLog "Public IP: '${instancePublicIp}'" "$LOG_FILE"
+    tryCount=$(( $tryCount - 1 ))
+    [[ $tryCount -eq 0 ]] && break;
+done
 
 if [[ -z "$instancePublicIp" ]]
 then
