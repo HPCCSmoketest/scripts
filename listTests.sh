@@ -72,7 +72,8 @@ dayInSec=$(( 3600 * 24 ))
 testDayOffset=$(( ( $(date "+%s") / $dayInSec ) - ( $(date --date "$testDay 12:30" "+%s" ) / $dayInSec ) ))
 [[ $verbose -eq 1 ]] && (echo "testDayOffset: $testDayOffset"; echo "")
 
-res=$( find PR-*/ -daystart -mtime $testDayOffset -iname 'build.summary' -exec egrep -H -i 'skipped' {} \; | awk -F '/' '{print $1 }' )
+res=$( find OldPrs/PR-*/ PR-*/ -daystart -mtime $testDayOffset -iname 'build.summary' -exec egrep -H -i 'skipped' {} \; | sed -e 's/OldPrs\/P\(.*\)$/P\1\/(closed)/' | awk -F '/' '{print $1 $3 }' | sort )
+
 if [[ -n "$res" ]]
 then
     echo "$res"
