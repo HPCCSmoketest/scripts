@@ -405,7 +405,9 @@ then
     then
         WritePlainLog "There is not '${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz' file." "$logFile"
         mkdir -p ${BUILD_ROOT}/downloads/
-        cp -v $HOME/boost_1_71_0.tar.gz ${BUILD_ROOT}/downloads/
+        res=$( cp -v $HOME/boost_1_71_0.tar.gz ${BUILD_ROOT}/downloads/ 2>&1 )
+        WritePlainLog "res: ${res}" "$logFile"
+        chmod 0766 ${BUILD_ROOT}/downloads/*.gz
         #wget -v  -O ${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz  https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
         WritePlainLog "$( ls -l ${BUILD_ROOT}/downloads/*.gz )" "$logFile"
         
