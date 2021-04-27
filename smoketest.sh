@@ -64,7 +64,33 @@ CheckIfNoSessionIsRunning()
                 echo "There is/are stuck ZIP(s): ${zipPids}"
                 sudo kill -9 ${zipPids}
             fi
+            eclTestPid=$( pgrep -f ecl-test )
+            engineTestTimeout=3600 # sec
+            if [ -n "${eclTestPid}" ]
+            then
+                hthorTimeInSec=$( ps -o etimes= -p $(pgrep -f './ecl-test run -t hthor') )
+                thorTimeInSec=$( ps -o etimes= -p $(pgrep -f './ecl-test run -t thor') )
+                roxieTimeInSec=$( ps -o etimes= -p $(pgrep -f './ecl-test run -t roxie') )
+                echo "Test runtimes: Hthor: ${hthorTimeInSec} sec, Thor: ${thorTimeInSec} sec, Roxie: ${roxieTimeInSec} sec, engine test timeout: ${engineTestTimeout}."
+                
+                if [[ ${hthorTimeInSec} -gt ${engineTestTimeout}  || ${thorTimeInSec} -gt ${engineTestTimeout} || ${roxieTimeInSec} -gt ${engineTestTimeout} ]]
+                then
+                    echo "There is/are stuck ecl-test(s): ${eclTestPid}."
+                    sudo kill -TERM ${eclTestPid}
+                else
+                    echo "Engine tests are still running, but it seems not too long time, so give them some more time."
+                fi
+            fi
         fi
+  
+        # Check GDB and kill it if it is running longer than the value of dbTimeOut in sec.
+        gdbTimeOut=300 # sec
+        pgrep -f gdb | while read pid
+        do 
+            procTime=$(ps -o etimes= -p $pid )
+            printf "GDB pid: %7d, run time: %4d sec. " "$pid" "${procTime}"
+            [[ ${procTime} -gt ${gdbTimeOut} ]]  && (echo " -> Running longer than $gdbTimeOut sec, kill"; sudo kill -KILL $pid) || echo " "
+        done
         
         checkCount=$(( $checkCount + 1 ))
         # Give it some time to finish
