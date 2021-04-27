@@ -68,7 +68,7 @@ CheckIfNoSessionIsRunning()
             engineTestTimeout=3600 # sec
             if [ -n "${eclTestPid}" ]
             then
-                 hthorTimeInSec=$( hthorPid=$(pgrep -f './ecl-test run -t hthor'); [[ -n "${hthorPid}" ]] && echo $( ps -o etimes= -p ${hthorPid} ) || echo "0" )
+                hthorTimeInSec=$( hthorPid=$(pgrep -f './ecl-test run -t hthor'); [[ -n "${hthorPid}" ]] && echo $( ps -o etimes= -p ${hthorPid} ) || echo "0" )
                 thorTimeInSec=$( thorPid=$(pgrep -f './ecl-test run -t thor'); [[ -n "${thorPid}" ]] && echo $( ps -o etimes= -p ${thorPid} ) || echo "0" )
                 roxieTimeInSec=$( roxiePid=$(pgrep -f './ecl-test run -t roxier'); [[ -n "${roxiePid}" ]] && echo $( ps -o etimes= -p ${roxiePid} ) || echo "0" )
                 echo "Test runtimes: Hthor: ${hthorTimeInSec} sec, Thor: ${thorTimeInSec} sec, Roxie: ${roxieTimeInSec} sec, engine test timeout: ${engineTestTimeout}."

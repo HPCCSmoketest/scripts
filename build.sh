@@ -404,7 +404,7 @@ then
     if [[ ! -f ${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz ]]
     then
         WritePlainLog "There is not '${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz' file." "$logFile"
-        mkdir -p ${BUILD_ROOT}/downloads/
+        mkdir -p ${BUILD_ROOT}/downloads/boost_1_71_0
         res=$( cp -v $HOME/boost_1_71_0.tar.gz ${BUILD_ROOT}/downloads/ 2>&1 )
         WritePlainLog "res: ${res}" "$logFile"
         chmod 0766 ${BUILD_ROOT}/downloads/*.gz
