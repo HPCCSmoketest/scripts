@@ -118,9 +118,11 @@ gitHubToken=None
 
 if 'inux' in sysId:
     myProc = subprocess.Popen(["gcc --version | head -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-    sysId += '\n GCC: ' + myProc.stdout.read().rstrip('\n')
+    sysId += '\n GCC:  ' + myProc.stdout.read().rstrip('\n')
     myProc = subprocess.Popen(["hostname"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
     sysId += '\n Host: ' + myProc.stdout.read().rstrip('\n')
+    myProc = subprocess.Popen(["git --version"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    sysId += '\n Git:  ' + myProc.stdout.read().rstrip('\n')
     
 
 failEmoji=':x:'
