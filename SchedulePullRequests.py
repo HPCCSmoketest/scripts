@@ -2478,7 +2478,10 @@ def HandleSkippedPulls(prSkipped):
         if not os.path.exists('build.summary'):
             print("build.summary not exists in %s." % (testDir))
             buildSummary = open('build.summary', "w")
-            buildSummary.write("Skipped");
+            if prSkipped[prid]['excludeFromTest'] == True:
+                buildSummary.write("Exclude from test, skipped")
+            else:
+                buildSummary.write("Skipped");
             buildSummary.close()
             isAlreadyCommented =  False
         else:

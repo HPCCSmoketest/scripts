@@ -203,8 +203,11 @@ echo "---------------------------------"
 
 echo "Find and remove 'build' and ' HPCC-Platfrom' directories"
 
-find PR-*/ -maxdepth 1 -iname 'build' -type d -print -exec rm -rf '{}' \;
-find PR-*/ -maxdepth 1 -iname 'HPCC-Platform' -type d -print -exec rm -rf '{}' \;
+if [[ "$keepFiles" != "1" ]]
+then
+    find PR-*/ -maxdepth 1 -iname 'build' -type d -print -exec rm -rf '{}' \;
+    find PR-*/ -maxdepth 1 -iname 'HPCC-Platform' -type d -print -exec rm -rf '{}' \;
+fi
 
 find OldPrs/PR-*/ -maxdepth 1 -iname 'build' -type d -print -exec rm -rf '{}' \;
 find OldPrs/PR-*/ -maxdepth 1 -iname 'HPCC-Platform' -type d -print -exec rm -rf '{}' \;

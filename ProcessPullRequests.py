@@ -750,6 +750,7 @@ def GetOpenPulls(knownPullRequests):
         prs[prid] = {'user':pr['user']['login'], 'code_base':pr['base']['ref'],  'label':pr['head']['ref'].encode('ascii','replace'),
                             'sha':pr['head']['sha'], 'title':pr['title'], 'draft':False }
         
+        prs[prid] ['prBranchId'] = prs[prid]['label'] + '-smoketest'
         prs[prid]['checkBoxes'] = ProcessPrBody(pr['body'])
         
         if ('draft' in pr) and (skipDraftPr == False) and not prs[prid]['checkBoxes']['testDraft']:
@@ -760,10 +761,10 @@ def GetOpenPulls(knownPullRequests):
         # 2018-05-02 -ff fall back to interactive, forbid it with --no-edit parameter.
         # It can be git/github or master branch problem and not Smoketest, but solved here
         #prs[prid]['cmd'] = 'git pull -ff upstream pull/'+str(prid)+'/head:'+repr(pr['head']['ref'])+'-smoketest'
-        prs[prid]['cmd'] = 'git pull -ff --no-edit upstream pull/'+str(prid)+'/head:'+repr(pr['head']['ref'])+'-smoketest'
+        prs[prid]['cmd'] = 'git pull -ff --no-edit upstream pull/'+str(prid)+'/head:' +  prs[prid] ['prBranchId'] 
 
         # On some version of git there is not "--no-edit" parameter like in OBT-011 system
-        prs[prid]['cmd2'] = 'git pull -ff  upstream pull/'+str(prid)+'/head:'+repr(pr['head']['ref'])+'-smoketest'
+        prs[prid]['cmd2'] = 'git pull -ff  upstream pull/'+str(prid)+'/head:' +  prs[prid] ['prBranchId'] 
         
         prs[prid]['addComment'] = {}
         prs[prid]['addComment']['cmd'] = 'curl -H "Content-Type: application/json" '\
@@ -1060,6 +1061,9 @@ def GetOpenPulls(knownPullRequests):
                 testedPRs += 1
             else:
                 print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' is in draft state, skip it!')
+                buildSummaryFile = open(buildSummaryFileName,  "wb")
+                buildSummaryFile.write( "prs[prid]['label']+' is in draft state, skipped." )
+                buildSummaryFile.close()
                 skippedPRs += 1
                 
     print("Number of open PRs      : %2d" % (openPRs))
@@ -2111,7 +2115,15 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             myProc = subprocess.Popen("git clean -f -fd",  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             result = formatResult(myProc, resultFile)
             #resultFile.write("\tresult:"+result+"\n")
-                
+            
+            # Pull the base  branch
+            s = "\tpull base branch "
+            print(s)
+            resultFile.write(s + '\n')
+            myProc = subprocess.Popen("git pull",  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            result = formatResult(myProc, resultFile)
+            
+            
             # Pull the branch
             # git fetch upstream pull/<'number'>/head:<'label'>+'-smoketest'
             print("\t"+prs[prid]['cmd'])
@@ -2126,6 +2138,9 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                     myProc = subprocess.Popen(prs[prid]['cmd2'],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                     (result, retcode) = formatResult(myProc, resultFile)
                 
+            myProc = subprocess.Popen("git checkout " +  prs[prid] ['prBranchId'] ,  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            (result, retcode) = formatResult(myProc, resultFile)
+
             if (retcode != 0) and ('Merge conflict' not in result) and ('Adding as' not in result):
                 noBuildReason = "Error in git command, should skip build and test."
                 resultFile.write("\tError in git command, should skip build and test.\n")
@@ -2393,7 +2408,9 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             myProc = subprocess.Popen(["sudo rm -rf HPCC-Platform build hpcc"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             result = formatResult(myProc, resultFile)
             #resultFile.write("\tresult:"+result+"\n")
-              
+        else:
+            print("Keep files")
+
         endTimestamp = time.time()
         myPrint("\tElapsed time:"+str(endTimestamp-startTimestamp)+" sec.")
         resultFile.write("\tElapsed time:"+str(endTimestamp-startTimestamp)+" sec.\n")

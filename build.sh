@@ -19,23 +19,6 @@ TARGET_DIR=""
 date=$(date +%Y-%m-%d_%H-%M-%S);
 logFile=$PR_ROOT/${BUILD_TYPE}"_Build_"$date".log";
 
-PARALLEL_REGRESSION_TEST=1
-hthorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Hthor_"$date".log";
-HTHOR_PQ=4
-unset HTHOR_PID
-
-thorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Thor_"$date".log";
-THOR_PQ=14
-unset THOR_PID
-
-roxieTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Roxie_"$date".log";
-ROXIE_PQ=4
-unset ROXIE_PID
-resultFile=$PR_ROOT/${BUILD_TYPE}"_result_"$date".log";
-
-HPCC_LOG_ARCHIVE=$PR_ROOT/HPCCSystems-logs-$date
-HPCC_CORE_ARCHIVE=$PR_ROOT/HPCCSystems-cores-$date
-
 #
 #----------------------------------------------------
 #
@@ -44,6 +27,28 @@ cp -vf ../utils.sh .
 . ./utils.sh
 
 cp -vf ../checkDiskSpace.sh .
+
+#
+#----------------------------------------------------
+#
+
+PARALLEL_REGRESSION_TEST=1
+hthorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Hthor_"$date".log";
+HTHOR_PQ=$(( $NUMBER_OF_CPUS  / 4 ))   # 4 on AWS
+unset HTHOR_PID
+
+thorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Thor_"$date".log";
+THOR_PQ=$(( $NUMBER_OF_CPUS * 7 / 8 ))   # 14 on AWS
+unset THOR_PID
+
+roxieTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Roxie_"$date".log";
+ROXIE_PQ=$(( $NUMBER_OF_CPUS  / 4 ))   # 4 on AWS
+unset ROXIE_PID
+
+resultFile=$PR_ROOT/${BUILD_TYPE}"_result_"$date".log";
+
+HPCC_LOG_ARCHIVE=$PR_ROOT/HPCCSystems-logs-$date
+HPCC_CORE_ARCHIVE=$PR_ROOT/HPCCSystems-cores-$date
 
 #
 #----------------------------------------------------

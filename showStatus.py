@@ -114,7 +114,17 @@ def update():
                                 
                             elif 'egression' in phase:
                                 # Test if it is Parallel Engine environment
-                                logfiles2 = sorted(glob.glob(pr + '/*_Regress_*.log'))
+                                logfiles2 = []
+                                f =sorted(glob.glob(pr + '/*_Regress_H*.log'))[-1:]
+                                if len(f) > 0:
+                                    logfiles2.extend(f)
+                                f =sorted(glob.glob(pr + '/*_Regress_R*.log'))[-1:]
+                                if len(f) > 0:
+                                    logfiles2.extend(f)
+                                f =sorted(glob.glob(pr + '/*_Regress_T*.log'))[-1:]
+                                if len(f) > 0:
+                                    logfiles2.extend(f)
+
 #                                if len(logfiles2) == 3:
 #                                    logFile=logfiles2[2] # Yes, it is, use RelWithDebInfo_Regress_Thor_YYYY-MM-DD_hh-mm-ss.log
 #                                else:
