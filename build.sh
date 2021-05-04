@@ -403,27 +403,45 @@ cd $PR_ROOT
 
 cd ${BUILD_ROOT}
 
-#if [[ ( "${SYSTEM_ID}" =~ "Ubuntu_16_04" ) ]]
-if [[ -f $HOME/boost_1_71_0.tar.gz ]]
-then
-    if [[ ! -f ${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz ]]
-    then
-        WritePlainLog "There is not '${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz' file." "$logFile"
-        mkdir -p ${BUILD_ROOT}/downloads/boost_1_71_0
-        res=$( cp -v $HOME/boost_1_71_0.tar.gz ${BUILD_ROOT}/downloads/ 2>&1 )
-        WritePlainLog "res: ${res}" "$logFile"
-        chmod 0766 ${BUILD_ROOT}/downloads/*.gz
-        #wget -v  -O ${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz  https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
-        WritePlainLog "$( ls -l ${BUILD_ROOT}/downloads/*.gz )" "$logFile"
-        
-        #MAKE_FILE="../HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake"
-        #sed -e 's/TIMEOUT \(.*\)/TIMEOUT 60/g' ${MAKE_FILE} >temp.cmake && sudo mv -f temp.cmake ${MAKE_FILE}
-        #WritePlainLog "There is $( egrep 'TIMEOUT' ${MAKE_FILE} )" "$logFile"
-    fi
-else
-    WritePlainLog "The boost_1_71_0.tar.gz not found." "$logFile"
-fi    
+res=$( wget -v --spider  https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz )
+isDownloadable=$?
 
+if [[ "${isDownloadable}" -ne 0 ]]
+then
+    WritePlainLog "* * * * Can't download boost_1_71_0.tar.gz from https://dl.bintray.com/boostorg file, use local copy." "$logFile"
+
+    if [[ -f $HOME/boost_1_71_0.tar.gz ]]
+    then
+        if [[ ! -f ${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz ]]
+        then
+            WritePlainLog "There is not '${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz' file." "$logFile"
+            #mkdir -p ${BUILD_ROOT}/downloads/boost_1_71_0
+            #res=$( cp -v $HOME/boost_1_71_0.tar.gz ${BUILD_ROOT}/downloads/ 2>&1 )
+            #WritePlainLog "res: ${res}" "$logFile"
+            #chmod 0766 ${BUILD_ROOT}/downloads/*.gz
+            #pushd ${BUILD_ROOT}/downloads
+            #tar -xzvf boost_1_71_0.tar.gz
+            #WritePlainLog "retcode: $?" "$logFile"
+            #popd
+
+            WritePlainLog "Hack 'HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake' to use local copy" "$logFile"
+            sed -i -e 's/URL \(.*\)$/URL \/home\/centos\/boost_1_71_0.tar.gz/g' -e 's/URL_HASH/# URL_HASH/g' ../HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake
+            res=$( egrep 'URL |URL_HASH' ../HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake )
+            WritePlainLog "res:\n$res" "$logFile"
+
+            #wget -v  -O ${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz  https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
+            WritePlainLog "$( ls -l ${BUILD_ROOT}/downloads/*.gz )" "$logFile"
+            
+            #MAKE_FILE="../HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake"
+            #sed -e 's/TIMEOUT \(.*\)/TIMEOUT 60/g' ${MAKE_FILE} >temp.cmake && sudo mv -f temp.cmake ${MAKE_FILE}
+            #WritePlainLog "There is $( egrep 'TIMEOUT' ${MAKE_FILE} )" "$logFile"
+        fi
+    else
+        WritePlainLog "The boost_1_71_0.tar.gz not found." "$logFile"
+    fi    
+else
+    WritePlainLog "The boost_1_71_0.tar.gz is downloadable." "$logFile"
+fi
 
 WritePlainLog "Create makefiles $(date +%Y-%m-%d_%H-%M-%S)" "$logFile"
 #cmake -G"Eclipse CDT4 - Unix Makefiles" -D CMAKE_BUILD_TYPE=Debug -D CMAKE_ECLIPSE_MAKE_ARGUMENTS=-30 ../HPCC-Platform ln -s ../HPCC-Platform >> $logFile 2>&1
