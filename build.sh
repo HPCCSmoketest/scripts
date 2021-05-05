@@ -34,15 +34,32 @@ cp -vf ../checkDiskSpace.sh .
 
 PARALLEL_REGRESSION_TEST=1
 hthorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Hthor_"$date".log";
-HTHOR_PQ=$(( $NUMBER_OF_CPUS  / 4 ))   # 4 on AWS
+if [[ $NUMBER_OF_CPUS -eq 8 ]]
+then
+    #HTHOR_PQ=$(( $NUMBER_OF_CPUS / 4  + (($RANDOM %  3) - 1 ) ))  # 1, 2 or 3
+    HTHOR_PQ=$(( $NUMBER_OF_CPUS / 4  + ( $RANDOM %  2 ) ))  #  2 or 3
+else
+    HTHOR_PQ=$(( $NUMBER_OF_CPUS  / 4 ))   # 4 on AWS
+fi
 unset HTHOR_PID
 
 thorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Thor_"$date".log";
-THOR_PQ=$(( $NUMBER_OF_CPUS * 7 / 8 ))   # 14 on AWS
+if [[ $NUMBER_OF_CPUS -eq 8 ]]
+then
+    THOR_PQ=$((  5 * $NUMBER_OF_CPUS / 8  + (($RANDOM %  3) - 1 ) ))  # 5, 6, or 7
+else
+    THOR_PQ=$(( $NUMBER_OF_CPUS * 7 / 8 ))   # 14 on AWS
+fi
 unset THOR_PID
 
 roxieTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Roxie_"$date".log";
-ROXIE_PQ=$(( $NUMBER_OF_CPUS  / 4 ))   # 4 on AWS
+if [[ $NUMBER_OF_CPUS -eq 8 ]]
+then
+    #ROXIE_PQ=$((   $NUMBER_OF_CPUS / 4  + (($RANDOM %  3) - 1 ) ))  # 1, 2 or 3
+    ROXIE_PQ=$((   $NUMBER_OF_CPUS / 4  + ($RANDOM %  2) ))  #  2 or 3
+else
+    ROXIE_PQ=$(( $NUMBER_OF_CPUS  / 4 ))   # 4 on AWS
+fi
 unset ROXIE_PID
 
 resultFile=$PR_ROOT/${BUILD_TYPE}"_result_"$date".log";
@@ -425,7 +442,7 @@ then
             #popd
 
             WritePlainLog "Hack 'HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake' to use local copy" "$logFile"
-            sed -i -e 's/URL \(.*\)$/URL \/home\/centos\/boost_1_71_0.tar.gz/g' -e 's/URL_HASH/# URL_HASH/g' ../HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake
+            sed -i -e 's/URL \(.*\)$/URL '"${HOME//\//\\/}"'\/boost_1_71_0.tar.gz/g' -e 's/URL_HASH/# URL_HASH/g' ../HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake
             res=$( egrep 'URL |URL_HASH' ../HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake )
             WritePlainLog "res:\n$res" "$logFile"
 
@@ -995,18 +1012,21 @@ then
                         WritePlainLog "Parallel regression test started..." "$logFile"
                         WritePlainLog  "Start hthor regression ..." "$logFile"
                         hthorCmd="./ecl-test run -t hthor ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} ${STORED_PARAMS} --generateStackTrace --pq $HTHOR_PQ"
+                        WritePlainLog  "hthorCmd: ${hthorCmd}" "$logFile"
                         exec   ${hthorCmd} > $hthorTestLogFile 2>&1 &
                         HTHOR_PID=$!
                         WritePlainLog  "Hthor pid: $HTHOR_PID." "$logFile"
 
                         WritePlainLog "Start thor regression..." "$logFile"
                         thorCmd="./ecl-test run -t thor ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} ${STORED_PARAMS} --generateStackTrace --pq $THOR_PQ"
+                        WritePlainLog  "thorCmd: ${thorCmd}" "$logFile"
                         exec ${thorCmd}  > $thorTestLogFile 2>&1 &
                         THOR_PID=$!
                         WritePlainLog  "Thor pid: $THOR_PID." "$logFile"
                         
                         WritePlainLog "Start roxie regression..." "$logFile"
                         roxieCmd="./ecl-test run -t roxie ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} ${STORED_PARAMS} --generateStackTrace --pq $ROXIE_PQ"
+                        WritePlainLog  "roxieCmd: ${roxieCmd}" "$logFile"
                         exec ${roxieCmd} > $roxieTestLogFile 2>&1 &
                         ROXIE_PID=$!
                         WritePlainLog  "Roxie pid: $ROXIE_PID." "$logFile"
