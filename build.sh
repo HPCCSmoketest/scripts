@@ -420,18 +420,21 @@ cd $PR_ROOT
 
 cd ${BUILD_ROOT}
 
-res=$( wget -v --spider  https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz )
+MAKE_FILE="$SOURCE_ROOT/cmake_modules/buildBOOST_REGEX.cmake"
+BOOST_URL=$( egrep 'URL ' $MAKE_FILE | awk '{print $2}')
+BOOST_PKG=${BOOST_URL##*/}; 
+res=$( wget -v --spider  $BOOST_URL )
 isDownloadable=$?
 
 if [[ "${isDownloadable}" -ne 0 ]]
 then
-    WritePlainLog "* * * * Can't download boost_1_71_0.tar.gz from https://dl.bintray.com/boostorg file, use local copy." "$logFile"
+    WritePlainLog "* * * * Can't download boost_1_71_0.tar.gzdile from $BOOST_URL, use local copy." "$logFile"
 
-    if [[ -f $HOME/boost_1_71_0.tar.gz ]]
+    if [[ -f $HOME/$BOOST_PKG ]]
     then
-        if [[ ! -f ${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz ]]
+        if [[ ! -f ${BUILD_ROOT}/downloads/$BOOST_PKG ]]
         then
-            WritePlainLog "There is not '${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz' file." "$logFile"
+            WritePlainLog "There is not '${BUILD_ROOT}/downloads/$BOOST_PKG' file." "$logFile"
             #mkdir -p ${BUILD_ROOT}/downloads/boost_1_71_0
             #res=$( cp -v $HOME/boost_1_71_0.tar.gz ${BUILD_ROOT}/downloads/ 2>&1 )
             #WritePlainLog "res: ${res}" "$logFile"
@@ -442,8 +445,8 @@ then
             #popd
 
             WritePlainLog "Hack 'HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake' to use local copy" "$logFile"
-            sed -i -e 's/URL \(.*\)$/URL '"${HOME//\//\\/}"'\/boost_1_71_0.tar.gz/g' -e 's/URL_HASH/# URL_HASH/g' ../HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake
-            res=$( egrep 'URL |URL_HASH' ../HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake )
+            sed -i -e 's/URL \(.*\)$/URL '"${HOME//\//\\/}/$BOOST_PKG"'/g' -e 's/URL_HASH/# URL_HASH/g' -e 's/TIMEOUT \(.*\)/TIMEOUT 90/g'  $MAKE_FILE
+            res=$( egrep 'URL |URL_HASH|TIMEOUT' $MAKE_FILE )
             WritePlainLog "res:\n$res" "$logFile"
 
             #wget -v  -O ${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz  https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
@@ -454,10 +457,13 @@ then
             #WritePlainLog "There is $( egrep 'TIMEOUT' ${MAKE_FILE} )" "$logFile"
         fi
     else
-        WritePlainLog "The boost_1_71_0.tar.gz not found." "$logFile"
+        WritePlainLog "The $BOOST_PKG not found." "$logFile"
     fi    
 else
-    WritePlainLog "The boost_1_71_0.tar.gz is downloadable." "$logFile"
+    WritePlainLog "The $BOOST_PKG is downloadable." "$logFile"
+    sed -e 's/TIMEOUT \(.*\)/TIMEOUT 60/g' ${MAKE_FILE} >temp.cmake && sudo mv -f temp.cmake ${MAKE_FILE}
+    res=$( egrep 'URL |TIMEOUT' $MAKE_FILE )
+    WritePlainLog "res:\n$res" "$logFile"
 fi
 
 WritePlainLog "Create makefiles $(date +%Y-%m-%d_%H-%M-%S)" "$logFile"
