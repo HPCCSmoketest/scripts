@@ -445,7 +445,7 @@ then
             #popd
 
             WritePlainLog "Hack 'HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake' to use local copy" "$logFile"
-            sed -i -e 's/URL \(.*\)$/URL '"${HOME//\//\\/}/$BOOST_PKG"'/g' -e 's/URL_HASH/# URL_HASH/g' -e 's/TIMEOUT \(.*\)/TIMEOUT 90/g'  $MAKE_FILE
+            sed -i -e 's/URL \(.*\)$/URL '"${HOME//\//\\/}\/$BOOST_PKG"'/g' -e 's/URL_HASH/# URL_HASH/g' -e 's/TIMEOUT \(.*\)/TIMEOUT 90/g'  $MAKE_FILE
             res=$( egrep 'URL |URL_HASH|TIMEOUT' $MAKE_FILE )
             WritePlainLog "res:\n$res" "$logFile"
 
