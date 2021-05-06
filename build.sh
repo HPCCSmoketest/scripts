@@ -428,7 +428,7 @@ isDownloadable=$?
 
 if [[ "${isDownloadable}" -ne 0 ]]
 then
-    WritePlainLog "* * * * Can't download boost_1_71_0.tar.gzdile from $BOOST_URL, use local copy." "$logFile"
+    WritePlainLog "* * * * Can't download file from $BOOST_URL, use local copy." "$logFile"
 
     if [[ -f $HOME/$BOOST_PKG ]]
     then
