@@ -37,7 +37,8 @@ hthorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Hthor_"$date".log";
 if [[ $NUMBER_OF_CPUS -eq 8 ]]
 then
     #HTHOR_PQ=$(( $NUMBER_OF_CPUS / 4  + (($RANDOM %  3) - 1 ) ))  # 1, 2 or 3
-    HTHOR_PQ=$(( $NUMBER_OF_CPUS / 4  + ( $RANDOM %  2 ) ))  #  2 or 3
+    #HTHOR_PQ=$(( $NUMBER_OF_CPUS / 4  + ( $RANDOM %  2 ) ))  #  2 or 3
+    HTHOR_PQ=$(( $NUMBER_OF_CPUS / 4  + ( $RANDOM % 3 ) ))  #  2, 3 or 4
 else
     HTHOR_PQ=$(( $NUMBER_OF_CPUS  / 4 ))   # 4 on AWS
 fi
@@ -46,7 +47,8 @@ unset HTHOR_PID
 thorTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Thor_"$date".log";
 if [[ $NUMBER_OF_CPUS -eq 8 ]]
 then
-    THOR_PQ=$((  5 * $NUMBER_OF_CPUS / 8  + (($RANDOM %  3) - 1 ) ))  # 5, 6, or 7
+    #THOR_PQ=$((  5 * $NUMBER_OF_CPUS / 8  + (($RANDOM %  3) - 1 ) ))  # 5, 6, or 7
+    THOR_PQ=$((  6 * $NUMBER_OF_CPUS / 8  + ($RANDOM %  3) ))  #  6, 7 or 8
 else
     THOR_PQ=$(( $NUMBER_OF_CPUS * 7 / 8 ))   # 14 on AWS
 fi
@@ -56,7 +58,8 @@ roxieTestLogFile=$PR_ROOT/${BUILD_TYPE}"_Regress_Roxie_"$date".log";
 if [[ $NUMBER_OF_CPUS -eq 8 ]]
 then
     #ROXIE_PQ=$((   $NUMBER_OF_CPUS / 4  + (($RANDOM %  3) - 1 ) ))  # 1, 2 or 3
-    ROXIE_PQ=$((   $NUMBER_OF_CPUS / 4  + ($RANDOM %  2) ))  #  2 or 3
+    #ROXIE_PQ=$((   $NUMBER_OF_CPUS / 4  + ($RANDOM %  2) ))  #  2 or 3
+    ROXIE_PQ=$((   $NUMBER_OF_CPUS / 4  + ($RANDOM % 3) ))  #  2, 3 or 4
 else
     ROXIE_PQ=$(( $NUMBER_OF_CPUS  / 4 ))   # 4 on AWS
 fi
