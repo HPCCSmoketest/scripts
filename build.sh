@@ -469,6 +469,27 @@ else
     WritePlainLog "res:\n$res" "$logFile"
 fi
 
+pushd ${PR_ROOT}
+if [[ ${ENABLE_CMakeLists_HACK} -eq 1 ]]
+then
+    WritePlainLog "Patch/hack some CMakeLists.txt" "$logFile"
+    pushd HPCC-Platform
+    sed -i -e 's/COMMAND make/COMMAND make -j '"${NUMBER_OF_BUILD_THREADS}"'/g' plugins/cassandra/CMakeLists.txt
+    sed -i -e 's/\${CMAKE_MAKE_PROGRAM}/\${CMAKE_MAKE_PROGRAM} -j '"${NUMBER_OF_BUILD_THREADS}"'/g' plugins/couchbase/CMakeLists.txt
+    sed -i -e 's/COMMAND make/COMMAND \${CMAKE_MAKE_PROGRAM} -j '"${NUMBER_OF_BUILD_THREADS}"'/g' plugins/redis/CMakeLists.txt
+    sed -i -e 's/\${CMAKE_MAKE_PROGRAM}/\${CMAKE_MAKE_PROGRAM} -j '"${NUMBER_OF_BUILD_THREADS}"'/g' system/aws/CMakeLists.txt
+    sed -i -e 's/\${CMAKE_MAKE_PROGRAM}/\${CMAKE_MAKE_PROGRAM} -j '"${NUMBER_OF_BUILD_THREADS}"'/g' system/azure/CMakeLists.txt
+    
+    res=$( git status )
+    ret=$?
+    WritePlainLog "ret: ${ret}\nres:\n$res" "$logFile"
+    popd
+    WritePlainLog "Done" "$logFile"
+else
+    WritePlainLog "CMakeFile patch hack disabled." "$logFile"
+fi
+popd
+
 WritePlainLog "Create makefiles $(date +%Y-%m-%d_%H-%M-%S)" "$logFile"
 #cmake -G"Eclipse CDT4 - Unix Makefiles" -D CMAKE_BUILD_TYPE=Debug -D CMAKE_ECLIPSE_MAKE_ARGUMENTS=-30 ../HPCC-Platform ln -s ../HPCC-Platform >> $logFile 2>&1
 #cmake  -G"Eclipse CDT4 - Unix Makefiles" -DINCLUDE_PLUGINS=ON -DTEST_PLUGINS=1 -DSUPPRESS_PY3EMBED=ON -DINCLUDE_PY3EMBED=OFF -DMAKE_DOCS=$DOCS_BUILD -DUSE_CPPUNIT=$UNIT_TESTS -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DUSE_LIBXSLT=ON -DXALAN_LIBRARIES= -D MAKE_CASSANDRAEMBED=1 -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D CMAKE_ECLIPSE_MAKE_ARGUMENTS=-30 ../HPCC-Platform ln -s ../HPCC-Platform >> $logFile 2>&1
