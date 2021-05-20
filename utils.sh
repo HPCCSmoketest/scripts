@@ -83,6 +83,8 @@ GLOBAL_EXCLUSION="-e=embedded,3rdparty"
 GLOBAL_EXCLUSION="--ef pipefail.ecl -e=embedded,3rdparty"
 PYTHON_PLUGIN=''
 
+ENABLE_CMakeLists_HACK=1
+
 #
 #-----------------------------------------------------------
 #
@@ -165,7 +167,9 @@ WriteEnvInfo()
         echo "Build threads: unlimited" >> $logFile
     else
         # Use 50% more threads than the number of CPUs you have
-        NUMBER_OF_BUILD_THREADS=$(( $NUMBER_OF_CPUS * 3 / 2 )) 
+        #NUMBER_OF_BUILD_THREADS=$(( $NUMBER_OF_CPUS * 3 / 2 )) 
+        # Use 100% more threads than the number of CPUs you have
+        NUMBER_OF_BUILD_THREADS=$(( $NUMBER_OF_CPUS *  2 )) 
         echo "Build threads: $NUMBER_OF_BUILD_THREADS"
         echo "Build threads: $NUMBER_OF_BUILD_THREADS" >> $logFile
     fi
