@@ -10,7 +10,7 @@ debug=0
 printf "engine,pq,queries,elaps,engine,pq,queries,elaps,engine,pq,queries,elaps,test,summary\n"
 while read fn
 do
-    echo $fn
+    # echo $fn
     while read line; 
     do 
         
