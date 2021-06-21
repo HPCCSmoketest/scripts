@@ -464,7 +464,7 @@ then
     fi    
 else
     WritePlainLog "The $BOOST_PKG is downloadable." "$logFile"
-    sed -e 's/TIMEOUT \(.*\)/TIMEOUT 60/g' ${MAKE_FILE} >temp.cmake && sudo mv -f temp.cmake ${MAKE_FILE}
+    sed -e 's/TIMEOUT \(.*\)/TIMEOUT 180/g' ${MAKE_FILE} >temp.cmake && sudo mv -f temp.cmake ${MAKE_FILE}
     res=$( egrep 'URL |TIMEOUT' $MAKE_FILE )
     WritePlainLog "res:\n$res" "$logFile"
 fi
