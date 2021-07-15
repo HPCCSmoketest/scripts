@@ -2153,7 +2153,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             myProc = subprocess.Popen("git checkout " +  prs[prid] ['prBranchId'] ,  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             (result, retcode) = formatResult(myProc, resultFile)
 
-            if (retcode != 0) and ('Merge conflict' not in result) and ('Adding as' not in result):
+            if (retcode != 0) and ('Merge conflict' not in result) and ('Adding as' not in result) and ('needs merge' not in result):
                 noBuildReason = "Error in git command, should skip build and test."
                 resultFile.write("\tError in git command, should skip build and test.\n")
             else:    
@@ -2170,7 +2170,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 result = ""
                 
             
-            if ('Unmerged paths:' in result) or (retcode != 0):
+            if ('Unmerged paths:' in result)  or ('needs merge' in result) or (retcode != 0):
                 # There is some conflict on this branch, I think it is better to skip build and test
                 if noBuildReason  == "":
                     noBuildReason = "Conflicting files, should skip build and test."

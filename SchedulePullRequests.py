@@ -799,6 +799,7 @@ def GetOpenPulls(knownPullRequests):
         prs[prid]['sessionTime'] = averageSessionTime   # default, average full test competion time
         prs[prid]['enableStackTrace'] = True
         prs[prid]['excludeFromTest'] = False
+        prs[prid]['containerized'] = False
         
         testDir = 'smoketest-'+str(prid)
         # mkdir smoketest-<PRID>
@@ -915,6 +916,7 @@ def GetOpenPulls(knownPullRequests):
             if len(t) == len(prs[prid]['files']):
                 # if the number of files in exludePaths is equal to the number of changed files then skip it.
                 prs[prid]['excludeFromTest'] = False  # Do not exlude but build it
+                prs[prid]['containerized'] = True
         
         isNotExcluded = prs[prid]['excludeFromTest'] == False
         
@@ -1113,7 +1115,7 @@ def GetOpenPulls(knownPullRequests):
                 prs[prid]['inQueue'] = True
                 buildPr += 1
                 #print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+" scheduled to testing (reason:'"+prs[prid]['reason']+"', is DOCS changed:"+str(prs[prid]['isDocsChanged'])+")")
-                print("Build PR-%s, label: %s scheduled to testing (reason:'%s', is DOCS changed: %s, is ECLWatch build: %s)" % (str(prid), prs[prid]['label'], prs[prid]['reason'], str(prs[prid]['isDocsChanged']), str(prs[prid]['buildEclWatch']) ) )
+                print("Build PR-%s, label: %s scheduled to testing (reason:'%s', is DOCS changed: %s, is ECLWatch build: %s, is Containerized: %s)" % (str(prid), prs[prid]['label'], prs[prid]['reason'], str(prs[prid]['isDocsChanged']), str(prs[prid]['buildEclWatch']), str(prs[prid]['containerized']) ))
             pass
             
             
