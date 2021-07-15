@@ -242,6 +242,7 @@ SUPPRESS_SPARK=1
 MAKE_WSSQL=0
 ENABLE_STACK_TRACE=''
 RTE_CHANGED=0
+CONTAINERIZED=0
 
 while [ $# -gt 0 ]
 do
@@ -307,6 +308,13 @@ do
                 RTE_CHANGED=${RTE_CHANGED//rteChanged=False/0}
                 WritePlainLog "RTE Changed: ${RTE_CHANGED}" "$logFile"
                 ;;
+                
+        containerized*)
+                CONTAINERIZED=${param//containerized=True/1}
+                CONTAINERIZED=${CONTAINERIZED}//containerized=False/0}
+                WritePlainLog "RTE Changed: ${CONTAINERIZED}" "$logFile"
+                ;;
+        
             
     esac
     shift
@@ -516,6 +524,7 @@ then
     CMAKE_CMD+=$' -D OPENSSL_LIBRARIES=/usr/local/lib/libssl.so -D OPENSSL_SSL_LIBRARY=/usr/local/lib/libssl.so'
 fi
 CMAKE_CMD+=$' -DCENTOS_6_BOOST=ON'
+CMAKE_CMD+=$' -DCONTAINERIZED='${CONTAINERIZED}
 CMAKE_CMD+=$' -D CMAKE_ECLIPSE_MAKE_ARGUMENTS=-30 ../HPCC-Platform'
 WritePlainLog "CMAKE_CMD:'${CMAKE_CMD}'\\n" "$logFile"
 
@@ -749,426 +758,432 @@ then
     CheckCMakeResult "$logFile"
     
     cd ${PR_ROOT}
-    if [[ -f environment.xml ]]
+    
+    
+    if [ ${CONTAINERIZED} -eq 0 ]
     then
-        echo "Copy and use preconfigured environment.xml"
-        sudo cp environment.xml $TARGET_DIR/etc/HPCCSystems/environment.xml
-        echo "Rename it to prevent further use"
-        mv environment.xml environment.xml-preconf
-    
-    else
-        # TO-DO fix it
-        echo "Patch $TARGET_DIR/etc/HPCCSystems/environment.xml to set $THOR_SLAVES slave Thor system"
-        sudo cp $TARGET_DIR/etc/HPCCSystems/environment.xml $TARGET_DIR/etc/HPCCSystems/environment.xml.bak
-        sed -e 's/slavesPerNode="\(.*\)"/slavesPerNode="'"$THOR_SLAVES"'"/g'                                    \
-                 -e 's/maxEclccProcesses="\(.*\)"/maxEclccProcesses="'"$NUMBER_OF_CPUS"'"/g'                  \
-                 -e 's/name="maxCompileThreads" value="\(.*\)"/name="maxCompileThreads" value="'"$NUMBER_OF_CPUS"'"/g'                  \
-                 "$TARGET_DIR/etc/HPCCSystems/environment.xml" > temp.xml && sudo mv -f temp.xml "$TARGET_DIR/etc/HPCCSystems/environment.xml"
-    fi
-    
-    cp $TARGET_DIR/etc/HPCCSystems/environment.xml environment.xml-used
-    
-    if [[ -d "$TARGET_DIR/opt/HPCCSystems/lib64" ]]
-    then
-        WritePlainLog "There is an unwanted lib64 directory, copy its contents into lib" "$logFile"
-        sudo cp -v $TARGET_DIR/opt/HPCCSystems/lib64/* $TARGET_DIR/opt/HPCCSystems/lib/
-    fi
-    
-    
-    # We can have more than one Thor node and each has their onw slavesPerNode attribute
-    WritePlainLog "Number of thor slaves (/thor node)  : $(sed -n 's/slavesPerNode="\(.*\)"/\1/p' $TARGET_DIR/etc/HPCCSystems/environment.xml | tr '\n' ',' | tr -d [:space:])" "$logFile"
-    WritePlainLog "Maximum number of Eclcc processes is: $(sed -n 's/maxEclccProcesses="\(.*\)"/\1/p' $TARGET_DIR/etc/HPCCSystems/environment.xml | tr -d [:space:])" "$logFile"
-    WritePlainLog "Maximum number of compile threads is: $(sed -n 's/<Option name=\"maxCompileThreads\" value=\"\(.*\)\"\/>/\1/p' $TARGET_DIR/etc/HPCCSystems/environment.xml | tr -d [:space:])" "$logFile"
-
-    WritePlainLog "Start HPCC system" "$logFile"
-
-    WritePlainLog "Check HPCC system status" "$logFile"
-
-    # Ensure no componenets are running
-    sudo /etc/init.d/hpcc-init status >> $logFile 2>&1
-    IS_THOR_ON_DEMAND=$( sudo /etc/init.d/hpcc-init status | egrep -i -c 'mythor \[OD\]' )
-    WritePlainLog ""  "$logFile"
-
-    hpccRunning=$( sudo /etc/init.d/hpcc-init status | grep -c "running")
-    if [[ "$hpccRunning" -ne 0 ]]
-    then
-        res=$(sudo /etc/init.d/hpcc-init stop |grep -c 'still')
-        # If the result is "Service dafilesrv, mydafilesrv is still running."
-        if [[ $res -ne 0 ]]
+        if [[ -f environment.xml ]]
         then
-            #echo $res
-            WritePlainLog "res: $res" "$logFile"
-            sudo /etc/init.d/dafilesrv stop >> $logFile 2>&1
+            WritePlainLog "Copy and use preconfigured environment.xml" "$logFile"
+            sudo cp environment.xml $TARGET_DIR/etc/HPCCSystems/environment.xml
+            WritePlainLog "Rename it to prevent further use" "$logFile"
+            mv environment.xml environment.xml-preconf
+        
+        else
+            # TO-DO fix it
+            WritePlainLog "Patch $TARGET_DIR/etc/HPCCSystems/environment.xml to set $THOR_SLAVES slave Thor system" "$logFile"
+            sudo cp $TARGET_DIR/etc/HPCCSystems/environment.xml $TARGET_DIR/etc/HPCCSystems/environment.xml.bak
+            sed -e 's/slavesPerNode="\(.*\)"/slavesPerNode="'"$THOR_SLAVES"'"/g'                                    \
+                     -e 's/maxEclccProcesses="\(.*\)"/maxEclccProcesses="'"$NUMBER_OF_CPUS"'"/g'                  \
+                     -e 's/name="maxCompileThreads" value="\(.*\)"/name="maxCompileThreads" value="'"$NUMBER_OF_CPUS"'"/g'                  \
+                     "$TARGET_DIR/etc/HPCCSystems/environment.xml" > temp.xml && sudo mv -f temp.xml "$TARGET_DIR/etc/HPCCSystems/environment.xml"
         fi
-    fi
-
-    # Let's start
-    TIME_STAMP=$(date +%s)
-    HPCC_STARTED=1
-    [ -z $NUMBER_OF_HPCC_COMPONENTS ] && NUMBER_OF_HPCC_COMPONENTS=$( sudo /opt/HPCCSystems/sbin/configgen -env /etc/HPCCSystems/environment.xml -list | egrep -i -v 'eclagent' | wc -l )
-    
-    if [[ $IS_THOR_ON_DEMAND -ne 0 ]]
-    then
-        WritePlainLog "We have $IS_THOR_ON_DEMAND Thor on demand server(s)." "$logFile"
-        WritePlainLog "Adjust the number of starting components from $NUMBER_OF_HPCC_COMPONENTS" "$logFile"
-        NUMBER_OF_HPCC_COMPONENTS=$(( $NUMBER_OF_HPCC_COMPONENTS  - $IS_THOR_ON_DEMAND ))
-        WritePlainLog "to $NUMBER_OF_HPCC_COMPONENTS." "$logFile"
-    fi
-
-    WriteMilestone "Start HPCC system with $NUMBER_OF_HPCC_COMPONENTS components" "$logFile"
-    #WritePlainLog "Let's start HPCC system" "$logFile"
-
-    hpccStart=$( sudo /etc/init.d/hpcc-init start 2>&1 )
-    hpccStatus=$( sudo /etc/init.d/hpcc-init status 2>&1 )
-    hpccRunning=$( sudo /etc/init.d/hpcc-init status | grep -c "running")
-    
-    WritePlainLog $hpccRunning" HPCC component started." "$logFile"
-    if [[ "$hpccRunning" -eq "$NUMBER_OF_HPCC_COMPONENTS" ]]
-    then        
-        WritePlainLog "HPCC Start: OK" "$logFile"
         
-        WritePlainLog "pushd ${PR_ROOT}" "$logFile"
-        pushd ${PR_ROOT}
-        # Always copy the timestampLogger.sh and WatchDog.py to ensure using the latest one
-        WritePlainLog "Copy latest version of timestampLogger.sh" "$logFile"
-        cp -vf ../timestampLogger.sh .
+        cp $TARGET_DIR/etc/HPCCSystems/environment.xml environment.xml-used
         
-        WritePlainLog "Copy latest version of WatchDog.py" "$logFile"
-        cp -vf ../WatchDog.py .
+        if [[ -d "$TARGET_DIR/opt/HPCCSystems/lib64" ]]
+        then
+            WritePlainLog "There is an unwanted lib64 directory, copy its contents into lib" "$logFile"
+            sudo cp -v $TARGET_DIR/opt/HPCCSystems/lib64/* $TARGET_DIR/opt/HPCCSystems/lib/
+        fi
         
-        WritePlainLog "cwd: $( popd )" "$logFile"
         
-    else
-        HPCC_STARTED=0
-        WritePlainLog "HPCC Start: Fail" "$logFile"
+        # We can have more than one Thor node and each has their onw slavesPerNode attribute
+        WritePlainLog "Number of thor slaves (/thor node)  : $(sed -n 's/slavesPerNode="\(.*\)"/\1/p' $TARGET_DIR/etc/HPCCSystems/environment.xml | tr '\n' ',' | tr -d [:space:])" "$logFile"
+        WritePlainLog "Maximum number of Eclcc processes is: $(sed -n 's/maxEclccProcesses="\(.*\)"/\1/p' $TARGET_DIR/etc/HPCCSystems/environment.xml | tr -d [:space:])" "$logFile"
+        WritePlainLog "Maximum number of compile threads is: $(sed -n 's/<Option name=\"maxCompileThreads\" value=\"\(.*\)\"\/>/\1/p' $TARGET_DIR/etc/HPCCSystems/environment.xml | tr -d [:space:])" "$logFile"
 
-        WritePlainLog "HPCC start:" "$logFile"
+        WritePlainLog "Start HPCC system" "$logFile"
 
-        WritePlainLog "${hpccStart}" "$logFile"
+        WritePlainLog "Check HPCC system status" "$logFile"
 
-        WritePlainLog " " "$logFile"
-        WritePlainLog "HPCC status:" "$logFile"
+        # Ensure no componenets are running
+        sudo /etc/init.d/hpcc-init status >> $logFile 2>&1
+        IS_THOR_ON_DEMAND=$( sudo /etc/init.d/hpcc-init status | egrep -i -c 'mythor \[OD\]' )
+        WritePlainLog ""  "$logFile"
 
-        WritePlainLog "${hpccStatus}" "$logFile"
+        hpccRunning=$( sudo /etc/init.d/hpcc-init status | grep -c "running")
+        if [[ "$hpccRunning" -ne 0 ]]
+        then
+            res=$(sudo /etc/init.d/hpcc-init stop |grep -c 'still')
+            # If the result is "Service dafilesrv, mydafilesrv is still running."
+            if [[ $res -ne 0 ]]
+            then
+                #echo $res
+                WritePlainLog "res: $res" "$logFile"
+                sudo /etc/init.d/dafilesrv stop >> $logFile 2>&1
+            fi
+        fi
 
-        res=$( sudo /etc/init.d/hpcc-init status | grep  "stopped" ) 
-        WritePlainLog "${res}" "$logFile"
-    fi
-    START_TIME=$(( $(date +%s) - $TIME_STAMP ))
-    
-    if [[ HPCC_STARTED -eq 1 ]]
-    then
+        # Let's start
         TIME_STAMP=$(date +%s)
-        if [[ $UNIT_TESTS -eq 1 ]]
+        HPCC_STARTED=1
+        [ -z $NUMBER_OF_HPCC_COMPONENTS ] && NUMBER_OF_HPCC_COMPONENTS=$( sudo /opt/HPCCSystems/sbin/configgen -env /etc/HPCCSystems/environment.xml -list | egrep -i -v 'eclagent' | wc -l )
+        
+        if [[ $IS_THOR_ON_DEMAND -ne 0 ]]
         then
-            WritePlainLog "pushd ${PR_ROOT}" "$logFile"
-            pushd ${PR_ROOT}
-            
-            cp -vf ../unittest.sh .
+            WritePlainLog "We have $IS_THOR_ON_DEMAND Thor on demand server(s)." "$logFile"
+            WritePlainLog "Adjust the number of starting components from $NUMBER_OF_HPCC_COMPONENTS" "$logFile"
+            NUMBER_OF_HPCC_COMPONENTS=$(( $NUMBER_OF_HPCC_COMPONENTS  - $IS_THOR_ON_DEMAND ))
+            WritePlainLog "to $NUMBER_OF_HPCC_COMPONENTS." "$logFile"
+        fi
 
-            cmd="./unittest.sh"
-            WriteMilestone "Unittests" "$logFile"
-            WritePlainLog "$(ls -ld /var/lib/HPCCSystems/hpcc-data/*)" "$logFile"
-            
-            WritePlainLog "cmd: ${cmd}" "$logFile"
-            #${cmd} 2>&1 | tee -a $logFile
-            ${cmd} >> $logFile 2>&1
-            
-            popd
-        fi
+        WriteMilestone "Start HPCC system with $NUMBER_OF_HPCC_COMPONENTS components" "$logFile"
+        #WritePlainLog "Let's start HPCC system" "$logFile"
+
+        hpccStart=$( sudo /etc/init.d/hpcc-init start 2>&1 )
+        hpccStatus=$( sudo /etc/init.d/hpcc-init status 2>&1 )
+        hpccRunning=$( sudo /etc/init.d/hpcc-init status | grep -c "running")
         
-        if [[ $WUTOOL_TESTS -eq 1 ]]
-        then
+        WritePlainLog $hpccRunning" HPCC component started." "$logFile"
+        if [[ "$hpccRunning" -eq "$NUMBER_OF_HPCC_COMPONENTS" ]]
+        then        
+            WritePlainLog "HPCC Start: OK" "$logFile"
+            
             WritePlainLog "pushd ${PR_ROOT}" "$logFile"
             pushd ${PR_ROOT}
-            cp -vf ../wutoolTest.sh .
+            # Always copy the timestampLogger.sh and WatchDog.py to ensure using the latest one
+            WritePlainLog "Copy latest version of timestampLogger.sh" "$logFile"
+            cp -vf ../timestampLogger.sh .
             
-            cmd="./wutoolTest.sh"
-            WriteMilestone "WUTooltest" "$logFile"
-            WritePlainLog "$(ls -ld /var/lib/HPCCSystems/hpcc-data/*)" "$logFile"
-            WritePlainLog "cmd: ${cmd}" "$logFile"
-            #${cmd} 2>&1  | tee -a $logFile
-            ${cmd} >> $logFile 2>&1
+            WritePlainLog "Copy latest version of WatchDog.py" "$logFile"
+            cp -vf ../WatchDog.py .
             
-            popd
+            WritePlainLog "cwd: $( popd )" "$logFile"
+            
+        else
+            HPCC_STARTED=0
+            WritePlainLog "HPCC Start: Fail" "$logFile"
+
+            WritePlainLog "HPCC start:" "$logFile"
+
+            WritePlainLog "${hpccStart}" "$logFile"
+
+            WritePlainLog " " "$logFile"
+            WritePlainLog "HPCC status:" "$logFile"
+
+            WritePlainLog "${hpccStatus}" "$logFile"
+
+            res=$( sudo /etc/init.d/hpcc-init status | grep  "stopped" ) 
+            WritePlainLog "${res}" "$logFile"
         fi
+        START_TIME=$(( $(date +%s) - $TIME_STAMP ))
         
-        if [ -n "$REGRESSION_TEST" ]
+        if [[ HPCC_STARTED -eq 1 ]]
         then
-            #WritePlainLog "pushd ${TEST_DIR}" "$logFile"
-            #pushd ${TEST_DIR}
-            
-            # Clean -up rte dir if exists
-            [[ -d $RTE_DIR ]] && rm -rf $RTE_DIR
-                
-            if [[ $RTE_CHANGED == 0 ]]
+            TIME_STAMP=$(date +%s)
+            if [[ $UNIT_TESTS -eq 1 ]]
             then
-                # Get the official version
-                # If we haven't  local RTE dir?
-                if [[ ! -d $RTE_DIR ]]
-                then 
-                    WritePlainLog "Get the official version from GitHub" "$logFile"
-                    #mkdir -p $RTE_DIR
-                    #res=$( cp -rv $COMMON_RTE_DIR/* $RTE_DIR/ 2>&1)
-                    res=$( git clone  https://github.com/AttilaVamos/RTE.git $RTE_DIR )
-                    WritePlainLog "res: ${res}" "$logFile"
+                WritePlainLog "pushd ${PR_ROOT}" "$logFile"
+                pushd ${PR_ROOT}
+                
+                cp -vf ../unittest.sh .
+
+                cmd="./unittest.sh"
+                WriteMilestone "Unittests" "$logFile"
+                WritePlainLog "$(ls -ld /var/lib/HPCCSystems/hpcc-data/*)" "$logFile"
+                
+                WritePlainLog "cmd: ${cmd}" "$logFile"
+                #${cmd} 2>&1 | tee -a $logFile
+                ${cmd} >> $logFile 2>&1
+                
+                popd
+            fi
+            
+            if [[ $WUTOOL_TESTS -eq 1 ]]
+            then
+                WritePlainLog "pushd ${PR_ROOT}" "$logFile"
+                pushd ${PR_ROOT}
+                cp -vf ../wutoolTest.sh .
+                
+                cmd="./wutoolTest.sh"
+                WriteMilestone "WUTooltest" "$logFile"
+                WritePlainLog "$(ls -ld /var/lib/HPCCSystems/hpcc-data/*)" "$logFile"
+                WritePlainLog "cmd: ${cmd}" "$logFile"
+                #${cmd} 2>&1  | tee -a $logFile
+                ${cmd} >> $logFile 2>&1
+                
+                popd
+            fi
+            
+            if [ -n "$REGRESSION_TEST" ]
+            then
+                #WritePlainLog "pushd ${TEST_DIR}" "$logFile"
+                #pushd ${TEST_DIR}
+                
+                # Clean -up rte dir if exists
+                [[ -d $RTE_DIR ]] && rm -rf $RTE_DIR
                     
-                    # Always use RTE config from PR source
-                    WritePlainLog "Copy '$TEST_DIR/ecl-test.json' into '$RTE_DIR'" "$logFile"
-                    res=$( cp -v $TEST_DIR/ecl-test.json $RTE_DIR/ 2>&1)
-                    WritePlainLog "res: ${res}" "$logFile"
-                fi
-            else
-                WritePlainLog "RTE changed (in this PR) get it from local source tree" "$logFile"
-                if [[ ! -d $RTE_DIR ]]
-                then 
-                    mkdir -p $RTE_DIR
-                    res=$( cp -v $TEST_DIR/ecl-test* $RTE_DIR/ 2>&1)
-                    WritePlainLog "res: ${res}" "$logFile"
-                    res=$( cp -rv $TEST_DIR/hpcc $RTE_DIR/hpcc 2>&1)
-                    WritePlainLog "res: ${res}" "$logFile"
-                fi
-                
-            fi
-            
-            # We should update the config in RTE dir
-            WritePlainLog "pushd ${RTE_DIR}" "$logFile"
-            pushd ${RTE_DIR}
-            #pwd2=$(PR_ROOT )
-            #echo "pwd:${pwd2}"
-            #echo "pwd:${pwd2}" >> $logFile 2>&1
-
-            # Patch ecl-test.json to put log inside the smoketest-xxxx directory
-            mv ecl-test.json ecl-test_json.bak
-            RESULT_DIR_ESC=${RESULT_DIR//\//\\\/}  #Replace '/' to '\/'
-            sed -e 's/"regressionDir"\w*: "\(.*\)"/"regressionDir" : "'"${RESULT_DIR_ESC}"'"/'   \
-                -e 's/"logDir"\w*: "\(.*\)"/"logDir" : "'"${RESULT_DIR_ESC}"'\/log"/'  \
-                -e 's/"timeout":"\(.*\)"/"timeout":"'"${REGRESSION_TIMEOUT}"'"/' \
-                -e 's/"maxAttemptCount":"\(.*\)"/"maxAttemptCount":"'"${REGRESSION_MAX_ATTEMPT_COUNT}"'"/'   ./ecl-test_json.bak > ./ecl-test.json
-        
-            WritePlainLog "Regression path in ecl-test.json:\n$(sed -n 's/\(regressionDir\)/\1/p' ./ecl-test.json)" "$logFile"
-            WritePlainLog "Regression log path             :\n$(sed -n 's/\(logDir\)/\1/p' ./ecl-test.json)" "$logFile"
-            WritePlainLog "OPT path in ecl-test.json       :\n$(sed -n 's/\(\/opt\/\)/\1/p' ./ecl-test.json)" "$logFile"
-            WritePlainLog "$(ls -ld /var/lib/HPCCSystems/hpcc-data/*)" "$logFile"
-            
-            #
-            #-----------------------------------------------------
-            # Patch regression suite tests if it needed to prevent extra long execuion tme
-            # See utlis.sh "Individual timeouts" section
-            if [[ -n $TIMEOUTS ]]
-            then
-                COUNT=${#TIMEOUTS[@]}
-                WritePlainLog "There is $COUNT test case need individual timeout setting" "$logFile"
-                for((testIndex=0; testIndex<$COUNT; testIndex++))
-                do
-                    TEST=(${!TIMEOUTS[$testIndex]})
-                    WritePlainLog "\tPatch ${TEST[0]} with ${TEST[1]} sec timeout" "$logFile"
-                    file="$TEST_DIR/ecl/${TEST[0]}"
-                    if [[ -f ${file} ]]
-                    then
-                        timeout=${TEST[1]}
-                        # Check if test already has '//timeout' tag
-                        if [[ $( egrep -c '\/\/timeout' $file ) -eq 0 ]]
-                        then
-                            # it has not, add one at the beginning of the file
-                            mv -fv $file $file-back
-                            echo "// Patched by the Smoketest on $( date '+%Y.%m.%d %H:%M:%S')" > $file
-                            echo "//timeout $timeout" >> $file
-                            cat $file-back >> $file
-                            
-                        else
-                            # yes it has, change it
-                            cp -fv $file $file-back
-                            sed -e 's/^\/\/timeout \(.*\).*$/\/\/ Patched by the Smoketest on '"$( date '+%Y.%m.%d %H:%M:%S')"'\n\/\/timeout '"$timeout"'/g' $file > $file-patched && mv -f $file-patched $file
-                        fi
-                    else
-                        WritePlainLog "\t${file} file not exists, skip patching." "$logFile"
-                    fi
-                done
-            fi
-            
-            #popd
-            #WritePlainLog "pushd ${RTE_DIR}" "$logFile"
-            #pushd ${RTE_DIR}
-            # Setup should run first
-            #cmd="./ecl-test setup -t all --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${SETUP_TIMEOUT} --pq ${PARALLEL_QUERIES} ${ENABLE_STACK_TRACE}"
-            cmd="./ecl-test setup -t all --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${SETUP_TIMEOUT} --pq ${PARALLEL_QUERIES} ${ENABLE_STACK_TRACE}"
-            WriteMilestone "Regression setup" "$logFile"
-            WritePlainLog "${cmd}" "$logFile"
-            
-            ${cmd} >> $logFile 2>&1
-            
-            [[ -f ${PR_ROOT}/setup.summary ]] && rm ${PR_ROOT}/setup.summary
-            
-            ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "setup_hthor" "$logFile"
-            ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "setup_thor" "$logFile"
-            ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "setup_roxie" "$logFile"
-
-            setupPassed=1
-            # Check if there is no error in Setup phase
-            if [[ -f ${PR_ROOT}/setup.summary ]]
-            then
-                numberOfNotFailedEngines=$( cat ${PR_ROOT}/setup.summary | egrep -o '\<failed:0\>' | wc -l )
-                if [[ $numberOfNotFailedEngines -ne 3 ]]
+                if [[ $RTE_CHANGED == 0 ]]
                 then
-                    setupPassed=0
-                    WritePlainLog "Setup failed on $(( 3 - $numberOfNotFailedEngines )) engines." "$logFile"
-                    inSuiteErrorLog=$( cat $logFile | sed -n "/\[Error\]/,/Suite destructor./p" )
-                    WritePlainLog "${inSuiteErrorLog}" "$logFile"
-                else            
-                    retVal=0
-                    WriteMilestone "Regression test" "$logFile"
-                    WritePlainLog "Regression Suite test case(s): '${REGRESSION_TEST}'" "$logFile"
+                    # Get the official version
+                    # If we haven't  local RTE dir?
+                    if [[ ! -d $RTE_DIR ]]
+                    then 
+                        WritePlainLog "Get the official version from GitHub" "$logFile"
+                        #mkdir -p $RTE_DIR
+                        #res=$( cp -rv $COMMON_RTE_DIR/* $RTE_DIR/ 2>&1)
+                        res=$( git clone  https://github.com/AttilaVamos/RTE.git $RTE_DIR )
+                        WritePlainLog "res: ${res}" "$logFile"
+                        
+                        # Always use RTE config from PR source
+                        WritePlainLog "Copy '$TEST_DIR/ecl-test.json' into '$RTE_DIR'" "$logFile"
+                        res=$( cp -v $TEST_DIR/ecl-test.json $RTE_DIR/ 2>&1)
+                        WritePlainLog "res: ${res}" "$logFile"
+                    fi
+                else
+                    WritePlainLog "RTE changed (in this PR) get it from local source tree" "$logFile"
+                    if [[ ! -d $RTE_DIR ]]
+                    then 
+                        mkdir -p $RTE_DIR
+                        res=$( cp -v $TEST_DIR/ecl-test* $RTE_DIR/ 2>&1)
+                        WritePlainLog "res: ${res}" "$logFile"
+                        res=$( cp -rv $TEST_DIR/hpcc $RTE_DIR/hpcc 2>&1)
+                        WritePlainLog "res: ${res}" "$logFile"
+                    fi
                     
-                    WritePlainLog "Parallel regression test: '${PARALLEL_REGRESSION_TEST}'" "$logFile"
-                    if [[ ${PARALLEL_REGRESSION_TEST} -eq 0 ]]
-                    then
-                        if [[ ${REGRESSION_TEST} == "*" ]]
+                fi
+                
+                # We should update the config in RTE dir
+                WritePlainLog "pushd ${RTE_DIR}" "$logFile"
+                pushd ${RTE_DIR}
+                #pwd2=$(PR_ROOT )
+                #echo "pwd:${pwd2}"
+                #echo "pwd:${pwd2}" >> $logFile 2>&1
+
+                # Patch ecl-test.json to put log inside the smoketest-xxxx directory
+                mv ecl-test.json ecl-test_json.bak
+                RESULT_DIR_ESC=${RESULT_DIR//\//\\\/}  #Replace '/' to '\/'
+                sed -e 's/"regressionDir"\w*: "\(.*\)"/"regressionDir" : "'"${RESULT_DIR_ESC}"'"/'   \
+                    -e 's/"logDir"\w*: "\(.*\)"/"logDir" : "'"${RESULT_DIR_ESC}"'\/log"/'  \
+                    -e 's/"timeout":"\(.*\)"/"timeout":"'"${REGRESSION_TIMEOUT}"'"/' \
+                    -e 's/"maxAttemptCount":"\(.*\)"/"maxAttemptCount":"'"${REGRESSION_MAX_ATTEMPT_COUNT}"'"/'   ./ecl-test_json.bak > ./ecl-test.json
+            
+                WritePlainLog "Regression path in ecl-test.json:\n$(sed -n 's/\(regressionDir\)/\1/p' ./ecl-test.json)" "$logFile"
+                WritePlainLog "Regression log path             :\n$(sed -n 's/\(logDir\)/\1/p' ./ecl-test.json)" "$logFile"
+                WritePlainLog "OPT path in ecl-test.json       :\n$(sed -n 's/\(\/opt\/\)/\1/p' ./ecl-test.json)" "$logFile"
+                WritePlainLog "$(ls -ld /var/lib/HPCCSystems/hpcc-data/*)" "$logFile"
+                
+                #
+                #-----------------------------------------------------
+                # Patch regression suite tests if it needed to prevent extra long execuion tme
+                # See utlis.sh "Individual timeouts" section
+                if [[ -n $TIMEOUTS ]]
+                then
+                    COUNT=${#TIMEOUTS[@]}
+                    WritePlainLog "There is $COUNT test case need individual timeout setting" "$logFile"
+                    for((testIndex=0; testIndex<$COUNT; testIndex++))
+                    do
+                        TEST=(${!TIMEOUTS[$testIndex]})
+                        WritePlainLog "\tPatch ${TEST[0]} with ${TEST[1]} sec timeout" "$logFile"
+                        file="$TEST_DIR/ecl/${TEST[0]}"
+                        if [[ -f ${file} ]]
                         then
-                            # Run whole Regression Suite
-                            #cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
-                            cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
+                            timeout=${TEST[1]}
+                            # Check if test already has '//timeout' tag
+                            if [[ $( egrep -c '\/\/timeout' $file ) -eq 0 ]]
+                            then
+                                # it has not, add one at the beginning of the file
+                                mv -fv $file $file-back
+                                echo "// Patched by the Smoketest on $( date '+%Y.%m.%d %H:%M:%S')" > $file
+                                echo "//timeout $timeout" >> $file
+                                cat $file-back >> $file
+                                
+                            else
+                                # yes it has, change it
+                                cp -fv $file $file-back
+                                sed -e 's/^\/\/timeout \(.*\).*$/\/\/ Patched by the Smoketest on '"$( date '+%Y.%m.%d %H:%M:%S')"'\n\/\/timeout '"$timeout"'/g' $file > $file-patched && mv -f $file-patched $file
+                            fi
                         else
-                            # Query the selected tests or whole suite if '*' in REGRESSION_TEST
-                            #cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
-                            cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
+                            WritePlainLog "\t${file} file not exists, skip patching." "$logFile"
                         fi
-                    
-                        WritePlainLog "cmd: ${cmd}" "$logFile"
-                        #${cmd} 2>&1  | tee -a $logFile
-                        ${cmd} >> $logFile 2>&1 
-                        retVal=$?
-                    else
-                        WritePlainLog "Parallel regression test started..." "$logFile"
-                        WritePlainLog  "Start hthor regression ..." "$logFile"
-                        hthorCmd="./ecl-test run -t hthor ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} ${STORED_PARAMS} --generateStackTrace --pq $HTHOR_PQ"
-                        WritePlainLog  "hthorCmd: ${hthorCmd}" "$logFile"
-                        exec   ${hthorCmd} > $hthorTestLogFile 2>&1 &
-                        HTHOR_PID=$!
-                        WritePlainLog  "Hthor pid: $HTHOR_PID." "$logFile"
+                    done
+                fi
+                
+                #popd
+                #WritePlainLog "pushd ${RTE_DIR}" "$logFile"
+                #pushd ${RTE_DIR}
+                # Setup should run first
+                #cmd="./ecl-test setup -t all --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${SETUP_TIMEOUT} --pq ${PARALLEL_QUERIES} ${ENABLE_STACK_TRACE}"
+                cmd="./ecl-test setup -t all --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${SETUP_TIMEOUT} --pq ${PARALLEL_QUERIES} ${ENABLE_STACK_TRACE}"
+                WriteMilestone "Regression setup" "$logFile"
+                WritePlainLog "${cmd}" "$logFile"
+                
+                ${cmd} >> $logFile 2>&1
+                
+                [[ -f ${PR_ROOT}/setup.summary ]] && rm ${PR_ROOT}/setup.summary
+                
+                ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "setup_hthor" "$logFile"
+                ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "setup_thor" "$logFile"
+                ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "setup_roxie" "$logFile"
 
-                        WritePlainLog "Start thor regression..." "$logFile"
-                        thorCmd="./ecl-test run -t thor ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} ${STORED_PARAMS} --generateStackTrace --pq $THOR_PQ"
-                        WritePlainLog  "thorCmd: ${thorCmd}" "$logFile"
-                        exec ${thorCmd}  > $thorTestLogFile 2>&1 &
-                        THOR_PID=$!
-                        WritePlainLog  "Thor pid: $THOR_PID." "$logFile"
-                        
-                        WritePlainLog "Start roxie regression..." "$logFile"
-                        roxieCmd="./ecl-test run -t roxie ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} ${STORED_PARAMS} --generateStackTrace --pq $ROXIE_PQ"
-                        WritePlainLog  "roxieCmd: ${roxieCmd}" "$logFile"
-                        exec ${roxieCmd} > $roxieTestLogFile 2>&1 &
-                        ROXIE_PID=$!
-                        WritePlainLog  "Roxie pid: $ROXIE_PID." "$logFile"
-                        
-                        WritePlainLog "Wait for processes finished." "$logFile"
-
-                        wait 
-                        retVal=$?
-                        
-                        echo "${hthorCmd}" >> $logFile
-                        cat $hthorTestLogFile  >> $logFile
-                        
-                        echo "${thorCmd}" >> $logFile
-                        cat $thorTestLogFile  >> $logFile
-                        
-                        echo "${roxieCmd}" >> $logFile
-                        cat $roxieTestLogFile >> $logFile
-                        
-                    fi    
-                    hasError=$( cat $logFile | grep -c '\[Error\]' )
-                    WritePlainLog "retVal: ${retVal}, hasError:${hasError}, setupPassed: ${setupPassed}" "$logFile"
-                    if [[ $retVal == 0  && $hasError == 0 && $setupPassed == 1 ]]
+                setupPassed=1
+                # Check if there is no error in Setup phase
+                if [[ -f ${PR_ROOT}/setup.summary ]]
+                then
+                    numberOfNotFailedEngines=$( cat ${PR_ROOT}/setup.summary | egrep -o '\<failed:0\>' | wc -l )
+                    if [[ $numberOfNotFailedEngines -ne 3 ]]
                     then
-                        # Collect results
-                        ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "hthor" "$logFile"
-                        ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "thor" "$logFile"
-                        ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "roxie" "$logFile"
-                    else
-                        WritePlainLog "Command failed : ${retVal}" "$logFile"
+                        setupPassed=0
+                        WritePlainLog "Setup failed on $(( 3 - $numberOfNotFailedEngines )) engines." "$logFile"
                         inSuiteErrorLog=$( cat $logFile | sed -n "/\[Error\]/,/Suite destructor./p" )
                         WritePlainLog "${inSuiteErrorLog}" "$logFile"
+                    else            
+                        retVal=0
+                        WriteMilestone "Regression test" "$logFile"
+                        WritePlainLog "Regression Suite test case(s): '${REGRESSION_TEST}'" "$logFile"
+                        
+                        WritePlainLog "Parallel regression test: '${PARALLEL_REGRESSION_TEST}'" "$logFile"
+                        if [[ ${PARALLEL_REGRESSION_TEST} -eq 0 ]]
+                        then
+                            if [[ ${REGRESSION_TEST} == "*" ]]
+                            then
+                                # Run whole Regression Suite
+                                #cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
+                                cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
+                            else
+                                # Query the selected tests or whole suite if '*' in REGRESSION_TEST
+                                #cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
+                                cmd="./ecl-test query -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE} $REGRESSION_TEST"
+                            fi
+                        
+                            WritePlainLog "cmd: ${cmd}" "$logFile"
+                            #${cmd} 2>&1  | tee -a $logFile
+                            ${cmd} >> $logFile 2>&1 
+                            retVal=$?
+                        else
+                            WritePlainLog "Parallel regression test started..." "$logFile"
+                            WritePlainLog  "Start hthor regression ..." "$logFile"
+                            hthorCmd="./ecl-test run -t hthor ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} ${STORED_PARAMS} --generateStackTrace --pq $HTHOR_PQ"
+                            WritePlainLog  "hthorCmd: ${hthorCmd}" "$logFile"
+                            exec   ${hthorCmd} > $hthorTestLogFile 2>&1 &
+                            HTHOR_PID=$!
+                            WritePlainLog  "Hthor pid: $HTHOR_PID." "$logFile"
+
+                            WritePlainLog "Start thor regression..." "$logFile"
+                            thorCmd="./ecl-test run -t thor ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} ${STORED_PARAMS} --generateStackTrace --pq $THOR_PQ"
+                            WritePlainLog  "thorCmd: ${thorCmd}" "$logFile"
+                            exec ${thorCmd}  > $thorTestLogFile 2>&1 &
+                            THOR_PID=$!
+                            WritePlainLog  "Thor pid: $THOR_PID." "$logFile"
+                            
+                            WritePlainLog "Start roxie regression..." "$logFile"
+                            roxieCmd="./ecl-test run -t roxie ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} ${STORED_PARAMS} --generateStackTrace --pq $ROXIE_PQ"
+                            WritePlainLog  "roxieCmd: ${roxieCmd}" "$logFile"
+                            exec ${roxieCmd} > $roxieTestLogFile 2>&1 &
+                            ROXIE_PID=$!
+                            WritePlainLog  "Roxie pid: $ROXIE_PID." "$logFile"
+                            
+                            WritePlainLog "Wait for processes finished." "$logFile"
+
+                            wait 
+                            retVal=$?
+                            
+                            echo "${hthorCmd}" >> $logFile
+                            cat $hthorTestLogFile  >> $logFile
+                            
+                            echo "${thorCmd}" >> $logFile
+                            cat $thorTestLogFile  >> $logFile
+                            
+                            echo "${roxieCmd}" >> $logFile
+                            cat $roxieTestLogFile >> $logFile
+                            
+                        fi    
+                        hasError=$( cat $logFile | grep -c '\[Error\]' )
+                        WritePlainLog "retVal: ${retVal}, hasError:${hasError}, setupPassed: ${setupPassed}" "$logFile"
+                        if [[ $retVal == 0  && $hasError == 0 && $setupPassed == 1 ]]
+                        then
+                            # Collect results
+                            ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "hthor" "$logFile"
+                            ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "thor" "$logFile"
+                            ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "roxie" "$logFile"
+                        else
+                            WritePlainLog "Command failed : ${retVal}" "$logFile"
+                            inSuiteErrorLog=$( cat $logFile | sed -n "/\[Error\]/,/Suite destructor./p" )
+                            WritePlainLog "${inSuiteErrorLog}" "$logFile"
+                        fi
                     fi
                 fi
+                # Get tests stat
+                if [[ -f $OBT_DIR/QueryStat2.py ]]
+                then
+                    WritePlainLog "Get tests stat..." "$logFile"
+                    CMD="$OBT_DIR/QueryStat2.py -p $PR_ROOT/ -d '' -a --timestamp "
+                    WritePlainLog "  CMD: '$CMD'" "$logFile"
+                    ${CMD} >> ${logFile} 2>&1
+                    retCode=$( echo $? )
+                    WritePlainLog "  RetCode: $retCode" "$logFile"
+                    WritePlainLog "  Files: $( ls -l perfstat* )" "$logFile"
+                    WritePlainLog "Done." "$logFile"
+                else
+                    WritePlainLog "$OBT_DIR/QueryStat2.py not found. Skip perfromance result collection " "$logFile"
+                fi
+                
+                #setupPassed=0
+                #WritePlainLog "Setup failed." "$logFile"
+                inSuiteErrorLog=$( cat $logFile | sed -n "/\[Error\]/,/Suite destructor./p" )
+                if [ -n "${inSuiteErrorLog}" ]
+                then
+                    WritePlainLog "${inSuiteErrorLog}" "$logFile"
+                else
+                    WritePlainLog "There isn't Suite Error" "$logFile"
+                fi
+                popd
+    #            set +x
             fi
-            # Get tests stat
-            if [[ -f $OBT_DIR/QueryStat2.py ]]
+            
+    #        set -x
+            if [[ -n "$REGRESSION_TEST" && -f ${ESP_TEST_DIR}/wutest.py ]]
             then
-                WritePlainLog "Get tests stat..." "$logFile"
-                CMD="$OBT_DIR/QueryStat2.py -p $PR_ROOT/ -d '' -a --timestamp "
-                WritePlainLog "  CMD: '$CMD'" "$logFile"
-                ${CMD} >> ${logFile} 2>&1
-                retCode=$( echo $? )
-                WritePlainLog "  RetCode: $retCode" "$logFile"
-                WritePlainLog "  Files: $( ls -l perfstat* )" "$logFile"
-                WritePlainLog "Done." "$logFile"
-            else
-                WritePlainLog "$OBT_DIR/QueryStat2.py not found. Skip perfromance result collection " "$logFile"
+                WritePlainLog "pushd ${ESP_TEST_DIR}" "$logFile"
+                pushd ${ESP_TEST_DIR}
+                
+                date=$(date +%Y-%m-%d_%H-%M-%S);
+                wutestLogFile="wutest-"$(date +%Y-%m-%d_%H-%M-%S)".log";
+                
+                cmd='./wutest.py'
+                WriteMilestone "WUtest" "$logFile"
+                WritePlainLog "${cmd}" "$logFile"
+                ${cmd}  > ${wutestLogFile} 2>&1
+                res=$?
+                WritePlainLog "res: ${res}" "$logFile"
+                
+                cp ${wutestLogFile} ${PR_ROOT}/.
+                
+                popd
             fi
             
-            #setupPassed=0
-            #WritePlainLog "Setup failed." "$logFile"
-            inSuiteErrorLog=$( cat $logFile | sed -n "/\[Error\]/,/Suite destructor./p" )
-            if [ -n "${inSuiteErrorLog}" ]
-            then
-                WritePlainLog "${inSuiteErrorLog}" "$logFile"
-            else
-                WritePlainLog "There isn't Suite Error" "$logFile"
-            fi
-            popd
-#            set +x
-        fi
-        
-#        set -x
-        if [[ -n "$REGRESSION_TEST" && -f ${ESP_TEST_DIR}/wutest.py ]]
-        then
-            WritePlainLog "pushd ${ESP_TEST_DIR}" "$logFile"
-            pushd ${ESP_TEST_DIR}
+    #        set +x
             
-            date=$(date +%Y-%m-%d_%H-%M-%S);
-            wutestLogFile="wutest-"$(date +%Y-%m-%d_%H-%M-%S)".log";
-            
-            cmd='./wutest.py'
-            WriteMilestone "WUtest" "$logFile"
-            WritePlainLog "${cmd}" "$logFile"
-            ${cmd}  > ${wutestLogFile} 2>&1
-            res=$?
-            WritePlainLog "res: ${res}" "$logFile"
-            
-            cp ${wutestLogFile} ${PR_ROOT}/.
-            
-            popd
-        fi
-        
-#        set +x
-        
-        TEST_TIME=$(( $(date +%s) - $TIME_STAMP ))
+            TEST_TIME=$(( $(date +%s) - $TIME_STAMP ))
 
-        TIME_STAMP=$(date +%s)
-        WriteMilestone "Stop HPCC" "$logFile"
-        
-        res=$(sudo /etc/init.d/hpcc-init stop |grep -c 'still')
-        # If the result is "Service dafilesrv, mydafilesrv is still running."
-        if [[ $res -ne 0 ]]
-        then
-            WritePlainLog "res: ${res}" "$logFile"
-            sudo /etc/init.d/dafilesrv stop >> $logFile 2>&1
+            TIME_STAMP=$(date +%s)
+            WriteMilestone "Stop HPCC" "$logFile"
+            
+            res=$(sudo /etc/init.d/hpcc-init stop |grep -c 'still')
+            # If the result is "Service dafilesrv, mydafilesrv is still running."
+            if [[ $res -ne 0 ]]
+            then
+                WritePlainLog "res: ${res}" "$logFile"
+                sudo /etc/init.d/dafilesrv stop >> $logFile 2>&1
+            fi
+            hpccRunning=$( sudo /etc/init.d/hpcc-init status | grep -c "running")
+            #echo $hpccRunning" HPCC component running."
+            WritePlainLog $hpccRunning" HPCC component running." "$logFile"
+            if [[ $hpccRunning -ne 0 ]]
+            then
+                WritePlainLog "HPCC Stop: Fail $hpccRunning components are still up!" "$logFile"
+                hpccRunning=$( sudo /etc/init.d/hpcc-init status | grep "running")
+                WritePlainLog "Running componenets:\n${hpccRunning}" "$logFile"
+                exit -1
+            else
+                WritePlainLog "HPCC Stop: OK" "$logFile"
+            fi
+            STOP_TIME=$(( $(date +%s) - $TIME_STAMP ))
         fi
-        hpccRunning=$( sudo /etc/init.d/hpcc-init status | grep -c "running")
-        #echo $hpccRunning" HPCC component running."
-        WritePlainLog $hpccRunning" HPCC component running." "$logFile"
-        if [[ $hpccRunning -ne 0 ]]
-        then
-            WritePlainLog "HPCC Stop: Fail $hpccRunning components are still up!" "$logFile"
-            hpccRunning=$( sudo /etc/init.d/hpcc-init status | grep "running")
-            WritePlainLog "Running componenets:\n${hpccRunning}" "$logFile"
-            exit -1
-        else
-            WritePlainLog "HPCC Stop: OK" "$logFile"
-        fi
-        STOP_TIME=$(( $(date +%s) - $TIME_STAMP ))
+    else
+        WritePlainLog "Temporarly there is not attempts to start, execute test and stop the platform build for containerized environment." "$logFile"
     fi
-    
     WriteMilestone "End game" "$logFile"
     WritePlainLog "Archive HPCC logs into ${HPCC_LOG_ARCHIVE}." "$logFile"
     

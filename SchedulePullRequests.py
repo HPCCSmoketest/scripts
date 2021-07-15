@@ -914,7 +914,7 @@ def GetOpenPulls(knownPullRequests):
             t = [True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])]
             if len(t) == len(prs[prid]['files']):
                 # if the number of files in exludePaths is equal to the number of changed files then skip it.
-                prs[prid]['excludeFromTest'] = True
+                prs[prid]['excludeFromTest'] = False  # Do not exlude but build it
         
         isNotExcluded = prs[prid]['excludeFromTest'] == False
         

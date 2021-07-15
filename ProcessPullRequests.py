@@ -787,6 +787,7 @@ def GetOpenPulls(knownPullRequests):
         prs[prid]['sessionTime'] = averageSessionTime   # default, average full test competion time
         prs[prid]['enableStackTrace'] = True
         prs[prid]['rteChanged'] = False
+        prs[prid]['containerized'] = False
         
         testDir = 'smoketest-'+str(prid)
         # mkdir smoketest-<PRID>
@@ -925,6 +926,15 @@ def GetOpenPulls(knownPullRequests):
             if os.path.exists(changedFilesFileName):
                 os.rename(changedFilesFileName,  oldChangedFilesFileName)
                 
+            # Check directory exclusions
+            #prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if ('^helm/' in x ) or ('^dockerfiles/' in x) or ('.github/' in x)] )
+            excludePaths = ['helm/', 'dockerfiles/', '.github/', 'testing/helm/', 'MyDockerfile/']
+            #prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])] )
+            t = [True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])]
+            if len(t) > 0:
+                # if the number of files in exludePaths is equal to the number of changed files then skip it.
+                prs[prid]['containerized'] = True
+                
             eclWatchOnly=True
             changedFilesFile = open(changedFilesFileName,  "wb")
             for changedFile in  prs[prid]['files']:
@@ -1051,7 +1061,7 @@ def GetOpenPulls(knownPullRequests):
             prs[prid]['inQueue'] = True
             buildPr += 1
             #print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+" scheduled to testing (reason:'"+prs[prid]['reason']+"', is DOCS changed:"+str(prs[prid]['isDocsChanged'])+")")
-            print("Build PR-%s, label: %s scheduled to testing (reason:'%s', is DOCS changed: %s, is ECLWatch build: %s)" % (str(prid), prs[prid]['label'], prs[prid]['reason'], str(prs[prid]['isDocsChanged']), str(prs[prid]['buildEclWatch']) ) )
+            print("Build PR-%s, label: %s scheduled to testing (reason:'%s', is DOCS changed: %s, is ECLWatch build: %s, is Containerized: %s)" % (str(prid), prs[prid]['label'], prs[prid]['reason'], str(prs[prid]['isDocsChanged']), str(prs[prid]['buildEclWatch']),  str(prs[prid]['containerized']) ))
             pass
             
             
@@ -2058,7 +2068,9 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             testPrNo  = '0'
             isBuild = True
             
-            msg="Process of PR-%s, label: %s starts now.\\nThe reason of this test is: %s.\\nCommit ID: %s\\nEstimated completion time is ~%.2f hour(s)\\n%s" % ( str(prid), prs[prid]['label'], prs[prid]['reason'], prs[prid]['sha'], prs[prid]['sessionTime'],  sysId.replace('\n', '\\n'))
+            msg="Process of PR-%s, label: %s starts now.\\nThe reason of this test is: %s.\\nCommit ID: %s\\nEstimated completion time is %.2f hour(s)\\n%s" % ( str(prid), prs[prid]['label'], prs[prid]['reason'], prs[prid]['sha'], prs[prid]['sessionTime'],  sysId.replace('\n', '\\n'))
+            if  prs[prid]['containerized'] :
+                msg += "\\nBuild only for containerized environment.\\n"
             addCommentCmd = prs[prid]['addComment']['cmd'] +'\'{"body":"'+msg+'"}\' '+prs[prid]['addComment']['url']
             
             print("\tAdd comment to pull request")
@@ -2261,6 +2273,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                     cmd += " -newEclWatchBuildMode=" + str(prs[prid]['newEclWatchBuildMode'])
                     if prs[prid]['rteChanged'] == True :
                         cmd += " -rteChanged=" + str(prs[prid]['rteChanged'])
+                    cmd += " -containerized=" + str(prs[prid]['containerized'])
                     
                     resultFile.write("\t" + cmd + "\n")
                     myProc = subprocess.Popen([ cmd ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -2297,6 +2310,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             msg= 'Automated Smoketest\n'
             msg += 'OS: ' + sysId + '\n'
             msg += 'Sha: '+prs[prid]['sha']+'\n'
+            msg += 'Containerized:' + str(prs[prid]['containerized']) + '\n'
             msg = processResult(result, msg, resultFile, buildFailed,  testFailed, prs[prid]['testfiles'], maxMsgLen, prs[prid]['runUnittests'], prs[prid]['runWutoolTests'], prid, prs[prid]['buildEclWatch'])
             
             
