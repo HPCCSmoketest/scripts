@@ -311,8 +311,8 @@ do
                 
         containerized*)
                 CONTAINERIZED=${param//containerized=True/1}
-                CONTAINERIZED=${CONTAINERIZED}//containerized=False/0}
-                WritePlainLog "RTE Changed: ${CONTAINERIZED}" "$logFile"
+                CONTAINERIZED=${CONTAINERIZED//containerized=False/0}
+                WritePlainLog "CONTAINERIZED Changed: ${CONTAINERIZED}" "$logFile"
                 ;;
         
             
