@@ -98,12 +98,13 @@ do
     #set -x
     version=1
     item=$(cat $fn | egrep -i 'Instance name|Commit Id|Instance Id' | cut -d' ' -f5 | tr -d \' | paste -d, -s - | cut -d',' -f1,2,3 --output ',' )
-    item=$(cat $fn | egrep -i 'Param: (Instancename|CommitId)|Instance Id' | cut -d' ' -f4,5 | tr -d \' | tr '=' ' ' | cut -d' ' -f 2 | paste -d, -s - | cut -d',' -f1,2,3 --output ',' )
+    #item=$(cat $fn | egrep -i 'Param: (Instancename|CommitId)|Instance Id' | cut -d' ' -f4,5 | tr -d \' | tr '=' ' ' | cut -d' ' -f 2 | paste -d, -s - | cut -d',' -f1,2,3 --output ',' )
 
     [[ -z "$item" ]] && ( item=$( cat $fn | egrep -i 'Instancename: |CommitId: |:Instance Id|An error' | cut -d' ' -f4,6 | tr -d \' | sed 's/commitId=//' | paste -d, -s - | cut -d',' -f1,2,3 --output ', ' ); version=2 )
     [[ -z "$item" ]] && ( item=$( cat $fn | egrep -i 'Schedule |sha ' | cut -d ' ' -f1,2,3,4,5 | tr -d \' | tr -d ':' | tr -s ' \t' | paste -d, -s -  ); version=2 )
     
-    timestamp=$( cat $fn | egrep 'Start:' | tr -d '\t' )
+    #timestamp=$( cat $fn | egrep 'Start:' | tr -d '\t' )
+    timestamp=$( head -n 1 $fn |  cut -d: -f1,2,3 )
     #echo "$cnt, $item ($timestamp)"
     
     IFS=',' read -ra arr <<< "$item"
@@ -112,26 +113,30 @@ do
 
     if [[ $version -eq 1 ]]
     then
-        [[ -z "${arr[0]}" ]] && arr[0]=$(dirname $fn)
+        [[ -z "${arr[1]}" ]] && arr[1]=$(dirname $fn)
 
-        printf "%s,%s,%s,%s" "$cnt" "${arr[0]}" "${arr[1]}" "${arr[2]}"
-      
+        printf "%s, %s, %s, %s" "$cnt" "${arr[1]}" "${arr[2]}" "${arr[0]}"
+
         a=("${arr[0]}" "${arr[1]}" "${arr[2]}")
 	
     else
         [[ -z "${arr[1]}" ]] && arr[1]=$(dirname $fn)
 
-        printf "%s,%s,%s,%s" "$cnt" "${arr[1]}" "${arr[2]}" "${arr[0]}"
+        printf "%s, %s, %s, %s" "$cnt" "${arr[1]}" "${arr[2]}" "${arr[0]}"
 
         a=( "${arr[1]}" "${arr[2]}" "${arr[0]}" )
 
     fi
-    [[ $verbose -eq 1 ]] && printf ",%s,(%s)" "$timestamp" "$version"
+
+    [[ "$fn" =~ "OldPrs" ]] && printf ", (Closed)" || ( running=$(  egrep -i -c 'Terminate:' $fn ); [[ $running -eq 0 ]] && printf ", (Running)" || printf ", (Finished)")
+
+    [[ $verbose -eq 1 ]] && printf ", %s, ( %s )" "$timestamp" "$version"
     printf "\n"
     PRs+=( a[@] )
 
     set +x
-done < <(find OldPrs/PR-*/ PR-*/ -iname 'scheduler-'"$testDay"'*.test' -print | sort )
+#done < <(find OldPrs/PR-*/ PR-*/ -iname 'scheduler-'"$testDay"'*.test' -print | sort )
+done < <(find OldPrs/PR-*/ PR-*/ -iname 'instance-*-*-'"$testDay"'_*.info' -print | sort )
 
 #[[ $cnt -eq 0 ]] && echo "None"
 #[[ -n "$res" ]] && echo "$res" || echo "None"
