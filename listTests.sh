@@ -136,7 +136,7 @@ do
 
     set +x
 #done < <(find OldPrs/PR-*/ PR-*/ -iname 'scheduler-'"$testDay"'*.test' -print | sort )
-done < <(find OldPrs/PR-*/ PR-*/ -iname 'instance-*-*-'"$testDay"'_*.info' -print | sort  --field-separator='-' --key=4,8r )
+done < <(find OldPrs/PR-*/ PR-*/ -iname 'instance-*-*-'"$testDay"'_*.info' -print | sort  --field-separator='-' --key=1,1 --key=4,4 --key=8.4n,8 )
 
 #[[ $cnt -eq 0 ]] && echo "None"
 #[[ -n "$res" ]] && echo "$res" || echo "None"
