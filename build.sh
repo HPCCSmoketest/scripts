@@ -1099,7 +1099,7 @@ then
                             ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "roxie" "$logFile"
                         else
                             WritePlainLog "Command failed : ${retVal}" "$logFile"
-                            inSuiteErrorLog=$( cat $logFile | sed -n "/\[Error\]/,/Suite destructor./p" )
+                            inSuiteErrorLog=$( cat $logFile | sed -n "/\[Error\]/,/Suite destructor./p" | egrep -v 'HPCC-Platform/docs/|docbookx.dtd' )
                             WritePlainLog "${inSuiteErrorLog}" "$logFile"
                         fi
                     fi

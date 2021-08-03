@@ -1531,7 +1531,7 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
             msg += tempRes.replace('"','').replace('u\'',  '').replace('\'','')
             allPassed = False
             continue;
-        elif (buildFailed or not eclWatchBuildOk) and not (result.startswith('[sudo]') or result.startswith('sudo')):
+        elif (buildFailed or not eclWatchBuildOk) and not (result.startswith('[sudo]') or result.startswith('sudo') or 'HPCC-Platform/docs/' in result or 'docbookx.dtd' in result ):
             print("\t\t"+result)
             tempRes = result
             msg += tempRes.replace('"','').replace('u\'',  '').replace('\'','')
