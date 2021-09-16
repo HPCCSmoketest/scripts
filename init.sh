@@ -105,6 +105,23 @@ git clone https://github.com/HPCCSmoketest/scripts.git
 cp scripts/*.sh .
 cp scripts/*.py .
 
+echo "Check and install CMake 3.18.0"
+CMAKE_3_18=$( find ~/ -iname 'cmake-3.18.0.tar.gz' -type f -size +1M -print | head -n 1 )
+if [[ -n "$CMAKE_3_18" ]]
+then
+    echo "$CMAKE_3_18 found, unzip and install it"
+    tar -xzvf  ${CMAKE_3_18} > cmake.log
+    pushd cmake-3.18.0
+    ./bootstrap
+    make -j
+    sudo make install
+    popd
+    type "cmake"
+    cmake --version;
+else
+    echo "$CMAKE_3_18 not found."
+fi
+
 [[ -f ./build.new ]] && cp -v ./build.new build.sh
 
 [ ! -d $INSTANCE_NAME ] && mkdir $INSTANCE_NAME
