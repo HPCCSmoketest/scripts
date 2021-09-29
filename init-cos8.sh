@@ -93,7 +93,7 @@ PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools bc psmisc 
 #if [ $DOCS_BUILD -eq 1 ]
 #then
     wget http://mirror.centos.org/centos/7/os/x86_64/Packages/fop-1.1-6.el7.noarch.rpm
-    PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL fop-1.1"
+    #PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL fop-1.1-6.el7"
 #fi
 
 echo "Packages to install: ${PACKAGES_TO_INSTALL}"
@@ -122,31 +122,14 @@ then
     echo "$CMAKE_3_18 found, unzip and install it"
     tar -xzvf  ${CMAKE_3_18} > cmake.log
     pushd cmake-3.18.0
-    ./bootstrap && \
-    make -j && \
+    ./bootstrap
+    make -j
     sudo make install
     popd
     type "cmake"
     cmake --version;
 else
-    echo "CMake 3.18.0 not found."
-fi
-
-echo "Check and install curl 7.67.0"
-CURL_7_67=$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
-if [[ -n "$CURL_7_67" ]]
-then
-    echo "$CURL_7_67 found, unzip and install it"
-    gunzip -c $CURL_7_67 | tar xvf -
-    pushd curl-7.67.0
-    ./configure --with-ssl && \
-    make -j && \
-    sudo make install
-    popd
-    type "curl"
-    curl --version;
-else
-    echo "curl 7.67.0 not found."
+    echo "$CMAKE_3_18 not found."
 fi
 
 [[ -f ./build.new ]] && cp -v ./build.new build.sh
@@ -212,7 +195,7 @@ INSTANCE_ID=$( wget -q -t1 -T1 -O - http://169.254.169.254/latest/meta-data/inst
 (echo "PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/sbin:/usr/sbin:"; echo "SHELL=/bin/bash"; crontab -l) | crontab
 if [[ $DRY_RUN -eq 0 ]]
 then
-    DEVTOOLSET=$( scl -l | egrep 'devtoolset' | tail -n 1 )
+   # DEVTOOLSET=$( scl -l | egrep 'devtoolset' | tail -n 1 )
     if [[ $BASE_TEST  -eq 1 ]]
     then
         # For base test
@@ -225,7 +208,7 @@ then
         #( crontab -l; echo ""; echo "# Self destruction initiated in ${GUILLOTINE} minutes"; echo $( date  -d "$today + ${GUILLOTINE} minutes" "+%M %H %d %m") " * sleep 10; sudo shutdown now " ) | crontab
     else
         # For PR test
-        ( crontab -l; echo $( date  -d "$today + $timeStep minute" "+%M %H %d %m") " * cd ~/smoketest; ./update.sh; export commitId=${COMMIT_ID}; export addGitComment=${ADD_GIT_COMMENT}; export runOnce=1; export keepFiles=$KEEP_FILES; export testOnlyOnePR=1; export testPrNo=$prId; export runFullRegression=1; export useQuickBuild=0; export skipDraftPr=0; export AVERAGE_SESSION_TIME=$AVERAGE_SESSION_TIME; scl enable devtoolset-7 './smoketest.sh'" ) | crontab
+        ( crontab -l; echo $( date  -d "$today + $timeStep minute" "+%M %H %d %m") " * cd ~/smoketest; ./update.sh; export commitId=${COMMIT_ID}; export addGitComment=${ADD_GIT_COMMENT}; export runOnce=1; export keepFiles=$KEEP_FILES; export testOnlyOnePR=1; export testPrNo=$prId; export runFullRegression=1; export useQuickBuild=0; export skipDraftPr=0; export AVERAGE_SESSION_TIME=$AVERAGE_SESSION_TIME; ./smoketest.sh" ) | crontab
         
         # Add self destruction with email notification
         ( crontab -l; echo ""; echo "# Self destruction initiated in ${GUILLOTINE} minutes"; echo $( date  -d "$today + ${GUILLOTINE} minutes" "+%M %H %d %m") " * sleep 10; echo \"At $(date '+%Y.%m.%d %H:%M:%S') the ${INSTANCE_ID} is still running, terminate it.\" | mailx -s \"Instance self-destruction initiated\" attila.vamos@gmail.com; sudo shutdown now " ) | crontab

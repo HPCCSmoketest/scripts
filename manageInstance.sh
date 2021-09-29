@@ -214,8 +214,12 @@ SSH_OPTIONS="-oConnectionAttempts=3 -oConnectTimeout=20 -oStrictHostKeyChecking=
 
 #AMI_ID=$( aws ec2 describe-images --owners 446598291512 | egrep -i '"name"|imageid' | egrep -i -A2 '-el7-' | egrep -i '"ImageId"' | tr -d " " | cut -d":" -f2 )
 # Better approach
+# CentOS 7
 AMI_ID=$( aws ec2 describe-images --owners 446598291512 --filters "Name=name,Values=*-el7-x86_64" --query Images[].ImageId --output text )
 [ -z ${AMI_ID} ] && AMI_ID="ami-0f6f902a9aff6d384"
+# CentOS 8
+#AMI_ID=$( aws ec2 describe-images --owners 446598291512 --filters "Name=name,Values=*-el8-x86_64" --query Images[].ImageId --output text )
+#[ -z ${AMI_ID} ] && AMI_ID="ami-0c464387e25013b1f"
 
 SECURITY_GROUP_ID="sg-08a92c3135ec19aea"
 SUBNET_ID="subnet-0f5274ec85eec91da"
@@ -408,9 +412,22 @@ then
     else
         WriteLog "The cmake-3.18.0 not found." "$LOG_FILE"
     fi
+
+    CURL_7_67=$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
+    if [[ -n "$CURL_7_67" ]]
+    then
+        WriteLog "Upload $CURL_7_67" "$LOG_FILE"
+        res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${CURL_7_67} centos@${instancePublicIp}:/home/centos/ 2>&1 )
+        WriteLog "Res: $res" "$LOG_FILE"
+    else
+        WriteLog "The curl 7.67.0 not found." "$LOG_FILE"
+    fi
     
     WriteLog "Upload init.sh" "$LOG_FILE"
+    # CentOS 7
     res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init.sh centos@${instancePublicIp}:/home/centos/ 2>&1 )
+    # CentOS 8
+    #res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init-cos8.sh centos@${instancePublicIp}:/home/centos/init.sh 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
 
 #    WriteLog "Set it to executable" "$LOG_FILE"
