@@ -127,7 +127,7 @@ if 'inux' in sysId:
     sysId += ',  CMake: ' + myProc.stdout.read().rstrip('\n').split()[2]
     myProc = subprocess.Popen(["curl --version"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
     sysId += ',  cUrl: ' + myProc.stdout.read().rstrip('\n').split()[1]
-    myProc = subprocess.Popen(["nodejs --version"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    myProc = subprocess.Popen(["node --version"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
     sysId += ',  node.js: ' + myProc.stdout.read().rstrip('\n')
     myProc = subprocess.Popen(["npm --version"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
     sysId += ',  npm: ' + myProc.stdout.read().rstrip('\n')
