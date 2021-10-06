@@ -188,11 +188,19 @@ then
     AVERAGE_SESSION_TIME=1.2         # Hours for m4.2xlarge instance
 
     # An experiment from 2020-10-29
-    INSTANCE_TYPE="m5.4xlarge"      # 0.856 USD per Hour (16 Cores, 64 GB RAM)
+    INSTANCE_TYPE="m5.4xlarge"      # 0.856 USD per Hour (16 Cores, 3.1GHz, 64 GB RAM)
     AVERAGE_SESSION_TIME=0.75       # Hours for m5.2xlarge instance
     
     # An experiment from 2021-10-05 in one-off test it was 11 minutes slower than same PR with m5.4xlarge
     #INSTANCE_TYPE="m5a.4xlarge"      # 0.768 USD per Hour (16 Cores, 64 GB RAM)
+    #AVERAGE_SESSION_TIME=0.75       # Hours for m5.2xlarge instance
+    
+    # An experiment from 2021-10-06
+    INSTANCE_TYPE="c5.4xlarge"      # 0.744 USD per Hour (16 Cores, 3.4GHz, 32 GB RAM)
+    AVERAGE_SESSION_TIME=0.75       # Hours for m5.2xlarge instance
+    
+    # An experiment from 2021-10-06 -> Can't create instance
+    #INSTANCE_TYPE="c5a.8xlarge"      # 0.1.344 USD per Hour (32 Cores, 3.3 GHz, 64 GB RAM)
     #AVERAGE_SESSION_TIME=0.75       # Hours for m5.2xlarge instance
 
     #INSTANCE_TYPE="m4.10xlarge"    # 2.22 USD per Hour (40 Cores, 163GB RAM)
