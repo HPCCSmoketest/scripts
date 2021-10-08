@@ -3,6 +3,7 @@
 PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
 
+set -a
 PREP_TIME=0
 BUILD_TIME=0
 PACKAGE_TIME=0
@@ -125,6 +126,8 @@ SYSTEM_ID=${SYSTEM_ID// (*)/}
 SYSTEM_ID=${SYSTEM_ID// /_}
 SYSTEM_ID=${SYSTEM_ID//./_}
 
+OBT_SYSTEM="Smoketest"
+OBT_SYSTEM_ENV="Smoketest"
 
 
 
@@ -498,3 +501,5 @@ KillCheckDiskSpace()
 
     sleep 1
 }
+
+set +a
