@@ -33,6 +33,7 @@ AVAILABLE_MEMORY_GB=$(( $(grep 'MemAvailable' /proc/meminfo | awk '{print $2}' |
 
 MEMORY_GB=$(( $( free | grep -i "mem" | awk '{ print $2}' )/ ( 1024 ** 2 ) ))
 MEMORY_MB=$(( $( free | grep -i "mem" | awk '{ print $2}' )/ 1024 ))
+MEMORY=$MEMORY_GB
 
 MEM_CORE_RATIO=$( echo "$MEMORY_GB $NUMBER_OF_CPUS" | awk '{printf "%.3f", $1 / $2 }' )
 MEM_CORE_RATIO_UNIT='GB/core'
