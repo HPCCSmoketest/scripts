@@ -87,7 +87,7 @@ DATASTAX_ENTRIES
 
 sudo yum remove -y nodejs
 
-curl --silent --location https://rpm.nodesource.com/setup_14.x | sudo bash -
+curl --silent --location https://rpm.nodesource.com/setup_16.x | sudo bash -
 
 PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools bc psmisc nodejs"
 #if [ $DOCS_BUILD -eq 1 ]
