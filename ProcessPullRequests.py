@@ -1114,9 +1114,9 @@ def CleanUpClosedPulls(knownPullRequests, smoketestHome):
         for pullReqDir in knownPullRequests:
             newlyClosedPrs +=1
             # to save disk space delete its HPCC-Platfrom and build directories.
-            if os.path.exists(pullReqDir+"/HPCC-Platform") or os.path.exists(pullReqDir+"/build"):
-                print ("Delete HPCC-Platform and build directories of the closed "+pullReqDir)
-                myProc = subprocess.Popen(["sudo -S rm -rf "+pullReqDir+"/HPCC-Platform "+pullReqDir+"/build"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            if os.path.exists(pullReqDir+"/HPCC-Platform") or os.path.exists(pullReqDir+"/build") or os.path.exists(pullReqDir+"/HPCCSystems-regression") :
+                print ("Delete HPCC-Platform, build, HPCCSystems-regression/archives and HPCCSystems-regression/results directories of the closed "+pullReqDir)
+                myProc = subprocess.Popen(["sudo -S rm -rf "+pullReqDir+"/HPCC-Platform "+pullReqDir+"/build "+pullReqDir+"/HPCCSystems-regression/archives "+pullReqDir+"/HPCCSystems-regression/results "],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                 (myStdout,  myStderr) = myProc.communicate(input = myPassw)
                 result = "returncode:" + str(myProc.returncode) + ", stdout:'" + myStdout + "', stderr:'" + myStderr + "'."
                 print("Result: "+result)
@@ -2424,9 +2424,9 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             result = formatResult(myProc, resultFile)
             #resultFile.write("\tresult:"+result+"\n")
             
-            print ("Delete source and build directory to save disk space "+testDir+" ("+prs[prid]['label']+").")
-            resultFile.write("Delete source and build directory to save disk space "+testDir+" ("+prs[prid]['label']+").\n")
-            myProc = subprocess.Popen(["sudo rm -rf HPCC-Platform build hpcc"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            print ("Delete source, build, OBT and rte directory to save disk space "+testDir+" ("+prs[prid]['label']+").")
+            resultFile.write("Delete source, build, OBT and rte directory to save disk space "+testDir+" ("+prs[prid]['label']+").\n")
+            myProc = subprocess.Popen(["sudo rm -rf HPCC-Platform build hpcc OBT rte"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             result = formatResult(myProc, resultFile)
             #resultFile.write("\tresult:"+result+"\n")
         else:
