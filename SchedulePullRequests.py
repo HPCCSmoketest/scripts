@@ -137,7 +137,6 @@ passEmoji=':white_check_mark:'
 
 #testInfo = {}
 threads = {}
-myPassw = 'Boglarka990405\n'
 
 embededStuffTests = {
                             'Rembed':       ['testing/regress/ecl/embedR.ecl'], 
@@ -1198,8 +1197,8 @@ def CleanUpClosedPulls(knownPullRequests, smoketestHome):
             # to save disk space delete its HPCC-Platfrom and build directories.
             if os.path.exists(pullReqDir+"/HPCC-Platform") or os.path.exists(pullReqDir+"/build") or os.path.exists(pullReqDir+"/HPCCSystems-regression") :
                 print ("Delete HPCC-Platform, build, HPCCSystems-regression/archives and HPCCSystems-regression/results directories of the closed "+pullReqDir)
-                myProc = subprocess.Popen(["sudo -S rm -rf "+pullReqDir+"/HPCC-Platform "+pullReqDir+"/build "+pullReqDir+"/HPCCSystems-regression/archives "+pullReqDir+"/HPCCSystems-regression/results "],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                (myStdout,  myStderr) = myProc.communicate(input = myPassw)
+                myProc = subprocess.Popen(["sudo rm -rf "+pullReqDir+"/HPCC-Platform "+pullReqDir+"/build "+pullReqDir+"/HPCCSystems-regression/archives "+pullReqDir+"/HPCCSystems-regression/results "],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                (myStdout,  myStderr) = myProc.communicate()
                 result = "returncode:" + str(myProc.returncode) + ", stdout:'" + myStdout + "', stderr:'" + myStderr + "'."
                 print("Result: "+result)
             # Remove gists
@@ -2301,7 +2300,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                     resultFile.write("\t" + cmd + "\n")
                     myProc = subprocess.Popen([ cmd ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
                     #myProc = subprocess.Popen(["./build.sh " + prs[prid]['regSuiteTests']  ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-                    (myStdout,  myStderr) = myProc.communicate(input = myPassw)
+                    (myStdout,  myStderr) = myProc.communicate()
                 except:
                     print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
                     pass
