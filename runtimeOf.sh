@@ -61,7 +61,12 @@ else
         
     done < <(find PR-*/ -maxdepth 1 -iname '*_Regress_'"$engine"'*' -type f -print)
 
-    printf "\n%s:\ncount  :%4d \nmin    :%4d sec \nmax    :%4d sec \naverage:%4d sec\n" "$testName" "$runCount" "$runTimeMin" "$runTimeMax" "$(( $runTimeSum / $runCount ))"
+    if [[ $runCount -ne 0 ]]
+    then
+        printf "\n%s:\ncount  :%4d \nmin    :%4d sec \nmax    :%4d sec \naverage:%4d sec\n" "$testName" "$runCount" "$runTimeMin" "$runTimeMax" "$(( $runTimeSum / $runCount ))"
+    else
+        printf "\nThe %s not found in results for %s engine.\n" "$testName" "$engine"
+    fi
 fi
 echo "End."
 
