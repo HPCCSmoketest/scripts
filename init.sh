@@ -86,10 +86,18 @@ gpgcheck = 0
 DATASTAX_ENTRIES
 
 sudo yum remove -y nodejs
+sudo yum --enablerepo=nodesource clean metadata
 
-curl --silent --location https://rpm.nodesource.com/setup_16.x | sudo bash -
+# Something happened and this method doesn't work anymore
+#curl --location https://rpm.nodesource.com/setup_16.x | sudo bash -
+#curl -fsSL https://rpm.nodesource.com/setup_16.x | sudo bash -
+#sudo yum --enablerepo=nodesource clean metadata
 
-PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools bc psmisc nodejs"
+# This approach works
+wget https://rpm.nodesource.com/pub_16.x/el/7/x86_64/nodejs-16.13.0-1nodesource.x86_64.rpm
+sudo rpm -i nodejs-16.13.0-1nodesource.x86_64.rpm
+
+PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools bc psmisc"
 #if [ $DOCS_BUILD -eq 1 ]
 #then
     wget http://mirror.centos.org/centos/7/os/x86_64/Packages/fop-1.1-6.el7.noarch.rpm
