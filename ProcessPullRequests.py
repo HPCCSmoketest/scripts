@@ -132,6 +132,14 @@ if 'inux' in sysId:
     myProc = subprocess.Popen(["npm --version"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
     sysId += ',  npm: ' + myProc.stdout.read().rstrip('\n')
 
+    myProc = subprocess.Popen(["wget -q -t1 -T1 -O - http://169.254.169.254/latest/meta-data/instance-id"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    instanceId = myProc.stdout.read().rstrip('\n')
+    if len(instanceId) == 0:
+        myProc = subprocess.Popen(["l=$(readlink /var/lib/cloud/instance); echo ${l##*/}"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+        instanceId = myProc.stdout.read().rstrip('\n')
+        if len(instanceId) == 0:
+            instanceId = "NotInCloud"
+        
 failEmoji=':x:'
 passEmoji=':white_check_mark:'
 
@@ -2092,10 +2100,12 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             print("\ttitle: %s" % (prs[prid]['title']))
             print("\tuser : %s" % (prs[prid]['user']))
             print("\tsha  : %s" % (prs[prid]['sha']))
+            print("\tinstance : %s" % (instanceId))
             print("\tstart: %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
             resultFile.write("%d/%d. Process PR-%s, label: %s\n" % ( prSequnceNumber, numOfPrToTest, str(prid), prs[prid]['label']))
             resultFile.write("\ttitle: %s\n" % (repr(prs[prid]['title'])))
             resultFile.write("\tsha  : %s\n" % (prs[prid]['sha']))
+            resultFile.write("\tinstance : %s\n" % (instanceId))
             resultFile.write("\tStart: %s\n" % (time.strftime("%y-%m-%d %H:%M:%S")))
             if not os.path.exists('HPCC-Platform'):
                 # clone the HPCC-Platfrom directory into the smoketes-<PRID> directory
