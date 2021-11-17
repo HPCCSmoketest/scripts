@@ -217,8 +217,8 @@ if [[ -n "$BASE_TEST" ]]
 then
     WriteLog "Execute base test with tag: ${INSTANCE_NAME}" "$LOG_FILE"
 else
-    WriteLog "Param: instanceName=${INSTANCE_NAME}" "$LOG_FILE"
-    WriteLog "Param: commitId=${C_ID}" "$LOG_FILE"
+    WriteLog "Param: instanceName= ${INSTANCE_NAME}" "$LOG_FILE"
+    WriteLog "Param: commitId= ${C_ID}" "$LOG_FILE"
 fi
 
 SSH_KEYFILE="~/HPCC-Platform-Smoketest.pem"
