@@ -63,7 +63,9 @@ def update():
         for f in files:
             if len(f) > 0:
                 print("File:%s" % (f))
-	        myProcA = subprocess.Popen(["cat " + f + " | egrep -i 'Instance name|instanceName= |Commit Id|commitId= |Instance Id' | cut -d' ' -f5 | tr -d \\' | paste -d, -s - | cut -d',' -f1,2,3 --output ',' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+	        #myProcA = subprocess.Popen(["cat " + f + " | egrep -i 'Instance name|instanceName= |Commit Id|commitId= |Instance Id|base= |jira= ' | cut -d' ' -f5 | tr -d \\' | paste -d, -s - | cut -d',' -f1,2,3 --output ',' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+	        myProcA = subprocess.Popen(["cat " + f + " | egrep -i 'Instance name|instanceName= |Commit Id|commitId= |Instance Id|base= |jira= ' | cut -d' ' -f5 | tr -d \\' | paste -d, -s - "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+
                 resultA = myProcA.stdout.read() + myProcA.stderr.read()
 		items = resultA.split(',')
                 print(items)
@@ -75,11 +77,18 @@ def update():
                 start = 'N/A'
                 end = 'N/A'
                 ellaps = 'N/A'
+                base = 'N/A'
+                jira = 'N/A'
+
                 for item in items:
-                    if item.startswith('PR-'):
+                    if item.startswith('PR-') and pr == 'N/A':
                         pr = item.strip()
                     elif item.startswith('i-'):
                         instance = item.strip()
+                    elif item.startswith('HPCC-'):
+                        jira = item.strip()
+                    elif item.startswith('master') or item.startswith('candidate'):
+			base = item.strip()
                     else:
                         commit = item.strip()
                         # Check whether it is a hexadecmal string (commit id)
@@ -119,6 +128,10 @@ def update():
                 tests[pr][instance]['index'] = index
                 if 'startTimestamp' not in tests[pr][instance]:
                     tests[pr][instance]['startTimestamp'] = time.mktime(time.strptime(start, "%Y-%m-%d %H:%M:%S")) #startTimestamp 
+
+                tests[pr][instance]['jira'] = jira
+                tests[pr][instance]['base'] = base
+
 		index += 1
 
                 #result.append("%s, %s, %s, %s" % (pr, commit, instance, status))
@@ -147,7 +160,7 @@ def update():
             for rf in resFiles:
                 if len(rf) > 0:
                     print(rf)
-                    myProcD = subprocess.Popen(["egrep '\s+Process PR-|\s+sha\s+:|\s+instance\s+:|\s+Summary\s+:|\s+pass :|In PR-' " + rf + " | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,(\s*)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' -e 's/^[0-9]*\/[0-9]*\.\s//g' | sed -r 's/(.*) ((sha: \w{8,8})([a-zA-Z0-9]+)), (.*)/\1 \3, \5/'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                    myProcD = subprocess.Popen(["egrep '\s+Process PR-|\s+sha\s+:|\s+title\s*:|\s+base\s+:|\s+instance\s+:|\s+Summary\s+:|\s+pass :|In PR-' " + rf + " | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,(\s*)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' -e 's/^[0-9]*\/[0-9]*\.\s//g' | sed -r 's/(.*) ((sha: \w{8,8})([a-zA-Z0-9]+)), (.*)/\1 \3, \5/'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                     resultD = myProcD.stdout.read() + myProcD.stderr.read()
                     items = resultD.split(',')
                     #print(items)
@@ -156,6 +169,8 @@ def update():
                     rEllaps = 'N/A'
                     rResult = 'N/A'
                     rInstance  = 'N/A'
+                    rTitle = 'N/A'
+                    rBase = 'N/A'
 
                     for i in items:
                         if 'Process' in i:
@@ -172,6 +187,10 @@ def update():
                                rResult = 'Failed' 
                         elif 'instance :' in i:
                             rInstance = i.replace('instance :', '').strip() 
+                        elif 'title:' in i:
+                            rTitle = i.replace('title :','').strip()
+                        elif 'base :' in i:
+                            rBase = i.replace('base :', '').strip()
 
                     #print("rPR:%s, rInstance:%s, rCommit:%s, rEllaps:%s, rResult:%s" % (rPr, rInstance, rCommit, rEllaps, rResult))
         	
@@ -194,6 +213,9 @@ def update():
                             ellapses[index] = rEllaps
                             tests[rPr][rInstance]['result'] = rResult
                             results[index] = rResult
+
+                            tests[rPr][rInstance]['title'] = rTitle
+                            tests[rPr][rInstance]['base'] = rBase
                         except Exception as e:
                             print(e)
                             pass
@@ -219,6 +241,9 @@ def update():
                                 ellapses[index] = rEllaps
                                 tests[rPr][rInstance]['result'] = rResult
                                 results[index] = rResult
+
+                                tests[rPr][rInstance]['title'] = rTitle
+                                tests[rPr][rInstance]['base'] = rBase
 
                         except Exception as e:
                             print(e)
