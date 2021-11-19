@@ -802,7 +802,8 @@ def GetOpenPulls(knownPullRequests):
         prs[prid]['enableStackTrace'] = True
         prs[prid]['rteChanged'] = False
         prs[prid]['containerized'] = False
-        
+        prs[prid]['jira'] = prs[prid]['label'][0:10]
+               
         testDir = 'smoketest-'+str(prid)
         # mkdir smoketest-<PRID>
         if not os.path.exists(testDir):

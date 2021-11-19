@@ -170,6 +170,14 @@ do
 #                BASE_TAG=${BASE_TAG//\"/}
 #                WriteLog "Execute base test with tag: ${BASE_TAG}" "$LOG_FILE"
                 ;;
+                
+        base) BASE=${param}
+                WriteLog "Base : ${BASE}" "$LOG_FILE"
+                ;;
+                
+        jira) JIRA=${param}
+                WriteLog "Jira : ${JIRA}" "$LOG_FILE"
+                ;;                
         
     esac
     shift

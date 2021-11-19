@@ -799,6 +799,7 @@ def GetOpenPulls(knownPullRequests):
         prs[prid]['enableStackTrace'] = True
         prs[prid]['excludeFromTest'] = False
         prs[prid]['containerized'] = False
+        prs[prid]['jira'] = pr['title'][0:10]
         
         testDir = 'smoketest-'+str(prid)
         # mkdir smoketest-<PRID>
@@ -2296,6 +2297,8 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                     cmd += " -buildEclWatch=" + str(prs[prid]['buildEclWatch'])
                     cmd += " -keepFiles=" + str(keepFiles)
                     cmd += " -enableStackTrace=" + str(prs[prid]['enableStackTrace'])
+                    cmd += " -base='"+prs[prid]['code_base'] +"'"
+                    cmd += " -jira='"+prs[prid]['jira'] +"'"
                     
                     resultFile.write("\t" + cmd + "\n")
                     myProc = subprocess.Popen([ cmd ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -2836,6 +2839,8 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
 #                    cmd += " -keepFiles=" + str(keepFiles)
 #                    cmd += " -enableStackTrace=" + str(prs[prid]['enableStackTrace'])
                     cmd += " -appId='" + appId + "'"
+                    cmd += " -base="+prs[prid]['code_base']
+                    cmd += " -jira="+prs[prid]['label']
                     
                     resultFile.write("\t" + cmd + "\n")
                  
