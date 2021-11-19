@@ -227,6 +227,8 @@ then
 else
     WriteLog "Param: instanceName= ${INSTANCE_NAME}" "$LOG_FILE"
     WriteLog "Param: commitId= ${C_ID}" "$LOG_FILE"
+    WriteLog "Param: Base= ${BASE}" "$LOG_FILE"
+    WriteLog "Param: Jira= ${JIRA}" "$LOG_FILE"
 fi
 
 SSH_KEYFILE="~/HPCC-Platform-Smoketest.pem"
