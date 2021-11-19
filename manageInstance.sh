@@ -171,11 +171,11 @@ do
 #                WriteLog "Execute base test with tag: ${BASE_TAG}" "$LOG_FILE"
                 ;;
                 
-        base) BASE=${param}
+        base*) BASE=${param//base=/}
                 WriteLog "Base : ${BASE}" "$LOG_FILE"
                 ;;
                 
-        jira) JIRA=${param}
+        jira*) JIRA=${param//jira=/}
                 WriteLog "Jira : ${JIRA}" "$LOG_FILE"
                 ;;                
         
