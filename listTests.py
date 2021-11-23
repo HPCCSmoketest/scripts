@@ -272,8 +272,10 @@ def update():
             starts.append("") 
             ends.append("")
             ellapses.append("")
+            bases.append("")
+            jiras.append("")
 
-        prs[0] = "No test"
+        prs[0] = "No test (yet)"
         
     #result.reverse()
     
