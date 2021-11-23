@@ -2840,7 +2840,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
 #                    cmd += " -enableStackTrace=" + str(prs[prid]['enableStackTrace'])
                     cmd += " -appId='" + appId + "'"
                     cmd += " -base="+prs[prid]['code_base']
-                    cmd += " -jira="+prs[prid]['label']
+                    cmd += " -jira="+prs[prid]['jira']
                     
                     resultFile.write("\t" + cmd + "\n")
                  
