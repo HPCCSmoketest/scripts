@@ -30,13 +30,22 @@ import glob
 source = ColumnDataSource(data = dict())
 updateInterval = 30 # sec
 tests = {}
+isReported = False
 
 def update():
+    global isReported
+
     startTimestamp = time.time()
     nextUpdateTime = datetime.now() + timedelta(seconds = updateInterval)
     print("Update (%s)..." % (time.strftime("%Y-%m-%d %H:%M:%S"))) 
     divUpdate.text = "Update..."
-    divCurrentState.text = 'Idle'
+    myProc = subprocess.Popen(["ps aux | egrep -c  '[p]ython ./Schedule' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    smoketestIsUp = myProc.stdout.read().strip() + myProc.stderr.read().strip()
+    
+    if smoketestIsUp == '0':
+        divCurrentState.text = 'Stopped'
+    else:
+        divCurrentState.text = 'Running'
 
     currLogFile = "prp-" + time.strftime("%Y-%m-%d") + ".log"
     testDay = time.strftime("%y-%m-%d")
@@ -260,6 +269,14 @@ def update():
 
         print(tests)
 
+	if smoketestIsUp == '0' and not isReported:
+            try:
+                outFile = open("smoketestReport-" + testDay + ".log", "w")
+                for i in range(len(prs)):
+                    outFile.write("%d, %s, %s, %s, (%s), %s, %s, tested as %s\n" % (i, prs[i], scheduledCommits[i], instances[i], statuses[i], results[i], ellapses[i], testedCommits[i]))
+                outFile.close()
+            finally:
+                isReported = True    
     else:
         print("\tlen prs: %d" % (len(prs)))
         if len(prs) == 0:
@@ -352,9 +369,10 @@ def update_time():
 
 #headerRow = row(divTimeHeader, divUpdateHeader, divCurrentStateHeader)
 staRow1 = row(divCurrentDayHeader, divCurrentDay, divTimeHeader, divTime, divUpdateHeader, divUpdate, divCurrentStateHeader, divCurrentState)
-staRow2 = row(divCurrentUserHeader, divCurrentUser)
-staRow3 = row(divCurrentEctHeader, divCurrentEct, divCurrentPhaseHeader, divCurrentPhase)
-curdoc().add_root(column(staRow1, staRow2, staRow3, dataTable))
+#staRow2 = row(divCurrentUserHeader, divCurrentUser)
+#staRow3 = row(divCurrentEctHeader, divCurrentEct, divCurrentPhaseHeader, divCurrentPhase)
+#curdoc().add_root(column(staRow1, staRow2, staRow3, dataTable))
+curdoc().add_root(column(staRow1, dataTable))
 
 curdoc().title = "List tests"
 
