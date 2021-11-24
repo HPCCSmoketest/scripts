@@ -273,7 +273,7 @@ def update():
             try:
                 outFile = open("smoketestReport-" + testDay + ".log", "w")
                 for i in range(len(prs)):
-                    outFile.write("%d, %s, %s, %s, (%s), %s, %s, tested as %s\n" % (i, prs[i], scheduledCommits[i], instances[i], statuses[i], results[i], ellapses[i], testedCommits[i]))
+                    outFile.write("%d, %s, %s, %s, (%s), %s, %s, tested as %s\n" % (i+1, prs[i], scheduledCommits[i], instances[i], statuses[i], results[i], ellapses[i], testedCommits[i]))
                 outFile.close()
             finally:
                 isReported = True    
