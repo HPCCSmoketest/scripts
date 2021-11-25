@@ -46,6 +46,11 @@ def update():
         divCurrentState.text = 'Stopped'
     else:
         divCurrentState.text = 'Running'
+        if isReported:
+            # Smoketest stopped and result reported, but it is up again (restarted). 
+            # Enable to report results after the next stop.
+            isReported = False
+            print("Result report re-enabled.")
 
     currLogFile = "prp-" + time.strftime("%Y-%m-%d") + ".log"
     testDay = time.strftime("%y-%m-%d")
@@ -102,8 +107,9 @@ def update():
                     except ValueError:
                         pass
 
-                    if item.startswith('PR-') and pr == 'N/A':
-                        pr = item
+                    if item.startswith('PR-'):
+                        if pr == 'N/A':
+                            pr = item
                     elif item.startswith('i-'):
                         instance = item
                     elif item.startswith('HPCC-') or item.startswith('PR-wo-'):
@@ -270,12 +276,15 @@ def update():
         print(tests)
 
 	if smoketestIsUp == '0' and not isReported:
+            # Smoketest stopped, but the results not (yet) reported
+            print("Report the test results.")
             try:
                 outFile = open("smoketestReport-" + testDay + ".log", "w")
                 for i in range(len(prs)):
                     outFile.write("%d, %s, %s, %s, (%s), %s, %s, tested as %s\n" % (i+1, prs[i], scheduledCommits[i], instances[i], statuses[i], results[i], ellapses[i], testedCommits[i]))
                 outFile.close()
             finally:
+                print("\tDone")
                 isReported = True    
     else:
         print("\tlen prs: %d" % (len(prs)))
