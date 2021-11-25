@@ -73,6 +73,7 @@ def update():
     ellapses = []
     bases = []
     jiras = []
+    urls = []
 
     if len(files) > 0:
         index = 0
@@ -80,7 +81,7 @@ def update():
             if len(f) > 0:
                 print("File:%s" % (f))
 	        #myProcA = subprocess.Popen(["cat " + f + " | egrep -i 'Instance name|instanceName= |Commit Id|commitId= |Instance Id|base= |jira= ' | cut -d' ' -f5 | tr -d \\' | paste -d, -s - | cut -d',' -f1,2,3 --output ',' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-	        myProcA = subprocess.Popen(["cat " + f + " | egrep -i 'Instance name|instanceName= |Commit Id|commitId= |Instance Id|base= |jira= ' | cut -d' ' -f5 | tr -d \\' | paste -d, -s - "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+	        myProcA = subprocess.Popen(["cat " + f + " | egrep -i 'Instance name|instanceName= |Commit Id|commitId= |Instance Id|base= |jira= |Bokeh address:' | cut -d' ' -f5 | tr -d \\' | paste -d, -s - "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
 
                 resultA = myProcA.stdout.read() + myProcA.stderr.read()
 		items = resultA.split(',')
@@ -95,6 +96,7 @@ def update():
                 ellaps = 'N/A'
                 base = 'N/A'
                 jira = 'N/A'
+                url = 'N/A'
 
                 for item in items:
                     item = item.strip()
@@ -120,6 +122,9 @@ def update():
                         commit = item
 			if len(commit) > 0 and 'N/A' != commit:
                             status = 'running'
+                    elif item.startswith('ec2-'):
+                        if url == 'N/A':
+                            url = 'http://' + item
                     else:
                         print("Unknown item: '%s'" % (item))
                 
@@ -154,6 +159,8 @@ def update():
 
                 tests[pr][instance]['jira'] = jira
                 tests[pr][instance]['base'] = base
+                tests[pr][instance]['bokehUrl'] = url
+                tests[pr][instance]['bokehUrlValid'] = True
 
 		index += 1
 
@@ -170,7 +177,8 @@ def update():
                 #ellapses.append("%d sec" % ( e ))
                 ellapses.append("%d sec (%s)" % (e, time.strftime("%H:%M:%S", time.gmtime(e))))
                 bases.append(base)
-                jiras.append(jira)        
+                jiras.append(jira)
+                urls.append(url)
 	
 	# get the results
         myProcRes = subprocess.Popen(["find OldPrs/PR-*/ PR-*/ -iname 'result-'" + testDay + "'*.log' -type f  -print | sort "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
@@ -240,6 +248,7 @@ def update():
 
                             tests[rPr][rInstance]['title'] = rTitle
                             tests[rPr][rInstance]['base'] = rBase
+                            tests[rPr][rInstance]['bokehUrlValid'] = False
                         except Exception as e:
                             print(e)
                             pass
@@ -268,7 +277,7 @@ def update():
 
                                 tests[rPr][rInstance]['title'] = rTitle
                                 tests[rPr][rInstance]['base'] = rBase
-
+                                tests[rPr][rInstance]['bokehUrlValid'] = False
                         except Exception as e:
                             print(e)
                         pass
