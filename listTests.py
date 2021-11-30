@@ -114,7 +114,7 @@ def update():
                             pr = item
                     elif item.startswith('i-'):
                         instance = item
-                    elif item.startswith('HPCC-') or item.startswith('PR-wo-'):
+                    elif item.upper().startswith('HPCC') or item.startswith('PR-wo-'):
                         jira = item
                     elif item.startswith('master') or item.startswith('candidate'):
 			base = item
