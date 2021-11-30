@@ -17,7 +17,7 @@ from bokeh.io import curdoc
 from bokeh.models.callbacks import CustomJS
 #from bokeh.models.annotations import LabelSet
 #from bokeh.models import DatetimeTickFormatter, DaysTicker
-from bokeh.models.widgets import DataTable,  TableColumn, Div, StringFormatter #,Select, CheckboxGroup
+from bokeh.models.widgets import DataTable,  TableColumn, Div, StringFormatter, HTMLTemplateFormatter #,Select, CheckboxGroup
 from bokeh.layouts import column, row
 
 import subprocess
@@ -160,7 +160,10 @@ def update():
                 tests[pr][instance]['jira'] = jira
                 tests[pr][instance]['base'] = base
                 tests[pr][instance]['bokehUrl'] = url
-                tests[pr][instance]['bokehUrlValid'] = True
+                if url == 'N/A':
+                    tests[pr][instance]['bokehUrlValid'] = False
+                else:
+                    tests[pr][instance]['bokehUrlValid'] = True
 
 		index += 1
 
