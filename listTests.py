@@ -115,7 +115,9 @@ def update():
                     elif item.startswith('i-'):
                         instance = item
                     elif item.upper().startswith('HPCC') or item.startswith('JIRA-'):
-                        jira = item.replace('JIRA-','') + "(no ID)"
+                        jira = item
+                        if item.startswith('JIRA-'):
+                            jira = item.replace('JIRA-','').replace('_',' ') + " (no ID)"
                     elif item.startswith('master') or item.startswith('candidate'):
                         base = item
                     elif itemIsHexString:
