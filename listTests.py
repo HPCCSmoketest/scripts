@@ -80,11 +80,11 @@ def update():
         for f in files:
             if len(f) > 0:
                 print("File:%s" % (f))
-	        #myProcA = subprocess.Popen(["cat " + f + " | egrep -i 'Instance name|instanceName= |Commit Id|commitId= |Instance Id|base= |jira= ' | cut -d' ' -f5 | tr -d \\' | paste -d, -s - | cut -d',' -f1,2,3 --output ',' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-	        myProcA = subprocess.Popen(["cat " + f + " | egrep -i 'Instance name|instanceName= |Commit Id|commitId= |Instance Id|base= |jira= |Bokeh address:' | cut -d' ' -f5 | tr -d \\' | paste -d, -s - "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                #myProcA = subprocess.Popen(["cat " + f + " | egrep -i 'Instance name|instanceName= |Commit Id|commitId= |Instance Id|base= |jira= ' | cut -d' ' -f5 | tr -d \\' | paste -d, -s - | cut -d',' -f1,2,3 --output ',' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                myProcA = subprocess.Popen(["cat " + f + " | egrep -i 'Instance name|instanceName= |Commit Id|commitId= |Instance Id|base= |jira= |Bokeh address:' | cut -d' ' -f5 | tr -d \\' | paste -d, -s - "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
 
                 resultA = myProcA.stdout.read() + myProcA.stderr.read()
-		items = resultA.split(',')
+                items = resultA.split(',')
                 print(items)
                 pr = 'N/A'
                 instance = 'N/A'
@@ -103,7 +103,7 @@ def update():
 
                     itemIsHexString = False
                     # Check whether it is a hexadecmal string (commit id)
-		    try:
+                    try:
                         i = int(item, 16)
                         itemIsHexString = True
                     except ValueError:
@@ -114,13 +114,13 @@ def update():
                             pr = item
                     elif item.startswith('i-'):
                         instance = item
-                    elif item.upper().startswith('HPCC') or item.startswith('PR-wo-'):
-                        jira = item
+                    elif item.upper().startswith('HPCC') or item.startswith('JIRA-'):
+                        jira = item.replace('JIRA-','') + "(no ID)"
                     elif item.startswith('master') or item.startswith('candidate'):
-			base = item
+                        base = item
                     elif itemIsHexString:
                         commit = item
-			if len(commit) > 0 and 'N/A' != commit:
+                        if len(commit) > 0 and 'N/A' != commit:
                             status = 'running'
                     elif item.startswith('ec2-'):
                         if url == 'N/A':
@@ -128,7 +128,7 @@ def update():
                     else:
                         print("Unknown item: '%s'" % (item))
                 
-		if 'OldPr' in f:
+                if 'OldPr' in f:
                     status = 'closed'
                 else:
                     myProcB = subprocess.Popen(["egrep -i -c 'Terminate:' " + f ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
@@ -140,7 +140,7 @@ def update():
                 resultC = myProcC.stdout.read() + myProcC.stderr.read()
                 start = resultC.strip()
 
-	        #print("\t%s" % (resultA))
+                #print("\t%s" % (resultA))
                 if pr not in tests:
                     tests[pr] = {}
                 if instance not in tests[pr]:
@@ -165,7 +165,7 @@ def update():
                 else:
                     tests[pr][instance]['bokehUrlValid'] = True
 
-		index += 1
+                index += 1
 
                 #result.append("%s, %s, %s, %s" % (pr, commit, instance, status))
                 prs.append(pr)
@@ -174,7 +174,7 @@ def update():
                 testedCommits.append('N/A')
                 statuses.append(status)
                 results.append(result)
-		starts.append(start)
+                starts.append(start)
                 ends.append(end)
                 e = int(startTimestamp - tests[pr][instance]['startTimestamp'])
                 #ellapses.append("%d sec" % ( e ))
@@ -182,8 +182,8 @@ def update():
                 bases.append(base)
                 jiras.append(jira)
                 urls.append(url)
-	
-	# get the results
+    
+        # get the results
         myProcRes = subprocess.Popen(["find OldPrs/PR-*/ PR-*/ -iname 'result-'" + testDay + "'*.log' -type f  -print | sort "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
         resFiles = myProcRes.stdout.read() + myProcRes.stderr.read()
         resFiles = resFiles.splitlines()
@@ -228,7 +228,7 @@ def update():
                             rBase = i.replace('base :', '').strip()
 
                     #print("rPR:%s, rInstance:%s, rCommit:%s, rEllaps:%s, rResult:%s" % (rPr, rInstance, rCommit, rEllaps, rResult))
-        	
+                
                     myProcE = subprocess.Popen(["egrep 'Finished:' " + rf + " | tr -d '\t' | cut -d ' ' -f 2,3 | tr -d ',' | tr -d '\n' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                     resultE = myProcE.stdout.read() + myProcE.stderr.read()
                     end = resultE.strip()
@@ -269,7 +269,7 @@ def update():
                                         
                             #print("\tindex: %d" % (index))
                             if index != -1:
-				tests[rPr][rInstance]['testedCommit'] = rCommit
+                                tests[rPr][rInstance]['testedCommit'] = rCommit
                                 testedCommits[index] = rCommit
                                 tests[rPr][rInstance]['end'] = end
                                 ends[index] = end
@@ -287,7 +287,7 @@ def update():
 
         print(tests)
 
-	if smoketestIsUp == '0' and not isReported:
+        if smoketestIsUp == '0' and not isReported:
             # Smoketest stopped, but the results not (yet) reported
             print("Report the test results.")
             try:

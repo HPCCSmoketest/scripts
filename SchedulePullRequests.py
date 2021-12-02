@@ -799,7 +799,9 @@ def GetOpenPulls(knownPullRequests):
         prs[prid]['enableStackTrace'] = True
         prs[prid]['excludeFromTest'] = False
         prs[prid]['containerized'] = False
-        prs[prid]['jira'] = pr['title'][0:10]
+        prs[prid]['jira'] = pr['title'][0:10].replace(' ','-')
+        if  not prs[prid]['jira'].startswith('HPCC'):
+            prs[prid]['jira'] = 'JIRA-' + prs[prid]['jira']
         
         testDir = 'smoketest-'+str(prid)
         # mkdir smoketest-<PRID>
