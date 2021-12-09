@@ -117,6 +117,7 @@ noEcho = False
 sysId = platform.dist()[0] + ' ' + platform.dist()[1] + ' (' + platform.system() + ' ' + platform.release() + ')'
 appId = "App"""
 gitHubToken=None
+curlTimeout=120
 
 if 'inux' in sysId:
     myProc = subprocess.Popen(["gcc --version | head -n 1 "], shell=True,  bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -614,7 +615,7 @@ def GetPullReqCommitId(prid):
     retVal = ''
     if gitHubToken != "":
         try:
-            myProc = subprocess.Popen(['curl --request GET -H "Content-Type: application/json" -H "Authorization: token %s" https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls/%s' % (gitHubToken, prid)],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            myProc = subprocess.Popen(['curl --max-time %d --request GET -H "Content-Type: application/json" -H "Authorization: token %s" https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls/%s' % (curlTimeout,  gitHubToken, prid)],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             result = myProc.stdout.read()
             pullInfo = json.loads(result)
             retVal = pullInfo['head']['sha']
@@ -647,6 +648,7 @@ def GetOpenPulls(knownPullRequests):
         # This solution tries to get PR info with stanadard GitHub API. If the pullRequests.json file
         # doesn't have 'draft' attribute then use the experimental API (via Accept header) to get extended result
         headers = '--header "Authorization: token ' +  gitHubToken + '"'
+        headers += ' --max-time %d' % (curlTimeout)
         # Using wget (problems on Replacement MFA machines)
         #myProc = subprocess.Popen(["wget -S " + headers + " -OpullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
 
@@ -779,7 +781,7 @@ def GetOpenPulls(knownPullRequests):
         prs[prid]['cmd2'] = 'git pull -ff  upstream pull/'+str(prid)+'/head:'+repr(pr['head']['ref'])+'-smoketest'
         
         prs[prid]['addComment'] = {}
-        prs[prid]['addComment']['cmd'] = 'curl -H "Content-Type: application/json" '\
+        prs[prid]['addComment']['cmd'] = 'curl --max-time '+ str(curlTimeout) + ' -H "Content-Type: application/json" '\
                                 '-H "Authorization: token ' + gitHubToken +'" '\
                                 ' --data '
         prs[prid]['addComment']['url'] = 'https://api.github.com/repos/hpcc-systems/HPCC-Platform/issues/'+str(prid)+'/comments'
@@ -3124,7 +3126,7 @@ class MessageId(object):
                 self.resultFile.write("\tThere is no related gist\n")
                 
             # Now remove old message
-            cmd = 'curl -H "Content-Type: application/json" -H "Authorization: token ' + gitHubToken + '"  --request DELETE https://api.github.com/repos/hpcc-systems/HPCC-Platform/issues/comments/'+last
+            cmd = 'curl --max-time '+ str(curlTimeout) + ' -H "Content-Type: application/json" -H "Authorization: token ' + gitHubToken + '"  --request DELETE https://api.github.com/repos/hpcc-systems/HPCC-Platform/issues/comments/'+last
             if self.resultFile != None:
                 self.resultFile.write("\tcmd:"+cmd + "\n")
                 
