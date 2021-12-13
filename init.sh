@@ -77,13 +77,23 @@ do
     shift
 done
 
-cat << DATASTAX_ENTRIES | sudo tee /etc/yum.repos.d/datastax.repo
-[datastax]
-name = DataStax Repo for Apache Cassandra
-baseurl = http://rpm.datastax.com/community
-enabled = 1
-gpgcheck = 0
-DATASTAX_ENTRIES
+#cat << DATASTAX_ENTRIES | sudo tee /etc/yum.repos.d/datastax.repo
+#[datastax]
+#name = DataStax Repo for Apache Cassandra
+#baseurl = https://rpm.datastax.com/community
+#enabled = 1
+#gpgcheck = 0
+#DATASTAX_ENTRIES
+
+cat << CASSANDRA_ENTRIES | sudo tee /etc/yum.repos.d/cassandra.repo
+[cassandra]
+name=Apache Cassandra
+baseurl=https://www.apache.org/dist/cassandra/redhat/311x/
+gpgcheck=0
+repo_gpgcheck=0
+gpgkey=https://www.apache.org/dist/cassandra/KEYS
+CASSANDRA_ENTRIES
+
 
 sudo yum remove -y nodejs
 sudo yum --enablerepo=nodesource clean metadata
@@ -97,7 +107,9 @@ sudo yum --enablerepo=nodesource clean metadata
 wget https://rpm.nodesource.com/pub_16.x/el/7/x86_64/nodejs-16.13.0-1nodesource.x86_64.rpm
 sudo rpm -i nodejs-16.13.0-1nodesource.x86_64.rpm
 
-PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools bc psmisc"
+#PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools bc psmisc"
+PACKAGES_TO_INSTALL="expect mailx dsc cassandra cassandra-tools bc psmisc"
+
 #if [ $DOCS_BUILD -eq 1 ]
 #then
     wget http://mirror.centos.org/centos/7/os/x86_64/Packages/fop-1.1-6.el7.noarch.rpm

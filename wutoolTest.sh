@@ -93,7 +93,7 @@ WriteLog "Check Cassandra..." "$WUTOOLTEST_EXECUTION_LOG_FILE"
 tryCount=4
 testCassandra=0
 CASSANDRA_STOPPED=0
-DELAY_TO_CHECK=60
+DELAY_TO_CHECK=10
 # Check if Cassandra installed
 if type "cqlsh" &> /dev/null
 then
@@ -133,9 +133,9 @@ then
     done
     if [[ $testCassandra -eq 0 ]]
     then
-        WriteLog "Cassandra won't start! Skip test on it. Send Email to Agyi!" "${WUTOOLTEST_EXECUTION_LOG_FILE}"
+        WriteLog "Cassandra doesn't start! Skip test on it. Send Email to Agyi!" "${WUTOOLTEST_EXECUTION_LOG_FILE}"
         # send email to Agyi
-        echo "Cassandra won't start!" | mailx -s "Problem with Cassandra" -u root  "attila.vamos@gmail.com"
+        echo "Cassandra doesn't start!" | mailx -s "Problem with Cassandra" -u root  "attila.vamos@gmail.com"
     else
         testParams=( "DALISERVER=." "DALISERVER=. cassandraserver=127.0.0.1 entire=1 repository=1" )
     fi
@@ -145,6 +145,22 @@ else
     echo "Cassandra  not installed in this sysytem!" | mailx -s "Problem with Cassandra" -u root  "attila.vamos@gmail.com"
 
 fi
+
+if [[ $testCassandra -eq 0 ]]
+then
+    sudo systemctl enable cassandra
+    sleep 10
+    WriteLog "$(nodetool status)" "${WUTOOLTEST_EXECUTION_LOG_FILE}"
+    testCassandra=$( nodetool status | egrep -c '^UN' )
+    if [[ $testCassandra -eq 1 ]]
+    then
+        WriteLog "Cassandra seems OK!" "${WUTOOLTEST_EXECUTION_LOG_FILE}"
+        testParams=( "DALISERVER=." "DALISERVER=. cassandraserver=127.0.0.1 entire=1 repository=1" )
+    else
+        WriteLog "Cassandra didn't start with 'sudo systemctl enable cassandra'." "${WUTOOLTEST_EXECUTION_LOG_FILE}"
+    fi
+fi
+
 
 #
 #-------------------------------
