@@ -491,6 +491,9 @@ then
     res=$( git status )
     ret=$?
     WritePlainLog "ret: ${ret}\nres:\n$res" "$logFile"
+    
+    removeLog4j=$( find . -iname '*log4j*' -type f -exec rm -fv {} \; )
+    WritePlainLog "Remove LOG4J items result:\n${removeLog4j}" "$logFile"
     popd
     WritePlainLog "Done" "$logFile"
 else
