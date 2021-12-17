@@ -90,7 +90,7 @@ WriteLog "Check Cassandra..." "$WUTOOLTEST_EXECUTION_LOG_FILE"
 
 #sudo rm -rf /var/lib/cassandra/*
 
-tryCount=4
+tryCount=0   # DO NOT TRY TO START CASSANDRA (based on log4j problem)
 testCassandra=0
 CASSANDRA_STOPPED=0
 DELAY_TO_CHECK=10
