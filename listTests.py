@@ -137,12 +137,21 @@ def update():
                     resultB = myProcB.stdout.read() + myProcB.stderr.read()
                     if int(resultB) > 0:
                         status = 'finished'
+                    else:
+                        myProcC = subprocess.Popen(["egrep -i -c 'Instance is terminated, exit' " + f ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                        resultC = myProcC.stdout.read() + myProcC.stderr.read()
+                        if int(resultC) > 0:
+                            status = 'aborted'
+                            myProcC = subprocess.Popen(["tail -n 1 " + f + " |  cut -d: -f1,2,3 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                            resultC = myProcC.stdout.read() + myProcC.stderr.read()
+                            end = resultC.strip()
 
                 myProcC = subprocess.Popen(["head -n 1 " + f + " |  cut -d: -f1,2,3 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                 resultC = myProcC.stdout.read() + myProcC.stderr.read()
                 start = resultC.strip()
 
-                #print("\t%s" % (resultA))
+                print("\tstart:%s, end: %s" % (start, end))
+
                 if pr not in tests:
                     tests[pr] = {}
                 if instance not in tests[pr]:
@@ -208,6 +217,7 @@ def update():
                     rInstance  = 'N/A'
                     rTitle = 'N/A'
                     rBase = 'N/A'
+                    end = ''
 
                     for i in items:
                         if 'Process' in i:
@@ -233,8 +243,13 @@ def update():
                 
                     myProcE = subprocess.Popen(["egrep 'Finished:' " + rf + " | tr -d '\t' | cut -d ' ' -f 2,3 | tr -d ',' | tr -d '\n' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                     resultE = myProcE.stdout.read() + myProcE.stderr.read()
-                    end = resultE.strip()
-                    #print("\tend:%s" % (end))
+                    if len(resultE.strip()) > 0:
+                        end = "20" + resultE.strip()
+
+                    if rResult == 'N/A':
+                        rResult = 'Failed'
+
+                    print("\tend:%s (%d), result: %s" % (end, len(end), rResult))
 
                     #Update tests
                     if rInstance != 'N/A':
@@ -244,8 +259,14 @@ def update():
                             #print("\tindex: %d" % (index))
                             tests[rPr][rInstance]['testedCommit'] = rCommit
                             testedCommits[index] = rCommit
-                            tests[rPr][rInstance]['end'] = end
-                            ends[index] = end
+                            if len(end) > 0:
+                            	tests[rPr][rInstance]['end'] = end
+                            	ends[index] = end
+                            
+                            if rEllaps == 'N/A' or len(rEllaps) == 0:
+                               e = (datetime.strptime(ends[index], "%Y-%m-%d %H:%M:%S") -  datetime.strptime(starts[index], "%Y-%m-%d %H:%M:%S")).total_seconds()
+                               rEllaps = ("%d sec (%s)" % (e, time.strftime("%H:%M:%S", time.gmtime(e))))
+
                             tests[rPr][rInstance]['ellaps'] = rEllaps 
                             ellapses[index] = rEllaps
                             tests[rPr][rInstance]['result'] = rResult
@@ -273,8 +294,14 @@ def update():
                             if index != -1:
                                 tests[rPr][rInstance]['testedCommit'] = rCommit
                                 testedCommits[index] = rCommit
-                                tests[rPr][rInstance]['end'] = end
-                                ends[index] = end
+                                if len(end) > 0:
+                                    tests[rPr][rInstance]['end'] = end
+                                    ends[index] = end
+
+                                if rEllaps == 'N/A' or len(rEllaps) == 0:
+                                    e = (datetime.strptime(ends[index], "%Y-%m-%d %H:%M:%S") -  datetime.strptime(starts[index], "%Y-%m-%d %H:%M:%S")).total_seconds()
+                                    rEllaps = ("%d sec (%s)" % (e, time.strftime("%H:%M:%S", time.gmtime(e))))
+
                                 tests[rPr][rInstance]['ellaps'] = rEllaps 
                                 ellapses[index] = rEllaps
                                 tests[rPr][rInstance]['result'] = rResult
@@ -295,7 +322,7 @@ def update():
             try:
                 outFile = open("smoketestReport-" + testDay + ".log", "w")
                 for i in range(len(prs)):
-                    outFile.write("%d, %s, %s, %s, (%s), %s, %s, tested as %s\n" % (i+1, prs[i], scheduledCommits[i], instances[i], statuses[i], results[i], ellapses[i], testedCommits[i]))
+                    outFile.write("%d,%s,%s,%s,%s,%s,%s,tested as %s\n" % (i+1, prs[i], scheduledCommits[i], instances[i], statuses[i], results[i], ellapses[i].split()[0], testedCommits[i]))
                 outFile.close()
             finally:
                 print("\tDone")
