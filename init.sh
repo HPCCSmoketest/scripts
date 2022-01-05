@@ -108,7 +108,7 @@ wget https://rpm.nodesource.com/pub_16.x/el/7/x86_64/nodejs-16.13.0-1nodesource.
 sudo rpm -i nodejs-16.13.0-1nodesource.x86_64.rpm
 
 #PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools bc psmisc"
-PACKAGES_TO_INSTALL="expect mailx dsc cassandra cassandra-tools bc psmisc"
+PACKAGES_TO_INSTALL="expect mailx dsc cassandra cassandra-tools bc psmisc git"
 
 #if [ $DOCS_BUILD -eq 1 ]
 #then

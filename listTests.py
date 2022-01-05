@@ -23,9 +23,9 @@ from bokeh.layouts import column, row
 import subprocess
 import time
 from datetime import datetime,  timedelta
-import re
-import os
-import glob
+#import re
+#import os
+#import glob
 
 source = ColumnDataSource(data = dict())
 updateInterval = 30 # sec
@@ -52,7 +52,7 @@ def update():
             isReported = False
             print("Result report re-enabled.")
 
-    currLogFile = "prp-" + time.strftime("%Y-%m-%d") + ".log"
+#    currLogFile = "prp-" + time.strftime("%Y-%m-%d") + ".log"
     testDay = time.strftime("%y-%m-%d")
     divCurrentDay.text = testDay
     #print("logfile:%s, " % (currLogFile )),
@@ -142,9 +142,9 @@ def update():
                         resultC = myProcC.stdout.read() + myProcC.stderr.read()
                         if int(resultC) > 0:
                             status = 'aborted'
-                            myProcC = subprocess.Popen(["tail -n 1 " + f + " |  cut -d: -f1,2,3 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                            resultC = myProcC.stdout.read() + myProcC.stderr.read()
-                            end = resultC.strip()
+                myProcC = subprocess.Popen(["tail -n 1 " + f + " |  cut -d: -f1,2,3 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                resultC = myProcC.stdout.read() + myProcC.stderr.read()
+                end = resultC.strip()
 
                 myProcC = subprocess.Popen(["head -n 1 " + f + " |  cut -d: -f1,2,3 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                 resultC = myProcC.stdout.read() + myProcC.stderr.read()
@@ -187,7 +187,10 @@ def update():
                 results.append(result)
                 starts.append(start)
                 ends.append(end)
-                e = int(startTimestamp - tests[pr][instance]['startTimestamp'])
+                if status == 'running':
+                    e = int(startTimestamp - tests[pr][instance]['startTimestamp'])
+                else:
+                    e = (datetime.strptime(end, "%Y-%m-%d %H:%M:%S") -  datetime.strptime(start, "%Y-%m-%d %H:%M:%S")).total_seconds()
                 #ellapses.append("%d sec" % ( e ))
                 ellapses.append("%d sec (%s)" % (e, time.strftime("%H:%M:%S", time.gmtime(e))))
                 bases.append(base)
@@ -266,6 +269,7 @@ def update():
                             if rEllaps == 'N/A' or len(rEllaps) == 0:
                                e = (datetime.strptime(ends[index], "%Y-%m-%d %H:%M:%S") -  datetime.strptime(starts[index], "%Y-%m-%d %H:%M:%S")).total_seconds()
                                rEllaps = ("%d sec (%s)" % (e, time.strftime("%H:%M:%S", time.gmtime(e))))
+                            print("\trEllaps: %s" % (rEllaps))
 
                             tests[rPr][rInstance]['ellaps'] = rEllaps 
                             ellapses[index] = rEllaps
@@ -360,11 +364,7 @@ def update():
         'ellaps' : ellapses,
 
     }
-        
-    # Select the last row in the table
-    #sel = Selection( indices = [len(result)-2, len(result)-1])
-    #sel = Selection( indices = [len(result)-1])
-    #source.selected = sel
+
         
     print(" Done (%2d sec)." % (time.time()-startTimestamp))
     
