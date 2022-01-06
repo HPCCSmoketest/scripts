@@ -237,7 +237,7 @@ SSH_OPTIONS="-oConnectionAttempts=3 -oConnectTimeout=20 -oStrictHostKeyChecking=
 #AMI_ID=$( aws ec2 describe-images --owners 446598291512 | egrep -i '"name"|imageid' | egrep -i -A2 '-el7-' | egrep -i '"ImageId"' | tr -d " " | cut -d":" -f2 )
 # Better approach
 # CentOS 7
-AMI_ID=$( aws ec2 describe-images --owners 446598291512 --filters "Name=name,Values=*dev-el7-x86_64" --query Images[].ImageId --output text )
+AMI_ID=$( aws ec2 describe-images --owners 446598291512 --filters "Name=name,Values=*dev-el7-x86_64-2021" --query Images[].ImageId --output text )
 [ -z "${AMI_ID}" ] && AMI_ID="ami-0f6f902a9aff6d384"
 # CentOS 8
 #AMI_ID=$( aws ec2 describe-images --owners 446598291512 --filters "Name=name,Values=*-el8-x86_64" --query Images[].ImageId --output text )
@@ -438,8 +438,8 @@ then
         WriteLog "The cmake-3.18.0 not found." "$LOG_FILE"
     fi
 
-    # Do not upload because the latest CentOS 7 AMI contains it.
-    CURL_7_67='' #$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
+    # Do not upload it when the latest CentOS 7 AMI contains it.
+    CURL_7_67=$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
     if [[ -n "$CURL_7_67" ]]
     then
         WriteLog "Upload $CURL_7_67" "$LOG_FILE"

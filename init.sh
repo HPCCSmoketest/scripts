@@ -95,18 +95,13 @@ gpgkey=https://www.apache.org/dist/cassandra/KEYS
 CASSANDRA_ENTRIES
 
 
-#sudo yum remove -y nodejs
-#sudo yum --enablerepo=nodesource clean metadata
-
-# Something happened and this method doesn't work anymore
-#curl --location https://rpm.nodesource.com/setup_16.x | sudo bash -
-#curl -fsSL https://rpm.nodesource.com/setup_16.x | sudo bash -
-#sudo yum --enablerepo=nodesource clean metadata
+# Commented out when the latest CentOS 7 AMI has this version of nodejs
+sudo yum remove -y nodejs
+sudo yum --enablerepo=nodesource clean metadata
 
 # This approach works
-# Commented out because the latest CentOS 7 AMI has this version
-#wget https://rpm.nodesource.com/pub_16.x/el/7/x86_64/nodejs-16.13.0-1nodesource.x86_64.rpm
-#sudo rpm -i nodejs-16.13.0-1nodesource.x86_64.rpm
+wget https://rpm.nodesource.com/pub_16.x/el/7/x86_64/nodejs-16.13.0-1nodesource.x86_64.rpm
+sudo rpm -i nodejs-16.13.0-1nodesource.x86_64.rpm
 
 #PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools bc psmisc"
 PACKAGES_TO_INSTALL="expect mailx dsc cassandra cassandra-tools bc psmisc git"
