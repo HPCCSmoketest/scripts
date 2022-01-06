@@ -430,15 +430,21 @@ then
         WriteLog "The boost_1_71_0.tar.gz not found." "$LOG_FILE"
     fi
 
-    CMAKE_3_18=$( find ~/ -iname 'cmake-3.18.0.tar.gz' -type f -size +5M -print | head -n 1 )
-    if [[ -n "$CMAKE_3_18" ]]
+    if [[ ${NEW_AMI} -eq 0 ]]
     then
-        WriteLog "Upload $CMAKE_3_18" "$LOG_FILE"
-        res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${CMAKE_3_18} centos@${instancePublicIp}:/home/centos/ 2>&1 )
-        WriteLog "Res: $res" "$LOG_FILE"
+        CMAKE_3_18=$( find ~/ -iname 'cmake-3.18.0.tar.gz' -type f -size +5M -print | head -n 1 )
+        if [[ -n "$CMAKE_3_18" ]]
+        then
+            WriteLog "Upload $CMAKE_3_18" "$LOG_FILE"
+            res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${CMAKE_3_18} centos@${instancePublicIp}:/home/centos/ 2>&1 )
+            WriteLog "Res: $res" "$LOG_FILE"
+        else
+            WriteLog "The cmake-3.18.0 not found." "$LOG_FILE"
+        fi
     else
-        WriteLog "The cmake-3.18.0 not found." "$LOG_FILE"
+        WriteLog "We have a new AMI, don't upolad make-3.18.0." "$LOG_FILE"
     fi
+
 
     if [[ ${NEW_AMI} -eq 0 ]]
     then 

@@ -152,7 +152,7 @@ then
     type "cmake"
     cmake --version;
 else
-    echo "CMake 3.18.0 not found."
+    echo "CMake 3.18.0 not found. Current version: $(cmake --version)"
 fi
 
 echo "Check and install curl 7.67.0"
@@ -169,7 +169,7 @@ then
     type "curl"
     curl --version;
 else
-    echo "curl 7.67.0 not found."
+    echo "curl 7.67.0 not found. Current version: $(curl --version)"
 fi
 
 [[ -f ./build.new ]] && cp -v ./build.new build.sh
