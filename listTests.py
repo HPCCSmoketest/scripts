@@ -142,9 +142,10 @@ def update():
                         resultC = myProcC.stdout.read() + myProcC.stderr.read()
                         if int(resultC) > 0:
                             status = 'aborted'
-                myProcC = subprocess.Popen(["tail -n 1 " + f + " |  cut -d: -f1,2,3 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                resultC = myProcC.stdout.read() + myProcC.stderr.read()
-                end = resultC.strip()
+                if status != 'running':
+                    myProcC = subprocess.Popen(["tail -n 1 " + f + " |  cut -d: -f1,2,3 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                    resultC = myProcC.stdout.read() + myProcC.stderr.read()
+                    end = resultC.strip()
 
                 myProcC = subprocess.Popen(["head -n 1 " + f + " |  cut -d: -f1,2,3 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                 resultC = myProcC.stdout.read() + myProcC.stderr.read()
