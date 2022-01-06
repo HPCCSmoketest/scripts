@@ -237,12 +237,14 @@ SSH_OPTIONS="-oConnectionAttempts=3 -oConnectTimeout=20 -oStrictHostKeyChecking=
 #AMI_ID=$( aws ec2 describe-images --owners 446598291512 | egrep -i '"name"|imageid' | egrep -i -A2 '-el7-' | egrep -i '"ImageId"' | tr -d " " | cut -d":" -f2 )
 # Better approach
 # CentOS 7
-AMI_ID=$( aws ec2 describe-images --owners 446598291512 --filters "Name=name,Values=*dev-el7-x86_64-2021" --query Images[].ImageId --output text )
+NEW_AMI=0
+AMI_ID=$( aws ec2 describe-images --owners 446598291512 --filters "Name=name,Values=*dev-el7-x86_64" --query Images[].ImageId --output text )
+[ -z "${AMI_ID}" ] && AMI_ID=$( aws ec2 describe-images --owners 446598291512 --filters "Name=name,Values=*dev-el7-x86_64-2021" --query Images[].ImageId --output text ) || NEW_AMI=1
 [ -z "${AMI_ID}" ] && AMI_ID="ami-0f6f902a9aff6d384"
 # CentOS 8
 #AMI_ID=$( aws ec2 describe-images --owners 446598291512 --filters "Name=name,Values=*-el8-x86_64" --query Images[].ImageId --output text )
 #[ -z ${AMI_ID} ] && AMI_ID="ami-0c464387e25013b1f"
-WriteLog "AMI_ID: ${AMI_ID}" "$LOG_FILE"
+WriteLog "AMI_ID: ${AMI_ID}, new AMI: ${NEW_AMI}" "$LOG_FILE"
 
 SECURITY_GROUP_ID="sg-08a92c3135ec19aea"
 SUBNET_ID="subnet-0f5274ec85eec91da"
@@ -438,15 +440,19 @@ then
         WriteLog "The cmake-3.18.0 not found." "$LOG_FILE"
     fi
 
-    # Do not upload it when the latest CentOS 7 AMI contains it.
-    CURL_7_67=$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
-    if [[ -n "$CURL_7_67" ]]
-    then
-        WriteLog "Upload $CURL_7_67" "$LOG_FILE"
-        res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${CURL_7_67} centos@${instancePublicIp}:/home/centos/ 2>&1 )
-        WriteLog "Res: $res" "$LOG_FILE"
+    if [[ ${NEW_AMI} -eq 0 ]]
+    then 
+        CURL_7_67=$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
+        if [[ -n "$CURL_7_67" ]]
+        then
+            WriteLog "Upload $CURL_7_67" "$LOG_FILE"
+            res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${CURL_7_67} centos@${instancePublicIp}:/home/centos/ 2>&1 )
+            WriteLog "Res: $res" "$LOG_FILE"
+        else
+            WriteLog "The curl 7.67.0 not found." "$LOG_FILE"
+        fi
     else
-        WriteLog "The curl 7.67.0 not found." "$LOG_FILE"
+        WriteLog "We have a new AMI, don't upolad curl 7.67.0." "$LOG_FILE"
     fi
     
     WriteLog "Upload init.sh" "$LOG_FILE"

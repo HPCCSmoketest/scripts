@@ -96,12 +96,20 @@ CASSANDRA_ENTRIES
 
 
 # Commented out when the latest CentOS 7 AMI has this version of nodejs
-sudo yum remove -y nodejs
-sudo yum --enablerepo=nodesource clean metadata
+echo "Node version: $(node --version)"
+if [[ "$(node --version)" != "v16.13.1" ]]
+then
+    echo "Wrong version, remove and install 16.13.1"
+    sudo yum remove -y nodejs
+    sudo yum --enablerepo=nodesource clean metadata
 
-# This approach works
-wget https://rpm.nodesource.com/pub_16.x/el/7/x86_64/nodejs-16.13.0-1nodesource.x86_64.rpm
-sudo rpm -i nodejs-16.13.0-1nodesource.x86_64.rpm
+    # This approach works
+    wget https://rpm.nodesource.com/pub_16.x/el/7/x86_64/nodejs-16.13.0-1nodesource.x86_64.rpm
+    sudo rpm -i nodejs-16.13.0-1nodesource.x86_64.rpm
+    echo "Node version: $(node --version)"
+else
+    echo "Good version, keep it"
+fi
 
 #PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools bc psmisc"
 PACKAGES_TO_INSTALL="expect mailx dsc cassandra cassandra-tools bc psmisc git"
@@ -115,7 +123,6 @@ PACKAGES_TO_INSTALL="expect mailx dsc cassandra cassandra-tools bc psmisc git"
 echo "Packages to install: ${PACKAGES_TO_INSTALL}"
 sudo yum install -y ${PACKAGES_TO_INSTALL}
 
-echo "Node version: $(node --version)"
 
 GUILLOTINE=$( echo " 2 * $AVERAGE_SESSION_TIME * 60" | bc |  xargs printf "%.0f" ) # minutes ( 2 x AVERAGE_SESSION_TIME)
 printf "AVERAGE_SESSION_TIME = %f hours, GUILLOTINE = %d minutes\n" "$AVERAGE_SESSION_TIME" "$GUILLOTINE"
