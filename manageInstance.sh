@@ -446,7 +446,7 @@ then
     fi
 
 
-    if [[ ${NEW_AMI} -eq 0 ]]
+    if [[ ${NEW_AMI} -eq 0 || true ]]  # The new ami doesn't have curl 7.67, must upload and install
     then 
         CURL_7_67=$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
         if [[ -n "$CURL_7_67" ]]
