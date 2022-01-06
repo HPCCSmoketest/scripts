@@ -438,7 +438,8 @@ then
         WriteLog "The cmake-3.18.0 not found." "$LOG_FILE"
     fi
 
-    CURL_7_67=$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
+    # Do not upload because the latest CentOS 7 AMI contains it.
+    CURL_7_67='' #$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
     if [[ -n "$CURL_7_67" ]]
     then
         WriteLog "Upload $CURL_7_67" "$LOG_FILE"
