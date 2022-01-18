@@ -57,7 +57,7 @@ THOR_CONNECT_TIMEOUT="-fthorConnectTimeout=36000"
 if [[ ${BOGO_MIPS_OF_CPUS} -lt 4500 ]] 
 then
     SETUP_TIMEOUT=720
-    REGRESSION_TIMEOUT=-1
+    REGRESSION_TIMEOUT=1200
 fi
 
 # Individual timeouts 

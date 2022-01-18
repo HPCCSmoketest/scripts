@@ -960,11 +960,14 @@ then
                 sed -e 's/"regressionDir"\w*: "\(.*\)"/"regressionDir" : "'"${RESULT_DIR_ESC}"'"/'   \
                     -e 's/"logDir"\w*: "\(.*\)"/"logDir" : "'"${RESULT_DIR_ESC}"'\/log"/'  \
                     -e 's/"timeout":"\(.*\)"/"timeout":"'"${REGRESSION_TIMEOUT}"'"/' \
+                    -e 's/"wuStatusTimeout":"\(.*\)"/"wuStatusTimeout":"90"/' \
                     -e 's/"maxAttemptCount":"\(.*\)"/"maxAttemptCount":"'"${REGRESSION_MAX_ATTEMPT_COUNT}"'"/'   ./ecl-test_json.bak > ./ecl-test.json
             
                 WritePlainLog "Regression path in ecl-test.json:\n$(sed -n 's/\(regressionDir\)/\1/p' ./ecl-test.json)" "$logFile"
                 WritePlainLog "Regression log path             :\n$(sed -n 's/\(logDir\)/\1/p' ./ecl-test.json)" "$logFile"
                 WritePlainLog "OPT path in ecl-test.json       :\n$(sed -n 's/\(\/opt\/\)/\1/p' ./ecl-test.json)" "$logFile"
+                WritePlainLog "timeout                         :\n$(sed -n 's/\(timeout\)/\1/p' ./ecl-test.json)" "$logFile"
+                WritePlainLog "wuStatusTimeout                 :\n$(sed -n 's/\(wuStatusTimeout\)/\1/p' ./ecl-test.json)" "$logFile"
                 WritePlainLog "$(ls -ld /var/lib/HPCCSystems/hpcc-data/*)" "$logFile"
                 
                 #
