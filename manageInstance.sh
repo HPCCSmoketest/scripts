@@ -579,7 +579,7 @@ then
 
     WriteLog "Check Smoketest" "$LOG_FILE"
     res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l ~/smoketest/${INSTANCE_NAME}" 2>&1 )
-    WriteLog "Res: $res" "$LOG_FILE"
+    WriteLog "Res: $res (retcode:$?)" "$LOG_FILE"
     
     WriteLog "Smoketest finished." "$LOG_FILE"
     age=2 # minutes
