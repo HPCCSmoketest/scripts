@@ -579,7 +579,14 @@ then
 
     WriteLog "Check Smoketest" "$LOG_FILE"
     res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l ~/smoketest/${INSTANCE_NAME}" 2>&1 )
-    WriteLog "Res: $res \n(retcode:$?)" "$LOG_FILE"
+    retCode=$?
+    WriteLog "Res: $res \n(retcode:$retCode)" "$LOG_FILE"
+    if [[ $retCode -ne 0 ]]
+    then
+        WriteLog "Remote ${INSTANCE_NAME} directory not found. Create result file." "$LOG_FILE"
+        # Create result-yy-mm-dd_hh-mm-ss.log file to ensure it is appear in listtest.sh output
+        CreateResultFile "PR directory not found, perhaps it is already closed" "${C_ID}"
+    fi
     
     WriteLog "Smoketest finished." "$LOG_FILE"
     age=2 # minutes
