@@ -41,7 +41,7 @@ def update():
     print("Update (%s)..." % (time.strftime("%Y-%m-%d %H:%M:%S"))) 
     divUpdate.text = "Update..."
     myProc = subprocess.Popen(["ps aux | egrep -c  '[p]ython ./Schedule' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-    smoketestIsUp = myProc.stdout.read().strip() + myProc.stderr.read().strip()
+    smoketestIsUp = (myProc.stdout.read().strip() + myProc.stderr.read().strip()).decode("utf-8")
     
     if smoketestIsUp == '0':
         divCurrentState.text = 'Stopped'
