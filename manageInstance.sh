@@ -506,7 +506,7 @@ then
 
     if [[ -z $DRY_RUN ]]
     then
-        INIT_WAIT=1m
+        INIT_WAIT=2m
         LOOP_WAIT=1m
     else
         INIT_WAIT=1m
