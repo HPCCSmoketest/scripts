@@ -19,7 +19,7 @@ PYTHON_MAIN_VERSION=$( ${BOKEH} info | egrep '^Python' | awk '{ print $4 }' | cu
 echo "Python main version: $PYTHON_MAIN_VERSION"
 if [[ ${PYTHON_MAIN_VERSION} -eq 3 ]]
 then
-    PYTHON_APPS="listTests3.py"
+    PYTHON_APPS="listTests3.py showStatus.py"
 else
     PYTHON_APPS="showStatus.py showSchedulerStatus.py listTests.py"
 fi

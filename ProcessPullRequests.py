@@ -1089,7 +1089,7 @@ def GetOpenPulls(knownPullRequests):
             else:
                 print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' is in draft state, skip it!')
                 buildSummaryFile = open(buildSummaryFileName,  "wb")
-                buildSummaryFile.write( "prs[prid]['label']+' is in draft state, skipped." )
+                buildSummaryFile.write( prs[prid]['label'] + " is in draft state, skipped." )
                 buildSummaryFile.close()
                 skippedPRs += 1
                 
