@@ -26,7 +26,7 @@ fi
 
 # The --allow-websocket-origin parameter(s) should update accordingly the real environment.
 unbuffer ${BOKEH} serve ${PYTHON_APPS} \
-   --allow-websocket-origin=hpcc-platform-dev-el7-dailybuild.novalocal:5006 \
+   --allow-websocket-origin=ec2-15-222-244-18.ca-central-1.compute.amazonaws.com:5006 \
    --allow-websocket-origin=10.224.20.54:5006
 
 # On ONT-011 we can use hostname
