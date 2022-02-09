@@ -325,6 +325,11 @@ then
 fi
 WriteLog "Public IP: ${instancePublicIp}" "$LOG_FILE"
 
+WriteLog "Remove Public IP: ${instancePublicIp} from know_hosts to prevent SSH warning \n(man-in-the-middle attack) when IP address is reused." "$LOG_FILE"
+res=$( sudo ssh-keygen -R ${instancePublicIp} -f ~/.ssh/known_hosts 2>&1 )
+WriteLog "Res: ${res}\n" "$LOG_FILE"
+
+
 volumeId=$( echo "$instanceInfo" | egrep 'VolumeId' | tr -d '", ' | cut -d : -f 2 )
 WriteLog "Volume ID: $volumeId" "$LOG_FILE"
 

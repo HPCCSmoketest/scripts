@@ -1124,14 +1124,46 @@ def GetOpenPulls(knownPullRequests):
             
             
         elif prs[prid]['excludeFromTest']:
-            print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' is excluded from test (helm or Dockerfile related), skip it!')
+            exlMsg = "Build PR-" + str(prid) + ", label: " + prs[prid]['label'] + " is excluded from test (helm or Dockerfile related), skip it!"
+            print(exlMsg)
+            #TODO should generate a result file with message about skipped
+            '''
+            # Wrong solution! It creates result file in every PR polling loop with differnt timestamp!
+            resultFileName= "result-" + time.strftime("%y-%m-%d-%H-%M-%S") + ".log"
+            try:
+                resultFile = open(resultFileName,  "w", 0)
+                resultFile.writeln("%s" % ( exlMsg ) )
+                resultFile.writeln("1/1. Process PR-%s, label: %s" % ( str(prid), prs[prid]['label'] ) )
+                resultFile.writeln(" sha : " % ( prs[prid]['sha'] ) )
+                resultFile.writeln(" Summary : 0 sec (00:00:00) ")
+                resultFile.writeln(" pass : False ")
+                resultFile.close()
+            except:
+                pass
+            '''    
             skippedPRs += 1
         else:
             if pr['draft'] == False:
                 print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' already tested!')
                 testedPRs += 1
             else:
-                print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' is in draft state, skip it!')
+                draftMsg = "Build PR-" + str(prid) + ", label: " + prs[prid]['label'] + " is in draft state, skip it!"
+                print(draftMsg)
+                #TODO should generate a result file with message about skipped
+                '''
+                # Wrong solution! It creates result file in every PR polling loop with differnt timestamp!
+                resultFileName= "result-" + time.strftime("%y-%m-%d-%H-%M-%S") + ".log"
+                try:
+                    resultFile = open(resultFileName,  "w", 0)
+                    resultFile.writeln("%s" % (draftMsg) )
+                    resultFile.writeln("1/1. Process PR-%s, label: %s" % ( str(prid), prs[prid]['label'] ) )
+                    resultFile.writeln(" sha : " % ( prs[prid]['sha'] ) )
+                    resultFile.writeln(" Summary : 0 sec (00:00:00) ")
+                    resultFile.writeln(" pass : False ")
+                    resultFile.close()
+                except:
+                    pass
+                '''    
                 skippedPRs += 1
     
     # Until this point all open PR is removed from knownPullRequests
