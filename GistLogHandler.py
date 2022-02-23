@@ -173,7 +173,8 @@ class GistLogHandler(object):
         #cmd = 'git remote set-url origin  https://gist.github.com/HPCCSmoketest/'+ self.id
         # https://gist.github.com/3b01b4185f6919e4f47ff66a06ad8588.git
         #cmd = 'git remote set-url origin  git@gist.github.com:'+ self.id + '.git'
-        cmd = 'git remote set-url origin  https://' + self.token + '@gist.github.com/HPCCSmoketest/'+ self.id
+        #cmd = 'git remote set-url origin  https://' + self.token + '@gist.github.com/HPCCSmoketest/'+ self.id
+        cmd = 'git remote set-url origin https://' + self.token + '@gist.github.com/'+ self.id
         result = self.execCmd(cmd)
         #print("\tresult:"+result + "\n")
         
@@ -352,7 +353,7 @@ class GistLogHandler(object):
         #print("\tresult:"+result[0] + "\n")
         
         # git push 
-        cmd = 'git push origin master'
+        cmd = 'git push origin main'
         result = self.execCmd(cmd)
         #print("\tresult:"+result[0] + "\n")
        
