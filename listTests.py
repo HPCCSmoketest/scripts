@@ -63,6 +63,7 @@ def update():
         
     print("\tlen files: %d" % (len(files)))
     prs = []
+    prIds = []
     instances = []
     scheduledCommits = []
     testedCommits = []
@@ -87,6 +88,7 @@ def update():
                 items = resultA.split(',')
                 print(items)
                 pr = 'N/A'
+                prId = 'N/A'
                 instance = 'N/A'
                 commit = 'N/A'
                 status = 'scheduled'
@@ -112,6 +114,7 @@ def update():
                     if item.startswith('PR-'):
                         if pr == 'N/A':
                             pr = item
+                            prId = pr.replace('PR-','')
                     elif item.startswith('i-'):
                         instance = item
                     elif item.upper().startswith('HPCC') or item.startswith('JIRA-'):
@@ -172,8 +175,9 @@ def update():
                 tests[pr][instance]['jira'] = jira
                 tests[pr][instance]['base'] = base
                 tests[pr][instance]['bokehUrl'] = url
-                if url == 'N/A':
+                if url == 'N/A' or status != 'running':
                     tests[pr][instance]['bokehUrlValid'] = False
+                    url = None
                 else:
                     tests[pr][instance]['bokehUrlValid'] = True
 
@@ -181,6 +185,7 @@ def update():
 
                 #result.append("%s, %s, %s, %s" % (pr, commit, instance, status))
                 prs.append(pr)
+                prIds.append(prId)
                 instances.append(instance)
                 scheduledCommits.append(commit)
                 testedCommits.append('N/A')
@@ -353,6 +358,7 @@ def update():
     
     source.data = {
         'pr' : prs,
+        'prId' : prIds,
         'instance' : instances,
         'base' : bases,
         'jira' : jiras,
@@ -363,6 +369,7 @@ def update():
         'start'  : starts,
         'end'    : ends,
         'ellaps' : ellapses,
+        'url'    : urls,
 
     }
 
@@ -371,9 +378,44 @@ def update():
     
     divUpdate.text = "Updated. (Next: %s)" % (nextUpdateTime.time().strftime("%H:%M:%S"))
 
+conditionalUrlFormatterTemplatee="""
+<div a <%=
+    (function colorfromint(){
+        if(url == ''){
+            return("style=\"color:black\"")}
+        else{return("style=\"color:blue\"")}
+        }()) %>; 
+      > 
+<%= value %></div>
+"""
+conditionalUrlFormatterTemplatee = '''
+<a href="<%= 
+    (function ize(){
+       if(url == ''){
+          return(void(0))}
+       else{ return(url)} 
+     }()) %>;
+    /showStatus" target="_blank"><%= value '%></a>' >; "
+</div> 
+'''
+conditionalUrlFormatterTemplatee="""
+<div style="color: <%=
+    (function colorfromint(){
+        if(url == ''){
+            return("black")}
+        else{return("blue")}
+        }()) %>; 
+      "> 
+<%= value %></div>
+"""
+conditionalUrlFormatterTemplate = '''
+<a href="<%= url %>/showStatus" target="_blank"><%= value %></a>}
+'''
 columns = [
-    TableColumn(field='pr', title= 'PR', formatter=StringFormatter(text_align='center',  text_color='#000000')),
-    TableColumn(field='instance', title= 'Instance', formatter=StringFormatter(text_align='center',  text_color='#000000')),
+    #TableColumn(field='pr', title= 'PR', formatter=StringFormatter(text_align='center',  text_color='#000000')),
+    TableColumn(field='pr', title= 'PR', formatter=HTMLTemplateFormatter(template = '<a href="https://github.com/hpcc-systems/HPCC-Platform/pull/<%= prId %>" target="_blank"><%= value %></a>')),
+    #TableColumn(field='instance', title= 'Instance', formatter=StringFormatter(text_align='center',  text_color='#000000')),
+    TableColumn(field='instance', title= 'Instance', formatter=HTMLTemplateFormatter(template=conditionalUrlFormatterTemplate)),
     TableColumn(field='base', title= 'Base branch', formatter=StringFormatter(text_align='center',  text_color='#000000')),
     TableColumn(field='jira', title= 'Jira', formatter=StringFormatter(text_align='center',  text_color='#000000')),
     TableColumn(field='scheduledCommit', title= 'Scheduled commit', formatter=StringFormatter(text_align='center',  text_color='#000000')),
