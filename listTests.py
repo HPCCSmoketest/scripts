@@ -341,6 +341,7 @@ def update():
         print("\tlen prs: %d" % (len(prs)))
         if len(prs) == 0:
             prs.append("")
+            prIds.append("")
             instances.append("")
             scheduledCommits.append("")
             testedCommits.append("")
@@ -351,6 +352,7 @@ def update():
             ellapses.append("")
             bases.append("")
             jiras.append("")
+            urls.append("")
 
         prs[0] = "No test (yet)"
         
@@ -409,7 +411,7 @@ conditionalUrlFormatterTemplatee="""
 <%= value %></div>
 """
 conditionalUrlFormatterTemplate = '''
-<a href="<%= url %>/showStatus" target="_blank"><%= value %></a>}
+<a href="<%= url %>/showStatus" target="_blank"><%= value %></a>
 '''
 columns = [
     #TableColumn(field='pr', title= 'PR', formatter=StringFormatter(text_align='center',  text_color='#000000')),
