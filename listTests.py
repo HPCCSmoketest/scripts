@@ -31,9 +31,10 @@ source = ColumnDataSource(data = dict())
 updateInterval = 30 # sec
 tests = {}
 isReported = False
+statusColor = "blue"
 
 def update():
-    global isReported
+    global isReported, statusColor 
 
     startTimestamp = time.time()
     nextUpdateTime = datetime.now() + timedelta(seconds = updateInterval)
@@ -44,6 +45,7 @@ def update():
     
     if smoketestIsUp == '0':
         divCurrentState.text = 'Stopped'
+        statusColor = "red"
     else:
         divCurrentState.text = 'Running'
         if isReported:
@@ -51,6 +53,7 @@ def update():
             # Enable to report results after the next stop.
             isReported = False
             print("Result report re-enabled.")
+            statusColor = "blue"
 
 #    currLogFile = "prp-" + time.strftime("%Y-%m-%d") + ".log"
     testDay = time.strftime("%y-%m-%d")
@@ -462,6 +465,17 @@ divCurrentPhase = Div(text=" ", width=350, height=20)
 def update_time():
     divTime.text = time.strftime("%H:%M:%S")
 
+
+phase = 0;
+def update_status():
+    global phase
+    if phase == 0:
+    	divCurrentState.style = {"color":statusColor,"font-style":"bold", "font-weight":"bold"}
+    else:
+        divCurrentState.style = {"color":statusColor}
+    phase = (phase + 1) % 2 
+
+
 #headerRow = row(divTimeHeader, divUpdateHeader, divCurrentStateHeader)
 staRow1 = row(divCurrentDayHeader, divCurrentDay, divTimeHeader, divTime, divUpdateHeader, divUpdate, divCurrentStateHeader, divCurrentState)
 #staRow2 = row(divCurrentUserHeader, divCurrentUser)
@@ -474,4 +488,7 @@ curdoc().title = "List tests"
 curdoc().add_periodic_callback(update, updateInterval * 1000)
 
 curdoc().add_periodic_callback(update_time, 1000)
+
+curdoc().add_periodic_callback(update_status, 500)
+
 update()
