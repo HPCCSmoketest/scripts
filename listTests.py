@@ -498,8 +498,14 @@ def update_status():
     global phase
     if phase == 0:
     	divCurrentState.style = {"color":statusColor,"font-style":"bold", "font-weight":"bold"}
+        if divRunningTestCount.text != '0':
+            divRunningTestCount.style = {"font-style":"bold", "font-weight":"bold"}
+        if divFailedTestCount .text != '0':
+            divFailedTestCount.style = {"color":"red", "font-style":"bold", "font-weight":"bold"}
     else:
         divCurrentState.style = {"color":statusColor}
+        divRunningTestCount.style = {}
+        divFailedTestCount.style = {"color":"black"}
     phase = (phase + 1) % 2 
 
 
