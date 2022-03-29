@@ -35,6 +35,7 @@ statusColor = "blue"
 
 def update():
     global isReported, statusColor 
+    counts = {'NumberOfTests' : 0, 'NumberOfClosed' : 0, 'NumberOfFinished' : 0, 'NumberOfRunning' : 0, 'NumberOfPassed' : 0, 'NumberOfFailed' : 0}
 
     startTimestamp = time.time()
     nextUpdateTime = datetime.now() + timedelta(seconds = updateInterval)
@@ -136,13 +137,16 @@ def update():
                     else:
                         print("Unknown item: '%s'" % (item))
                 
+                counts['NumberOfTests'] += 1
                 if 'OldPr' in f:
                     status = 'closed'
+                    counts['NumberOfClosed'] += 1
                 else:
                     myProcB = subprocess.Popen(["egrep -i -c 'Terminate:' " + f ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                     resultB = myProcB.stdout.read() + myProcB.stderr.read()
                     if int(resultB) > 0:
                         status = 'finished'
+                        counts['NumberOfFinished'] += 1
                     else:
                         myProcC = subprocess.Popen(["egrep -i -c 'Instance is terminated, exit' " + f ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                         resultC = myProcC.stdout.read() + myProcC.stderr.read()
@@ -242,8 +246,10 @@ def update():
                             rResult = i.replace('pass :', '').strip()
                             if 'True' == rResult:
                                rResult = 'Passed'
+                               counts['NumberOfPassed'] += 1
                             else:
                                rResult = 'Failed' 
+                               counts['NumberOfFailed'] += 1 
                         elif 'instance :' in i:
                             rInstance = i.replace('instance :', '').strip() 
                         elif 'title:' in i:
@@ -260,6 +266,7 @@ def update():
 
                     if rResult == 'N/A':
                         rResult = 'Failed'
+                        counts['NumberOfFailed'] += 1
 
                     print("\tend:%s (%d), result: %s" % (end, len(end), rResult))
 
@@ -328,6 +335,8 @@ def update():
                         pass
 
         print(tests)
+        counts['NumberOfRunning'] = counts['NumberOfTests'] - counts['NumberOfFinished'] - counts['NumberOfClosed']
+        print(counts)
 
         if smoketestIsUp == '0' and not isReported:
             # Smoketest stopped, but the results not (yet) reported
@@ -360,6 +369,12 @@ def update():
         prs[0] = "No test (yet)"
         
     #result.reverse()
+    divTestCount.text = "%d" % (counts['NumberOfTests'])
+    divClosedTestCount.text = "%d" % (counts['NumberOfClosed'])
+    divFinishedTestCount.text = "%d" % (counts['NumberOfFinished'])
+    divPassedTestCount.text = "%d" % (counts['NumberOfPassed'])
+    divFailedTestCount.text = "%d" % (counts['NumberOfFailed'])
+    divRunningTestCount.text = "%d" % (counts['NumberOfRunning'])
     
     source.data = {
         'pr' : prs,
@@ -462,6 +477,18 @@ divCurrentEct = Div(text=" ", width=150, height=20)
 divCurrentPhaseHeader = Div(text="Phase: ", width=50, height=15)
 divCurrentPhase = Div(text=" ", width=350, height=20)
 
+divTestCountHeader = Div(text="Number of tests: ", width=100, height=15)
+divTestCount = Div(text=" ", width=50, height=20)
+divClosedTestCountHeader = Div(text="Number of closed: ", width=120, height=15)
+divClosedTestCount = Div(text=" ", width=50, height=20)
+divFinishedTestCountHeader = Div(text="Number of finished: ", width=150, height=15)
+divFinishedTestCount = Div(text=" ", width=50, height=20)
+divPassedTestCountHeader = Div(text="Number of passed: ", width=120, height=15)
+divPassedTestCount = Div(text=" ", width=50, height=20)
+divFailedTestCountHeader = Div(text="Number of failed: ", width=120, height=15)
+divFailedTestCount = Div(text=" ", width=50, height=20)
+divRunningTestCountHeader = Div(text="Number of running: ", width=120, height=15)
+divRunningTestCount = Div(text=" ", width=50, height=20)
 def update_time():
     divTime.text = time.strftime("%H:%M:%S")
 
@@ -478,10 +505,10 @@ def update_status():
 
 #headerRow = row(divTimeHeader, divUpdateHeader, divCurrentStateHeader)
 staRow1 = row(divCurrentDayHeader, divCurrentDay, divTimeHeader, divTime, divUpdateHeader, divUpdate, divCurrentStateHeader, divCurrentState)
-#staRow2 = row(divCurrentUserHeader, divCurrentUser)
+staRow2 = row(divTestCountHeader , divTestCount, divClosedTestCountHeader, divClosedTestCount, divFinishedTestCountHeader, divFinishedTestCount, divPassedTestCountHeader, divPassedTestCount, divFailedTestCountHeader, divFailedTestCount, divRunningTestCountHeader, divRunningTestCount )
 #staRow3 = row(divCurrentEctHeader, divCurrentEct, divCurrentPhaseHeader, divCurrentPhase)
 #curdoc().add_root(column(staRow1, staRow2, staRow3, dataTable))
-curdoc().add_root(column(staRow1, dataTable))
+curdoc().add_root(column(staRow1, staRow2, dataTable))
 
 curdoc().title = "List tests"
 
