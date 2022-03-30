@@ -499,9 +499,9 @@ def update_status():
     if phase == 0:
     	divCurrentState.style = {"color":statusColor,"font-style":"bold", "font-weight":"bold"}
         if divRunningTestCount.text != '0':
-            divRunningTestCount.style = {"font-style":"bold", "font-weight":"bold"}
+            divRunningTestCount.style = {"font-style":"bold", "font-weight":"bold", "font-size":"125%"}
         if divFailedTestCount .text != '0':
-            divFailedTestCount.style = {"color":"red", "font-style":"bold", "font-weight":"bold"}
+            divFailedTestCount.style = {"color":"red", "font-style":"bold", "font-weight":"bold", "font-size":"125%"}
     else:
         divCurrentState.style = {"color":statusColor}
         divRunningTestCount.style = {}
