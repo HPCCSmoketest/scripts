@@ -433,9 +433,9 @@ conditionalUrlFormatterTemplate = '''
 '''
 columns = [
     #TableColumn(field='pr', title= 'PR', formatter=StringFormatter(text_align='center',  text_color='#000000')),
-    TableColumn(field='pr', title= 'PR', formatter=HTMLTemplateFormatter(template = '<a href="https://github.com/hpcc-systems/HPCC-Platform/pull/<%= prId %>" target="_blank"><%= value %></a>')),
+    TableColumn(field='pr', title= 'PR', width=200, formatter=HTMLTemplateFormatter(template = '<a href="https://github.com/hpcc-systems/HPCC-Platform/pull/<%= prId %>" target="_blank"><%= value %></a>')),
     #TableColumn(field='instance', title= 'Instance', formatter=StringFormatter(text_align='center',  text_color='#000000')),
-    TableColumn(field='instance', title= 'Instance', formatter=HTMLTemplateFormatter(template=conditionalUrlFormatterTemplate)),
+    TableColumn(field='instance', title= 'Instance',width=350, formatter=HTMLTemplateFormatter(template=conditionalUrlFormatterTemplate)),
     TableColumn(field='base', title= 'Base branch', formatter=StringFormatter(text_align='center',  text_color='#000000')),
     TableColumn(field='jira', title= 'Jira', formatter=StringFormatter(text_align='center',  text_color='#000000')),
     TableColumn(field='scheduledCommit', title= 'Scheduled commit', formatter=StringFormatter(text_align='center',  text_color='#000000')),
