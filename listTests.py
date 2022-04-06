@@ -249,7 +249,6 @@ def update():
                                counts['NumberOfPassed'] += 1
                             else:
                                rResult = 'Failed' 
-                               counts['NumberOfFailed'] += 1 
                         elif 'instance :' in i:
                             rInstance = i.replace('instance :', '').strip() 
                         elif 'title:' in i:
@@ -266,7 +265,6 @@ def update():
 
                     if rResult == 'N/A':
                         rResult = 'Failed'
-                        counts['NumberOfFailed'] += 1
 
                     print("\tend:%s (%d), result: %s" % (end, len(end), rResult))
 
@@ -336,6 +334,7 @@ def update():
 
         print(tests)
         counts['NumberOfRunning'] = counts['NumberOfTests'] - counts['NumberOfFinished'] - counts['NumberOfClosed']
+        counts['NumberOfFailed']  = counts['NumberOfTests'] - counts['NumberOfPassed'] - counts['NumberOfRunning']
         print(counts)
 
         if smoketestIsUp == '0' and not isReported:
