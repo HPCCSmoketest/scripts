@@ -150,10 +150,11 @@ def update():
                         status = 'finished'
                         counts['NumberOfFinished'] += 1
                     else:
-                        myProcC = subprocess.Popen(["egrep -i -c 'Instance is terminated, exit' " + f ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                        myProcC = subprocess.Popen(["egrep -i -c 'Instance is terminated, exit|MyExit' " + f ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                         resultC = myProcC.stdout.read() + myProcC.stderr.read()
                         if int(resultC) > 0:
                             status = 'aborted'
+                            counts['NumberOfFinished'] += 1
                 if status != 'running':
                     myProcC = subprocess.Popen(["tail -n 1 " + f + " |  cut -d: -f1,2,3 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                     resultC = myProcC.stdout.read() + myProcC.stderr.read()
@@ -295,6 +296,8 @@ def update():
                             ellapses[index] = rEllaps
                             tests[rPr][rInstance]['result'] = rResult
                             results[index] = rResult
+                            if rResult != 'N/A' and statuses[index] == 'running':
+                                statusses[index] = 'finished'
 
                             tests[rPr][rInstance]['title'] = rTitle
                             tests[rPr][rInstance]['base'] = rBase
