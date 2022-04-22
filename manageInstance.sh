@@ -116,7 +116,7 @@ CreateResultFile()
 #
 
 DOCS_BUILD=0
-SMOKETEST_HOME=
+SMOKETEST_HOME=$(pwd)
 ADD_GIT_COMMENT=0
 INSTANCE_NAME="PR-12701"
 DRY_RUN=''  #"-dryRun"
@@ -231,6 +231,8 @@ else
     WriteLog "Param: Jira= ${JIRA}" "$LOG_FILE"
 fi
 
+REGION=$(aws configure get region)
+WriteLog "Param: region= ${REGION}" "$LOG_FILE"
 SSH_KEYFILE="~/HPCC-Platform-Smoketest.pem"
 SSH_OPTIONS="-oConnectionAttempts=3 -oConnectTimeout=20 -oStrictHostKeyChecking=no"
 
@@ -246,8 +248,15 @@ AMI_ID=$( aws ec2 describe-images --owners 446598291512 --filters "Name=name,Val
 #[ -z ${AMI_ID} ] && AMI_ID="ami-0c464387e25013b1f"
 WriteLog "AMI_ID: ${AMI_ID}, new AMI: ${NEW_AMI}" "$LOG_FILE"
 
-SECURITY_GROUP_ID="sg-08a92c3135ec19aea"
-SUBNET_ID="subnet-0f5274ec85eec91da"
+if [[ $REGION =~ 'us-east-1' ]]
+then
+    AMI_ID="ami-00e1c66ba91987906"
+    SECURITY_GROUP_ID="sg-0f8acde8c1dc008f1"
+    SUBNET_ID="subnet-00c6da41f8516f57d"
+else
+    SECURITY_GROUP_ID="sg-08a92c3135ec19aea"
+    SUBNET_ID="subnet-0f5274ec85eec91da"
+fi
 
 WriteLog "Create instance for ${INSTANCE_NAME}, type: $INSTANCE_TYPE, disk: $instanceDiskVolumeSize, build ${DOCS_BUILD}" "$LOG_FILE"
 #cmd=aws ec2 run-instances --image-id ${AMI_ID} --count 1 --instance-type $INSTANCE_TYPE --key-name HPCC-Platform-Smoketest --security-group-ids ${SECURITY_GROUP_ID} --subnet-id ${SUBNET_ID} --instance-initiated-shutdown-behavior terminate --block-device-mappings "[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"VolumeSize\":$instanceDiskVolumeSize,\"DeleteOnTermination\":true,\"Encrypted\":true}}]"
@@ -276,7 +285,7 @@ then
     MyExit "-1" "Instance creation failed, exit" "$instance" "${INSTANCE_NAME}" "${C_ID}"
 fi
 
-instanceInfo=$( aws ec2 describe-instances --instance-ids ${instanceId} 2>&1 | egrep -i 'instan|status|public|volume' )
+instanceInfo=$( aws ec2 describe-instances --instance-ids ${instanceId} 2>&1 | egrep -i 'instan|status|publicip|privateip|volume' )
 WriteLog "Instance info: $instanceInfo" "$LOG_FILE"
 
 if [[ $instanceInfo =~ "InvalidInstanceID.NotFound" ]]
@@ -291,7 +300,12 @@ then
     MyExit "-1" "Error:${instanceInfo}, exit" "$instance" "${INSTANCE_NAME}" "${C_ID}"
 
 fi
-instancePublicIp=$( echo "$instanceInfo" | egrep 'PublicIpAddress' | tr -d '", ' | cut -d : -f 2 )
+if [[ $REGION =~ 'us-east-1' ]]
+then
+    instancePublicIp=$( echo "$instanceInfo" | egrep 'PrivateIpAddress' | head -n 1 | tr -d '", ' | cut -d : -f 2 )
+else
+    instancePublicIp=$( echo "$instanceInfo" | egrep 'PublicIpAddress' | tr -d '", ' | cut -d : -f 2 )
+fi
 
 tryCount=5
 delay=10 # sec
@@ -299,9 +313,14 @@ while [[ -z "$instancePublicIp" ]]
 do
     WriteLog "Instance has not public IP yet, wait for ${delay} sec and try again." "$LOG_FILE"
     sleep ${delay}
-    instanceInfo=$( aws ec2 describe-instances --instance-ids ${instanceId} 2>&1 | egrep -i 'instan|status|public|volume' )
+    instanceInfo=$( aws ec2 describe-instances --instance-ids ${instanceId} 2>&1 | egrep -i 'instan|status|publicip|privateip|volume' )
     WriteLog "Instance info: $instanceInfo" "$LOG_FILE"
-    instancePublicIp=$( echo "$instanceInfo" | egrep 'PublicIpAddress' | tr -d '", ' | cut -d : -f 2 )
+    if [[ $REGION =~ 'us-east-1' ]]
+    then
+        instancePublicIp=$( echo "$instanceInfo" | egrep 'PrivateIpAddress' | head -n 1 | tr -d '", ' | cut -d : -f 2 )
+    else
+        instancePublicIp=$( echo "$instanceInfo" | egrep 'PublicIpAddress' | tr -d '", ' | cut -d : -f 2 )
+    fi
     WriteLog "Public IP: '${instancePublicIp}'" "$LOG_FILE"
     tryCount=$(( $tryCount - 1 ))
     [[ $tryCount -eq 0 ]] && break;
@@ -323,7 +342,7 @@ then
    
     MyExit "-1" "Instance has not public IP, exit" "$instance" "${INSTANCE_NAME}" "${C_ID}"
 fi
-WriteLog "Public IP: ${instancePublicIp}" "$LOG_FILE"
+WriteLog "Public IP: '${instancePublicIp}'" "$LOG_FILE"
 
 WriteLog "Remove Public IP: ${instancePublicIp} from know_hosts to prevent SSH warning \n(man-in-the-middle attack) when public IP address is reused by AWS." "$LOG_FILE"
 res=$( ssh-keygen -R ${instancePublicIp} -f ~/.ssh/known_hosts 2>&1 )

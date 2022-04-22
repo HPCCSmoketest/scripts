@@ -1,4 +1,4 @@
-# Python 3 version
+#
 # Start:
 # bokeh serve showStatus.py (locally)
 #
@@ -32,19 +32,22 @@ source = ColumnDataSource(data = dict())
 updateInterval = 30 # sec
 tests = {}
 isReported = False
+statusColor = "blue"
 
 def update():
-    global isReported
+    global isReported, statusColor 
+    counts = {'NumberOfTests' : 0, 'NumberOfClosed' : 0, 'NumberOfFinished' : 0, 'NumberOfRunning' : 0, 'NumberOfPassed' : 0, 'NumberOfFailed' : 0}
 
     startTimestamp = time.time()
     nextUpdateTime = datetime.now() + timedelta(seconds = updateInterval)
     print("Update (%s)..." % (time.strftime("%Y-%m-%d %H:%M:%S"))) 
     divUpdate.text = "Update..."
     myProc = subprocess.Popen(["ps aux | egrep -c  '[p]ython ./Schedule' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-    smoketestIsUp = (myProc.stdout.read().strip() + myProc.stderr.read().strip()).decode("utf-8")
+    smoketestIsUp = myProc.stdout.read().strip() + myProc.stderr.read().strip()
     
     if smoketestIsUp == '0':
         divCurrentState.text = 'Stopped'
+        statusColor = "red"
     else:
         divCurrentState.text = 'Running'
         if isReported:
@@ -52,6 +55,7 @@ def update():
             # Enable to report results after the next stop.
             isReported = False
             print("Result report re-enabled.")
+            statusColor = "blue"
 
 #    currLogFile = "prp-" + time.strftime("%Y-%m-%d") + ".log"
     testDay = time.strftime("%y-%m-%d")
@@ -64,6 +68,7 @@ def update():
         
     print("\tlen files: %d" % (len(files)))
     prs = []
+    prIds = []
     instances = []
     scheduledCommits = []
     testedCommits = []
@@ -89,6 +94,7 @@ def update():
                 items = resultA.decode("utf-8").strip().split(',')
                 print(items)
                 pr = 'N/A'
+                prId = 'N/A'
                 instance = 'N/A'
                 commit = 'N/A'
                 status = 'scheduled'
@@ -114,6 +120,7 @@ def update():
                     if item.startswith('PR-'):
                         if pr == 'N/A':
                             pr = item
+                            prId = pr.replace('PR-','')
                     elif item.startswith('i-'):
                         instance = item
                     elif item.upper().startswith('HPCC') or item.startswith('JIRA-'):
@@ -126,19 +133,22 @@ def update():
                         commit = item
                         if len(commit) > 0 and 'N/A' != commit:
                             status = 'running'
-                    elif item.startswith('ec2-'):
+                    elif item.startswith('ec2-') or item.startswith('10.22.254'):
                         if url == 'N/A':
                             url = 'http://' + item
                     else:
                         print("Unknown item: '%s'" % (item))
                 
+                counts['NumberOfTests'] += 1
                 if 'OldPr' in f:
                     status = 'closed'
+                    counts['NumberOfClosed'] += 1
                 else:
                     myProcB = subprocess.Popen(["egrep -i -c 'Terminate:' " + f ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                     resultB = myProcB.stdout.read() + myProcB.stderr.read()
                     if int(resultB) > 0:
                         status = 'finished'
+                        counts['NumberOfFinished'] += 1
                     else:
                         myProcC = subprocess.Popen(["egrep -i -c 'Instance is terminated, exit' " + f ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                         resultC = myProcC.stdout.read() + myProcC.stderr.read()
@@ -175,8 +185,9 @@ def update():
                 tests[pr][instance]['jira'] = jira
                 tests[pr][instance]['base'] = base
                 tests[pr][instance]['bokehUrl'] = url
-                if url == 'N/A':
+                if url == 'N/A' or status != 'running':
                     tests[pr][instance]['bokehUrlValid'] = False
+                    url = None
                 else:
                     tests[pr][instance]['bokehUrlValid'] = True
 
@@ -184,6 +195,7 @@ def update():
 
                 #result.append("%s, %s, %s, %s" % (pr, commit, instance, status))
                 prs.append(pr)
+                prIds.append(prId)
                 instances.append(instance)
                 scheduledCommits.append(commit)
                 testedCommits.append('N/A')
@@ -238,6 +250,7 @@ def update():
                             rResult = i.replace('pass :', '').strip()
                             if 'True' == rResult:
                                rResult = 'Passed'
+                               counts['NumberOfPassed'] += 1
                             else:
                                rResult = 'Failed' 
                         elif 'instance :' in i:
@@ -326,6 +339,9 @@ def update():
                         pass
 
         print(tests)
+        counts['NumberOfRunning'] = counts['NumberOfTests'] - counts['NumberOfFinished'] - counts['NumberOfClosed']
+        counts['NumberOfFailed']  = counts['NumberOfTests'] - counts['NumberOfPassed'] - counts['NumberOfRunning']
+        print(counts)
 
         if smoketestIsUp == '0' and not isReported:
             # Smoketest stopped, but the results not (yet) reported
@@ -342,6 +358,7 @@ def update():
         print("\tlen prs: %d" % (len(prs)))
         if len(prs) == 0:
             prs.append("")
+            prIds.append("")
             instances.append("")
             scheduledCommits.append("")
             testedCommits.append("")
@@ -352,13 +369,21 @@ def update():
             ellapses.append("")
             bases.append("")
             jiras.append("")
+            urls.append("")
 
         prs[0] = "No test (yet)"
         
     #result.reverse()
+    divTestCount.text = "%d" % (counts['NumberOfTests'])
+    divClosedTestCount.text = "%d" % (counts['NumberOfClosed'])
+    divFinishedTestCount.text = "%d" % (counts['NumberOfFinished'])
+    divPassedTestCount.text = "%d" % (counts['NumberOfPassed'])
+    divFailedTestCount.text = "%d" % (counts['NumberOfFailed'])
+    divRunningTestCount.text = "%d" % (counts['NumberOfRunning'])
     
     source.data = {
         'pr' : prs,
+        'prId' : prIds,
         'instance' : instances,
         'base' : bases,
         'jira' : jiras,
@@ -369,6 +394,7 @@ def update():
         'start'  : starts,
         'end'    : ends,
         'ellaps' : ellapses,
+        'url'    : urls,
 
     }
 
@@ -377,12 +403,47 @@ def update():
     
     divUpdate.text = "Updated. (Next: %s)" % (nextUpdateTime.time().strftime("%H:%M:%S"))
 
-
 print(platform.python_version_tuple())
 
+conditionalUrlFormatterTemplatee="""
+<div a <%=
+    (function colorfromint(){
+        if(url == ''){
+            return("style=\"color:black\"")}
+        else{return("style=\"color:blue\"")}
+        }()) %>; 
+      > 
+<%= value %></div>
+"""
+
+conditionalUrlFormatterTemplatee = '''
+<a href="<%= 
+    (function ize(){
+       if(url == ''){
+          return(void(0))}
+       else{ return(url)} 
+     }()) %>;
+    /showStatus" target="_blank"><%= value '%></a>' >; "
+</div> 
+'''
+conditionalUrlFormatterTemplatee="""
+<div style="color: <%=
+    (function colorfromint(){
+        if(url == ''){
+            return("black")}
+        else{return("blue")}
+        }()) %>; 
+      "> 
+<%= value %></div>
+"""
+conditionalUrlFormatterTemplate = '''
+<a href="<%= url %>/showStatus" target="_blank"><%= value %></a>
+'''
 columns = [
-    TableColumn(field='pr', title= 'PR', formatter=StringFormatter(text_align='center',  text_color='#000000')),
-    TableColumn(field='instance', title= 'Instance', formatter=StringFormatter(text_align='center',  text_color='#000000')),
+    #TableColumn(field='pr', title= 'PR', formatter=StringFormatter(text_align='center',  text_color='#000000')),
+    TableColumn(field='pr', title= 'PR', width=200, formatter=HTMLTemplateFormatter(template = '<a href="https://github.com/hpcc-systems/HPCC-Platform/pull/<%= prId %>" target="_blank"><%= value %></a>')),
+    #TableColumn(field='instance', title= 'Instance', formatter=StringFormatter(text_align='center',  text_color='#000000')),
+    TableColumn(field='instance', title= 'Instance',width=350, formatter=HTMLTemplateFormatter(template=conditionalUrlFormatterTemplate)),
     TableColumn(field='base', title= 'Base branch', formatter=StringFormatter(text_align='center',  text_color='#000000')),
     TableColumn(field='jira', title= 'Jira', formatter=StringFormatter(text_align='center',  text_color='#000000')),
     TableColumn(field='scheduledCommit', title= 'Scheduled commit', formatter=StringFormatter(text_align='center',  text_color='#000000')),
@@ -424,19 +485,46 @@ divCurrentEct = Div(text=" ", width=150, height=20)
 divCurrentPhaseHeader = Div(text="Phase: ", width=50, height=15)
 divCurrentPhase = Div(text=" ", width=350, height=20)
 
+divTestCountHeader = Div(text="Number of tests: ", width=100, height=15)
+divTestCount = Div(text=" ", width=50, height=20)
+divClosedTestCountHeader = Div(text="Number of closed: ", width=120, height=15)
+divClosedTestCount = Div(text=" ", width=50, height=20)
+divFinishedTestCountHeader = Div(text="Number of finished: ", width=150, height=15)
+divFinishedTestCount = Div(text=" ", width=50, height=20)
+divPassedTestCountHeader = Div(text="Number of passed: ", width=120, height=15)
+divPassedTestCount = Div(text=" ", width=50, height=20)
+divFailedTestCountHeader = Div(text="Number of failed: ", width=120, height=15)
+divFailedTestCount = Div(text=" ", width=50, height=20)
+divRunningTestCountHeader = Div(text="Number of running: ", width=120, height=15)
+divRunningTestCount = Div(text=" ", width=50, height=20)
 def update_time():
     divTime.text = time.strftime("%H:%M:%S")
 
+phase = 0;
+def update_status():
+    global phase
+    if phase == 0:
+        divCurrentState.style = {"color":statusColor,"font-style":"bold", "font-weight":"bold"}
+        if divRunningTestCount.text != '0':
+            divRunningTestCount.style = {"font-style":"bold", "font-weight":"bold", "font-size":"125%"}
+        if divFailedTestCount .text != '0':
+            divFailedTestCount.style = {"color":"red", "font-style":"bold", "font-weight":"bold", "font-size":"125%"}
+    else:
+        divCurrentState.style = {"color":statusColor}
+        divRunningTestCount.style = {}
+        divFailedTestCount.style = {"color":"black"}
+    phase = (phase + 1) % 2 
 #headerRow = row(divTimeHeader, divUpdateHeader, divCurrentStateHeader)
 staRow1 = row(divCurrentDayHeader, divCurrentDay, divTimeHeader, divTime, divUpdateHeader, divUpdate, divCurrentStateHeader, divCurrentState)
-#staRow2 = row(divCurrentUserHeader, divCurrentUser)
+staRow2 = row(divTestCountHeader , divTestCount, divClosedTestCountHeader, divClosedTestCount, divFinishedTestCountHeader, divFinishedTestCount, divPassedTestCountHeader, divPassedTestCount, divFailedTestCountHeader, divFailedTestCount, divRunningTestCountHeader, divRunningTestCount )
 #staRow3 = row(divCurrentEctHeader, divCurrentEct, divCurrentPhaseHeader, divCurrentPhase)
 #curdoc().add_root(column(staRow1, staRow2, staRow3, dataTable))
-curdoc().add_root(column(staRow1, dataTable))
+curdoc().add_root(column(staRow1, staRow2, dataTable))
 
 curdoc().title = "List tests"
 
 curdoc().add_periodic_callback(update, updateInterval * 1000)
 
 curdoc().add_periodic_callback(update_time, 1000)
+curdoc().add_periodic_callback(update_status, 500)
 update()

@@ -131,7 +131,7 @@ def update():
                         commit = item
                         if len(commit) > 0 and 'N/A' != commit:
                             status = 'running'
-                    elif item.startswith('ec2-'):
+                    elif item.startswith('ec2-') or item.startswith('10.22.254'):
                         if url == 'N/A':
                             url = 'http://' + item
                     else:
@@ -496,7 +496,7 @@ phase = 0;
 def update_status():
     global phase
     if phase == 0:
-    	divCurrentState.style = {"color":statusColor,"font-style":"bold", "font-weight":"bold"}
+        divCurrentState.style = {"color":statusColor,"font-style":"bold", "font-weight":"bold"}
         if divRunningTestCount.text != '0':
             divRunningTestCount.style = {"font-style":"bold", "font-weight":"bold", "font-size":"125%"}
         if divFailedTestCount .text != '0':

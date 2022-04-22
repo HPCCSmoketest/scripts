@@ -3,11 +3,20 @@
 PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
 
-#export PATH=$PATH:/usr/local/bin:/bin:/usr/local/sbin:/sbin:/usr/sbin:
+export PATH=$PATH:/usr/local/sbin:/usr/sbin:
 echo "path: $PATH"
 
 PUBLIC_IP=$( curl http://checkip.amazonaws.com )
+echo "PUBLIC_IP: '$PUBLIC_IP'"
+
 PUBLIC_HOSTNAME=$( wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname )
+echo "PUBLIC_HOSTNAME: '$PUBLIC_HOSTNAME'"
+
+IP_FULL_PATH=$( which "ip" )
+echo "IP_FULL_PATH: '$IP_FULL_PATH'"
+LOCAL_IP=$(ip -4 addr | egrep '10\.' | awk '{ print $2 }' | cut -d / -f1)
+echo "LOCAL_IP: '$LOCAL_IP'"
+
 INSTANCE_NAME="PR-12701"
 DOCS_BUILD=0
 DOCS_BUILD_STR=''
@@ -286,8 +295,12 @@ p3=$(which "pip3")
 echo "p3: '$p3'"
 sudo ${p3} install pandas bokeh pyproj
 
+echo "LD_LIBRARY_PATH: '$LD_LIBRARY_PATH'"
+export LD_LIBRARY_PATH=/usr/lib:/usr/lib64:$LD_LIBRARY_PATH
+echo "LD_LIBRARY_PATH: '$LD_LIBRARY_PATH'"
 bk=$(which 'bokeh')
 echo "bokeh: $bk"
+echo "$(bokeh info)"
 
 echo "Prepare Bokeh"
 cd ~/smoketest
@@ -295,11 +308,19 @@ cd ~/smoketest
 #sed -e 's/origin=\(ec2.*\)/origin='"$PUBLIC_IP"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
 #echo "Bokeh address: $PUBLIC_IP:5006"
 
-# Use Public hostname isntead
-sed -e 's/origin=\(ec2.*\)/origin='"$PUBLIC_HOSTNAME"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
-echo "Bokeh address: $PUBLIC_HOSTNAME:5006"
-echo "http://$PUBLIC_HOSTNAME:5006/showStatus" > bokeh.url
+if [[ -n $PUBLIC_HOSTNAME ]]
+then
+    eco "Use Public hostname: '$PUBLIC_HOSTNAME'"
+    sed -e 's/origin=\(ec2.*\)/origin='"$PUBLIC_HOSTNAME"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
+    echo "Bokeh address: $PUBLIC_HOSTNAME:5006"
+    echo "http://$PUBLIC_HOSTNAME:5006/showStatus" > bokeh.url
+else
+    echo "Perhaps we are in us-east-1 use Local IP: '$LOCAL_IP'"
+    sed -e 's/origin=\(ec2.*\):5006/origin='"$LOCAL_IP"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
+    echo "Bokeh address: $LOCAL_IP:5006"
+    echo "http://$LOCAL_IP:5006/showStatus" > bokeh.url
 
+fi
 echo "Start Bokeh"
 chmod +x ./startBokeh.sh
 ./startBokeh.sh &
