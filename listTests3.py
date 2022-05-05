@@ -444,21 +444,21 @@ conditionalUrlFormatterTemplate = '''
 '''
 columns = [
     #TableColumn(field='pr', title= 'PR', formatter=StringFormatter(text_align='center',  text_color='#000000')),
-    TableColumn(field='pr', title= 'PR', width=200, formatter=HTMLTemplateFormatter(template = '<a href="https://github.com/hpcc-systems/HPCC-Platform/pull/<%= prId %>" target="_blank"><%= value %></a>')),
+    TableColumn(field='pr', title= 'PR', width=75, formatter=HTMLTemplateFormatter(template = '<a href="https://github.com/hpcc-systems/HPCC-Platform/pull/<%= prId %>" target="_blank"><%= value %></a>')),
     #TableColumn(field='instance', title= 'Instance', formatter=StringFormatter(text_align='center',  text_color='#000000')),
-    TableColumn(field='instance', title= 'Instance',width=350, formatter=HTMLTemplateFormatter(template=conditionalUrlFormatterTemplate)),
-    TableColumn(field='base', title= 'Base branch', formatter=StringFormatter(text_align='center',  text_color='#000000')),
-    TableColumn(field='jira', title= 'Jira', formatter=StringFormatter(text_align='center',  text_color='#000000')),
-    TableColumn(field='scheduledCommit', title= 'Scheduled commit', formatter=StringFormatter(text_align='center',  text_color='#000000')),
-    TableColumn(field='testedCommit', title= 'Tested commit', formatter=StringFormatter(text_align='center',  text_color='#000000')),
-    TableColumn(field='start', title= 'Start', formatter=StringFormatter(text_align='center',  text_color='#000000')),
-    TableColumn(field='end', title= 'End', formatter=StringFormatter(text_align='center',  text_color='#000000')),
-    TableColumn(field='ellaps', title= 'Ellaps time', formatter=StringFormatter(text_align='center',  text_color='#000000')),
-    TableColumn(field='status', title= 'Status', formatter=StringFormatter(text_align='center',  text_color='#000000')),
-    TableColumn(field='result', title= 'Result', formatter=StringFormatter(text_align='center',  text_color='#000000')),
+    TableColumn(field='instance', title= 'Instance',width=140, formatter=HTMLTemplateFormatter(template=conditionalUrlFormatterTemplate)),
+    TableColumn(field='base', title= 'Base branch',width=120, formatter=StringFormatter(text_align='center',  text_color='#000000')),
+    TableColumn(field='jira', title= 'Jira',width=120, formatter=StringFormatter(text_align='center',  text_color='#000000')),
+    TableColumn(field='scheduledCommit', title= 'Scheduled commit', width=100, formatter=StringFormatter(text_align='center',  text_color='#000000')),
+    TableColumn(field='testedCommit', title= 'Tested commit', width=100, formatter=StringFormatter(text_align='center',  text_color='#000000')),
+    TableColumn(field='start', title= 'Start', width=140, formatter=StringFormatter(text_align='center',  text_color='#000000')),
+    TableColumn(field='end', title= 'End', width=140, formatter=StringFormatter(text_align='center',  text_color='#000000')),
+    TableColumn(field='ellaps', title= 'Ellaps time', width=140, formatter=StringFormatter(text_align='center',  text_color='#000000')),
+    TableColumn(field='status', title= 'Status', width=80, formatter=StringFormatter(text_align='center',  text_color='#000000')),
+    TableColumn(field='result', title= 'Result', width=80, formatter=StringFormatter(text_align='center',  text_color='#000000')),
     ]
     
-dataTable = DataTable(source=source,  columns=columns,  width=1300 )
+dataTable = DataTable(source=source,  columns=columns,  width=1300, autosize_mode='none' )
 
 # If no row(s) selected and dataTable 'data' changed then this scrolls down to the last lines.
 data_table_force_change = CustomJS(args=dict(source=dataTable),  code="""
