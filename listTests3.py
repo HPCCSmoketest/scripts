@@ -44,6 +44,7 @@ def update():
     divUpdate.text = "Update..."
     myProc = subprocess.Popen(["ps aux | egrep -c  '[p]ython ./Schedule' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
     smoketestIsUp = myProc.stdout.read().strip() + myProc.stderr.read().strip()
+    smoketestIsUp = smoketestIsUp.decode("utf-8")
     
     if smoketestIsUp == '0':
         divCurrentState.text = 'Stopped'
@@ -64,7 +65,7 @@ def update():
     myProc = subprocess.Popen(["find OldPrs/PR-*/ PR-*/ -iname 'instance-*-*-" + testDay + "_*.info' -print | sort  --field-separator='-' --key=1,1 --key=4,4 --key=8.4n,8 --key=9n,9 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
     #myProc = subprocess.Popen(["./showSchedulerStatus.sh " + currLogFile + "| egrep '\-{3} PR'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
     files = myProc.stdout.read() + myProc.stderr.read()
-    files = files.splitlines()
+    files = files.decode("utf-8").splitlines()
         
     print("\tlen files: %d" % (len(files)))
     prs = []
@@ -83,8 +84,7 @@ def update():
 
     if len(files) > 0:
         index = 0
-        for _f in files:
-            f = _f.decode("utf-8")
+        for f in files:
             if len(f) > 0:
                 print("File:%s" % (f))
                 #myProcA = subprocess.Popen(["cat " + f + " | egrep -i 'Instance name|instanceName= |Commit Id|commitId= |Instance Id|base= |jira= ' | cut -d' ' -f5 | tr -d \\' | paste -d, -s - | cut -d',' -f1,2,3 --output ',' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
@@ -217,14 +217,13 @@ def update():
         # get the results
         myProcRes = subprocess.Popen(["find OldPrs/PR-*/ PR-*/ -iname 'result-'" + testDay + "'*.log' -type f  -print | sort "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
         resFiles = myProcRes.stdout.read() + myProcRes.stderr.read()
-        resFiles = resFiles.splitlines()
+        resFiles = resFiles.decode("utf-8").splitlines()
         
         print("\tlen result files: %d" % (len(resFiles)))
 
         if len(resFiles) > 0:
             index = 0
-            for _rf in resFiles:
-                rf = _rf.decode("utf-8")
+            for rf in resFiles:
                 if len(rf) > 0:
                     print(rf)
                     myProcD = subprocess.Popen(["egrep '\s+Process PR-|\s+sha\s+:|\s+title\s*:|\s+base\s+:|\s+instance\s+:|\s+Summary\s+:|\s+pass :|In PR-' " + rf + " | tr -d '\t' | tr -s ' ' | paste -d, -s - | sed -e 's/ : /: /' -e 's/,(\s*)/, /g' -e 's/In PR-[0-9]* , label: [a-zA-Z0-9]* : //g' -e 's/^[0-9]*\/[0-9]*\.\s//g' | sed -r 's/(.*) ((sha: \w{8,8})([a-zA-Z0-9]+)), (.*)/\1 \3, \5/'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
