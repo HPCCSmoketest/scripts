@@ -945,12 +945,19 @@ def GetOpenPulls(knownPullRequests):
                 
             # Check directory exclusions
             #prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if ('^helm/' in x ) or ('^dockerfiles/' in x) or ('.github/' in x)] )
-            excludePaths = ['helm/', 'dockerfiles/', '.github/', 'testing/helm/', 'MyDockerfile/']
+            
+            # Do we really consider any GH Action (changes) as a containerised envireonment
+            #excludePaths = ['helm/', 'dockerfiles/', '.github/', 'testing/helm/', 'MyDockerfile/'] 
+            excludePaths = ['helm/', 'dockerfiles/', 'testing/helm/', 'MyDockerfile/']
+            
             #prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])] )
             t = [True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])]
             if len(t) > 0:
                 # if the number of files in exludePaths is equal to the number of changed files then skip it.
                 prs[prid]['containerized'] = True
+            
+            # Uncomment to ad-hoc build, start and test a containerised platform
+            #prs[prid]['containerized'] = False
                 
             eclWatchOnly=True
             changedFilesFile = open(changedFilesFileName,  "wb")
