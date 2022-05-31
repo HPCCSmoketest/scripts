@@ -946,7 +946,7 @@ def GetOpenPulls(knownPullRequests):
             # Check directory exclusions
             #prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if ('^helm/' in x ) or ('^dockerfiles/' in x) or ('.github/' in x)] )
             
-            # Do we really consider any GH Action (changes) as a containerised envireonment
+            # Do we really consider any GH Action (changes) as a containerised envireonment?
             #excludePaths = ['helm/', 'dockerfiles/', '.github/', 'testing/helm/', 'MyDockerfile/'] 
             excludePaths = ['helm/', 'dockerfiles/', 'testing/helm/', 'MyDockerfile/']
             
