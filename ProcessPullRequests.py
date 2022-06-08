@@ -805,6 +805,7 @@ def GetOpenPulls(knownPullRequests):
         prs[prid]['rteChanged'] = False
         prs[prid]['containerized'] = False
         prs[prid]['jira'] = prs[prid]['label'][0:10]
+        prs[prid]['enableVcpkgBuild'] = False
                
         testDir = 'smoketest-'+str(prid)
         # mkdir smoketest-<PRID>
@@ -1073,6 +1074,18 @@ def GetOpenPulls(knownPullRequests):
                 if len(prs[prid]['testfiles']) > 0:
                     prs[prid]['regSuiteTests'] ='"' + WildGen(prs[prid]['testfiles']) + '"'
                 
+                # Check base version for VCPKG build
+                enableVcpkgBuildMinVersion={'major':8, 'minor':8,  'release':0}
+                baseVersion = prs[prid]['code_base'].split('-')
+                if len(baseVersion) >= 2:
+                    baseVersionItems = baseVersion[1].split('.')
+                    if len(baseVersionItems) >= 3:
+                        if (int(baseVersionItems[0]) >= enableVcpkgBuildMinVersion['major']) and (int(baseVersionItems[1]) >= wutoolsMinVersion['minor']):
+                            prs[prid]['enableVcpkgBuild'] = True
+                elif ('master' == baseVersion[0]):
+                        prs[prid]['enableVcpkgBuild'] = True
+                        pass
+                    
             if isBuilt:
                 os.unlink(buildSummaryFileName)
                 
@@ -2095,6 +2108,12 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             msg="Process of PR-%s, label: %s starts now.\\nThe reason of this test is: %s.\\nCommit ID: %s\\nEstimated completion time is %.2f hour(s)\\n%s" % ( str(prid), prs[prid]['label'], prs[prid]['reason'], prs[prid]['sha'], prs[prid]['sessionTime'],  sysId.replace('\n', '\\n'))
             if  prs[prid]['containerized'] :
                 msg += "\\nBuild only for containerized environment.\\n"
+                
+            if prs[prid]['enableVcpkgBuild']:
+                msg += "\\nUsing VCPKG to build HPCC.\\n"
+            else:
+                msg += "\\nNot using VCPKG to build HPCC.\\n"
+                
             addCommentCmd = prs[prid]['addComment']['cmd'] +'\'{"body":"'+msg+'"}\' '+prs[prid]['addComment']['url']
             
             print("\tAdd comment to pull request")
@@ -2300,6 +2319,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                     if prs[prid]['rteChanged'] == True :
                         cmd += " -rteChanged=" + str(prs[prid]['rteChanged'])
                     cmd += " -containerized=" + str(prs[prid]['containerized'])
+                    cmd += " -enableVcpkgBuild=" + str(prs[prid]['enableVcpkgBuild'])
                     
                     resultFile.write("\t" + cmd + "\n")
                     myProc = subprocess.Popen([ cmd ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)

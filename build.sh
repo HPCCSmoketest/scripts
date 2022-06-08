@@ -243,6 +243,7 @@ MAKE_WSSQL=0
 ENABLE_STACK_TRACE=''
 RTE_CHANGED=0
 CONTAINERIZED=0
+VCPKG_BUILD=0
 
 while [ $# -gt 0 ]
 do
@@ -314,7 +315,11 @@ do
                 CONTAINERIZED=${CONTAINERIZED//containerized=False/0}
                 WritePlainLog "CONTAINERIZED Changed: ${CONTAINERIZED}" "$logFile"
                 ;;
-        
+        enableVcpkgBuild*)
+                VCPKG_BUILD=${param//enableVcpkgBuild=True/1}
+                VCPKG_BUILD=${VCPKG_BUILD//enableVcpkgBuild=False/0}
+                WritePlainLog "VCPKG_BUILD: ${VCPKG_BUILD}" "$logFile"
+                ;;
             
     esac
     shift
@@ -494,6 +499,11 @@ then
     
     removeLog4j=$( find . -iname '*log4j*' -type f -exec rm -fv {} \; )
     WritePlainLog "Remove LOG4J items result:\n${removeLog4j}" "$logFile"
+    
+    if [[ ${VCPKG_BUILD} -eq 1 ]]
+    then
+        [ ! -d vcpkg-overlays ] && mkdir vcpkg-overlays
+    fi
     popd
     WritePlainLog "Done" "$logFile"
 else
@@ -512,7 +522,7 @@ CMAKE_CMD+=$' -D CMAKE_BUILD_TYPE='$BUILD_TYPE
 if [[ ( "${SYSTEM_ID}" =~ "Ubuntu_16_04" ) ]]
 then
       # On Ubuntu 16.04 RPR VM I have not proper Python 3.6 so avoid to build plugins and Python stuff
-      CMAKE_CMD+=$' -D INCLUDE_PLUGINS=OFF -D TEST_PLUGINS=OFF -DSUPPRESS_PY3EMBED=ON -DINCLUDE_PY3EMBED=OFF -DSUPPRESS_PY2EMBED=ON -DINCLUDE_PY2EMBED=OFF -D USE_PYTHON3=OFF'
+      CMAKE_CMD+=$' -D INCLUDE_PLUGINS=OFF -D TEST_PLUGINS=OFF -DSUPPRESS_PY3EMBED=ON -DINCLUDE_PY3EMBED=OFF -DSUPPRESS_PY2EMBED=ON -DINCLUDE_PY2EMBED=OFF -D USE_PYTHON3=OFF -DINCLUDE_JAVAEMBED=ON'
 else
       CMAKE_CMD+=$' -D INCLUDE_PLUGINS=ON -D TEST_PLUGINS=1 '${PYTHON_PLUGIN}
 fi
@@ -528,6 +538,20 @@ then
 fi
 CMAKE_CMD+=$' -DCENTOS_6_BOOST=ON'
 CMAKE_CMD+=$' -DCONTAINERIZED='${CONTAINERIZED}
+
+if [[ ${VCPKG_BUILD} -eq 1 ]]
+then
+    if [ -f ../HPCC-Platform/vcpkg/bootstrap-vcpkg.sh ]
+   then 
+        WritePlainLog "Execute 'bootstrap-vcpkg.sh'" "$logFile"
+        res=$( ../HPCC-Platform/vcpkg/bootstrap-vcpkg.sh 2>&1 )
+        WritePlainLog "Result:\n${res}" "$logFile"
+        CMAKE_CMD+=$' -DCMAKE_TOOLCHAIN_FILE=../HPCC-Platform/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_OVERLAY_PORTS=../HPCC-Platform/vcpkg-overlays'
+    else
+        WritePlainLog "The '../HPCC-Platform/vcpkg/bootstrap-vcpkg.sh' not found, fall back to standard build." "$logFile"
+    fi
+fi
+
 CMAKE_CMD+=$' -D CMAKE_ECLIPSE_MAKE_ARGUMENTS=-30 ../HPCC-Platform'
 WritePlainLog "CMAKE_CMD:'${CMAKE_CMD}'\\n" "$logFile"
 
