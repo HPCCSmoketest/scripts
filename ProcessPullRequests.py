@@ -2113,9 +2113,9 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 msg += "\\nBuild only for containerized environment.\\n"
                 
             if prs[prid]['enableVcpkgBuild']:
-                msg += "\\nUsing VCPKG to build HPCC.\\n"
+                msg += "VCPKG build enabled.\\n"
             else:
-                msg += "\\nNot using VCPKG to build HPCC.\\n"
+                msg += "VCPKG build disabled.\\n"
                 
             addCommentCmd = prs[prid]['addComment']['cmd'] +'\'{"body":"'+msg+'"}\' '+prs[prid]['addComment']['url']
             
