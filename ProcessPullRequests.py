@@ -2110,12 +2110,14 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             
             msg="Process of PR-%s, label: %s starts now.\\nThe reason of this test is: %s.\\nCommit ID: %s\\nEstimated completion time is %.2f hour(s)\\n%s" % ( str(prid), prs[prid]['label'], prs[prid]['reason'], prs[prid]['sha'], prs[prid]['sessionTime'],  sysId.replace('\n', '\\n'))
             if  prs[prid]['containerized'] :
-                msg += "\\nBuild only for containerized environment.\\n"
+                msg += "\\nBuild only for containerized environment."
                 
             if prs[prid]['enableVcpkgBuild']:
-                msg += "VCPKG build enabled.\\n"
+                msg += "\\nVCPKG build enabled."
             else:
-                msg += "VCPKG build disabled.\\n"
+                msg += "\\nVCPKG build disabled."
+                
+            msg += "\\n"""
                 
             addCommentCmd = prs[prid]['addComment']['cmd'] +'\'{"body":"'+msg+'"}\' '+prs[prid]['addComment']['url']
             
