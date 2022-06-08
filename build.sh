@@ -314,6 +314,12 @@ do
                 CONTAINERIZED=${param//containerized=True/1}
                 CONTAINERIZED=${CONTAINERIZED//containerized=False/0}
                 WritePlainLog "CONTAINERIZED Changed: ${CONTAINERIZED}" "$logFile"
+                #if [[ ${CONTAINERIZED} -eq 1 ]]
+                #then
+                #    WritePlainLog "Temporarily ignore CONTAINERIZED = ${CONTAINERIZED}, build and test as bare metal to ensure it is not broken." "$logFile"
+                #    CONTAINERIZED=0
+                #fi
+                    
                 ;;
         enableVcpkgBuild*)
                 VCPKG_BUILD=${param//enableVcpkgBuild=True/1}
@@ -545,7 +551,7 @@ then
    then 
         WritePlainLog "Execute 'bootstrap-vcpkg.sh'" "$logFile"
         res=$( ../HPCC-Platform/vcpkg/bootstrap-vcpkg.sh 2>&1 )
-        WritePlainLog "Result:\n${res}" "$logFile"
+        WritePlainLog "Result:\n${res}\nDone." "$logFile"
         CMAKE_CMD+=$' -DCMAKE_TOOLCHAIN_FILE=../HPCC-Platform/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_OVERLAY_PORTS=../HPCC-Platform/vcpkg-overlays'
     else
         WritePlainLog "The '../HPCC-Platform/vcpkg/bootstrap-vcpkg.sh' not found, fall back to standard build." "$logFile"
@@ -1212,7 +1218,7 @@ then
             STOP_TIME=$(( $(date +%s) - $TIME_STAMP ))
         fi
     else
-        WritePlainLog "Temporarly there is not attempts to start, execute test and stop the platform build for containerized environment." "$logFile"
+        WritePlainLog "Temporarily there is not attempts to start, execute test and stop the platform build for containerized environment." "$logFile"
     fi
     WriteMilestone "End game" "$logFile"
     WritePlainLog "Archive HPCC logs into ${HPCC_LOG_ARCHIVE}." "$logFile"

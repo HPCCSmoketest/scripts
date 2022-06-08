@@ -1086,6 +1086,9 @@ def GetOpenPulls(knownPullRequests):
                         prs[prid]['enableVcpkgBuild'] = True
                         pass
                     
+                # Temporarily disable vcpkg build
+                prs[prid]['enableVcpkgBuild'] = False
+                
             if isBuilt:
                 os.unlink(buildSummaryFileName)
                 
