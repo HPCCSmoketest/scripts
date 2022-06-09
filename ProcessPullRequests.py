@@ -1080,7 +1080,7 @@ def GetOpenPulls(knownPullRequests):
                 if len(baseVersion) >= 2:
                     baseVersionItems = baseVersion[1].split('.')
                     if len(baseVersionItems) >= 3:
-                        if (int(baseVersionItems[0]) >= enableVcpkgBuildMinVersion['major']) and (int(baseVersionItems[1]) >= wutoolsMinVersion['minor']):
+                        if (int(baseVersionItems[0]) >= enableVcpkgBuildMinVersion['major']) and (int(baseVersionItems[1]) >= enableVcpkgBuildMinVersion['minor']):
                             prs[prid]['enableVcpkgBuild'] = True
                 elif ('master' == baseVersion[0]):
                         prs[prid]['enableVcpkgBuild'] = True
@@ -2117,7 +2117,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             else:
                 msg += "\\nVCPKG build disabled."
                 
-            msg += "\\n"""
+            msg += "\\n"
                 
             addCommentCmd = prs[prid]['addComment']['cmd'] +'\'{"body":"'+msg+'"}\' '+prs[prid]['addComment']['url']
             
@@ -2361,7 +2361,11 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             msg= 'Automated Smoketest\n'
             msg += 'OS: ' + sysId + '\n'
             msg += 'Sha: '+prs[prid]['sha']+'\n'
-            msg += 'Containerized:' + str(prs[prid]['containerized']) + '\n'
+            msg += 'Containerized: ' + str(prs[prid]['containerized']) + '\n'
+            if prs[prid]['enableVcpkgBuild']:
+                msg += "VCPKG build enabled.\n"
+            else:
+                msg += "VCPKG build disabled.\n"
             msg = processResult(result, msg, resultFile, buildFailed,  testFailed, prs[prid]['testfiles'], maxMsgLen, prs[prid]['runUnittests'], prs[prid]['runWutoolTests'], prid, prs[prid]['buildEclWatch'])
             
             
