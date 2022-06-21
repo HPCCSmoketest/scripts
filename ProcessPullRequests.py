@@ -104,7 +104,7 @@ averageSessionTime=0.5
 if ('AVERAGE_SESSION_TIME' in os.environ):
     averageSessionTime = float(os.environ['AVERAGE_SESSION_TIME'])
 
-# Use this to contorl if PR has changed files in containeresied environment then 
+# Use this to control if PR has changed files in containeresied environment then 
 # build and test is as bare-metal or containerised environment.
 # It can controll stand alone, always running Smoketest to build and test in a selected environment.
 containerisedEnvironment =False;
@@ -2911,6 +2911,8 @@ if __name__ == '__main__':
     print("Build ECLWatch is                                  : " + str(buildEclWatch))
     print("Skip draft PR is                                   : " + str(skipDraftPr))
     print("Average Session Time                               : " + str(averageSessionTime)) + " hours"
+    print("Enable VCPKG build                                 : " + str(enableVcpkgBuild))
+    print("Containerised environment                          : " + str(containerisedEnvironment))
     
     if testPrNo > 0:
         print("Test PR-" + str(testPrNo) + " only (if it is open) and exit.")
