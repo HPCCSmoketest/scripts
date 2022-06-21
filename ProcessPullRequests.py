@@ -104,6 +104,17 @@ averageSessionTime=0.5
 if ('AVERAGE_SESSION_TIME' in os.environ):
     averageSessionTime = float(os.environ['AVERAGE_SESSION_TIME'])
 
+# Use this to contorl if PR has changed files in containeresied environment then 
+# build and test is as bare-metal or containerised environment.
+# It can controll stand alone, always running Smoketest to build and test in a selected environment.
+containerisedEnvironment =False;
+if ('containerisedEnvironment' in os.environ) and (os.environ['containerisedEnvironment'] == '1'):
+    containerisedEnvironment = True
+
+enableVcpkgBuild = False
+if ('enableVcpkgBuild' in os.environ) and (os.environ['enableVcpkgBuild'] == '1'):
+    enableVcpkgBuild = True
+
 verbose = False
 # Do not update PR source code - means use last PR code (Do not get new commit)
 # It has sense if and only if there is a previously updated HPCC platform code with merged PR code
@@ -1074,20 +1085,18 @@ def GetOpenPulls(knownPullRequests):
                 if len(prs[prid]['testfiles']) > 0:
                     prs[prid]['regSuiteTests'] ='"' + WildGen(prs[prid]['testfiles']) + '"'
                 
-                # Check base version for VCPKG build
-                enableVcpkgBuildMinVersion={'major':8, 'minor':8,  'release':0}
-                baseVersion = prs[prid]['code_base'].split('-')
-                if len(baseVersion) >= 2:
-                    baseVersionItems = baseVersion[1].split('.')
-                    if len(baseVersionItems) >= 3:
-                        if (int(baseVersionItems[0]) >= enableVcpkgBuildMinVersion['major']) and (int(baseVersionItems[1]) >= enableVcpkgBuildMinVersion['minor']):
+                if enableVcpkgBuild == True:
+                    # Check base version for VCPKG build
+                    enableVcpkgBuildMinVersion={'major':8, 'minor':8,  'release':0}
+                    baseVersion = prs[prid]['code_base'].split('-')
+                    if len(baseVersion) >= 2:
+                        baseVersionItems = baseVersion[1].split('.')
+                        if len(baseVersionItems) >= 3:
+                            if (int(baseVersionItems[0]) >= enableVcpkgBuildMinVersion['major']) and (int(baseVersionItems[1]) >= enableVcpkgBuildMinVersion['minor']):
+                                prs[prid]['enableVcpkgBuild'] = True
+                    elif ('master' == baseVersion[0]):
                             prs[prid]['enableVcpkgBuild'] = True
-                elif ('master' == baseVersion[0]):
-                        prs[prid]['enableVcpkgBuild'] = True
-                        pass
-                    
-                # Temporarily disable vcpkg build
-                prs[prid]['enableVcpkgBuild'] = False
+                            pass
                 
             if isBuilt:
                 os.unlink(buildSummaryFileName)

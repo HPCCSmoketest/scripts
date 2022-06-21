@@ -121,7 +121,7 @@ else
 fi
 
 #PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools bc psmisc"
-PACKAGES_TO_INSTALL="expect mailx dsc cassandra cassandra-tools bc psmisc git"
+PACKAGES_TO_INSTALL="expect mailx dsc cassandra cassandra-tools bc psmisc git ncurses-devel"
 
 #if [ $DOCS_BUILD -eq 1 ]
 #then
