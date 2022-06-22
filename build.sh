@@ -314,11 +314,11 @@ do
                 CONTAINERIZED=${param//containerized=True/1}
                 CONTAINERIZED=${CONTAINERIZED//containerized=False/0}
                 WritePlainLog "CONTAINERIZED Changed: ${CONTAINERIZED}" "$logFile"
-                #if [[ ${CONTAINERIZED} -eq 1 ]]
-                #then
-                #    WritePlainLog "Temporarily ignore CONTAINERIZED = ${CONTAINERIZED}, build and test as bare metal to ensure it is not broken." "$logFile"
-                #    CONTAINERIZED=0
-                #fi
+#                if [[ ${CONTAINERIZED} -eq 1 ]]
+#                then
+#                    WritePlainLog "Temporarily ignore CONTAINERIZED = ${CONTAINERIZED}, build and test as bare metal to ensure it is not broken." "$logFile"
+#                    CONTAINERIZED=0
+#                fi
                     
                 ;;
         enableVcpkgBuild*)
@@ -553,6 +553,7 @@ then
         res=$( ../HPCC-Platform/vcpkg/bootstrap-vcpkg.sh 2>&1 )
         WritePlainLog "Result:\n${res}\nDone." "$logFile"
         CMAKE_CMD+=$' -DCMAKE_TOOLCHAIN_FILE=../HPCC-Platform/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_OVERLAY_PORTS=../HPCC-Platform/vcpkg-overlays'
+        CMAKE_CMD+=$' -DSUPPRESS_COUCHBASEEMBED=ON -DOPENSSLV3=ON'
     else
         WritePlainLog "The '../HPCC-Platform/vcpkg/bootstrap-vcpkg.sh' not found, fall back to standard build." "$logFile"
     fi

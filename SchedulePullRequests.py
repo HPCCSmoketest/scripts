@@ -106,6 +106,17 @@ averageSessionTime=0.5
 if ('AVERAGE_SESSION_TIME' in os.environ):
     averageSessionTime = float(os.environ['AVERAGE_SESSION_TIME'])
 
+# Use this to control if PR has changed files in containeresied environment then 
+# build and test is as bare-metal or containerised environment.
+# It can controll stand alone, always running Smoketest to build and test in a selected environment.
+containerisedEnvironment =False;
+if ('containerisedEnvironment' in os.environ) and (os.environ['containerisedEnvironment'] == '1'):
+    containerisedEnvironment = True
+
+enableVcpkgBuild = False
+if ('enableVcpkgBuild' in os.environ) and (os.environ['enableVcpkgBuild'] == '1'):
+    enableVcpkgBuild = True
+
 verbose = False
 # Do not update PR source code - means use last PR code (Do not get new commit)
 # It has sense if and only if there is a previously updated HPCC platform code with merged PR code
@@ -3467,6 +3478,8 @@ if __name__ == '__main__':
     print("Build ECLWatch is                                  : " + str(buildEclWatch))
     print("Skip draft PR is                                   : " + str(skipDraftPr))
     print("Average Session Time                               : " + str(averageSessionTime)) + " hours"
+    print("Enable VCPKG build                                 : " + str(enableVcpkgBuild))
+    print("Containerised environment                          : " + str(containerisedEnvironment))
     
     if testPrNo > 0:
         print("Test PR-" + str(testPrNo) + " only (if it is open) and exit.")
