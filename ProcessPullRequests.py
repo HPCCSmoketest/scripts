@@ -815,6 +815,7 @@ def GetOpenPulls(knownPullRequests):
         prs[prid]['enableStackTrace'] = True
         prs[prid]['rteChanged'] = False
         prs[prid]['containerized'] = False
+        prs[prid]['containerizedOnly'] = False
         prs[prid]['jira'] = prs[prid]['label'][0:10]
         prs[prid]['enableVcpkgBuild'] = False
                
@@ -965,8 +966,11 @@ def GetOpenPulls(knownPullRequests):
             #prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])] )
             t = [True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])]
             if len(t) > 0:
-                # if the number of files in exludePaths is equal to the number of changed files then skip it.
+                # Some changes in containerisation
                 prs[prid]['containerized'] = True
+                if len(t) == len(prs[prid]['files']):
+                    # if the number of files in exludePaths is equal to the number of changed files the change only related to containerisation
+                    prs[prid]['containerizedOnly'] = True
             
             # Uncomment to ad-hoc build, start and test a containerised platform
             #prs[prid]['containerized'] = False

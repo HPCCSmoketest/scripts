@@ -812,6 +812,7 @@ def GetOpenPulls(knownPullRequests):
         prs[prid]['enableStackTrace'] = True
         prs[prid]['excludeFromTest'] = False
         prs[prid]['containerized'] = False
+        prs[prid]['containerizedOnly'] = False
         prs[prid]['jira'] = pr['title'][0:10].replace(' ','_')
         if  not prs[prid]['jira'].startswith('HPCC'):
             prs[prid]['jira'] = 'JIRA-' + prs[prid]['jira']
@@ -925,14 +926,22 @@ def GetOpenPulls(knownPullRequests):
             
             # Check directory exclusions
             #prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if ('^helm/' in x ) or ('^dockerfiles/' in x) or ('.github/' in x)] )
-            excludePaths = ['helm/', 'dockerfiles/', '.github/', 'testing/helm/', 'MyDockerfile/']
+            
+           # Do we really consider any GH Action (changes) as a containerised envireonment?
+            #excludePaths = ['helm/', 'dockerfiles/', '.github/', 'testing/helm/', 'MyDockerfile/'] 
+            excludePaths = ['helm/', 'dockerfiles/', 'testing/helm/', 'MyDockerfile/']
+            
             #prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])] )
             t = [True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])]
-            if len(t) == len(prs[prid]['files']):
-                # if the number of files in exludePaths is equal to the number of changed files then skip it.
-                prs[prid]['excludeFromTest'] = False  # Do not exlude but build it
+            
+            if len(t) > 0:
+                # Some changes in containerisation
                 prs[prid]['containerized'] = True
-        
+                if len(t) == len(prs[prid]['files']):
+                    # if the number of files in exludePaths is equal to the number of changed files the change only related to containerisation
+                    prs[prid]['containerizedOnly'] = True
+                    prs[prid]['excludeFromTest'] = False  # Do not exlude but build it
+                    
         isNotExcluded = prs[prid]['excludeFromTest'] == False
         
         if isNotDraft and isChangedOrNew and isNotExcluded:
