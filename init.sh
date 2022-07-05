@@ -14,7 +14,7 @@ echo "PUBLIC_HOSTNAME: '$PUBLIC_HOSTNAME'"
 
 IP_FULL_PATH=$( which "ip" )
 echo "IP_FULL_PATH: '$IP_FULL_PATH'"
-LOCAL_IP=$(ip -4 addr | egrep '10\.' | awk '{ print $2 }' | cut -d / -f1)
+LOCAL_IP=$($IP_FULL_PATH -4 addr | egrep '10\.' | awk '{ print $2 }' | cut -d / -f1)
 echo "LOCAL_IP: '$LOCAL_IP'"
 
 INSTANCE_NAME="PR-12701"
@@ -147,21 +147,25 @@ git clone https://github.com/HPCCSmoketest/scripts.git
 cp scripts/*.sh .
 cp scripts/*.py .
 
-echo "Check and install CMake 3.18.0"
-CMAKE_3_18=$( find ~/ -iname 'cmake-3.18.0.tar.gz' -type f -size +1M -print | head -n 1 )
-if [[ -n "$CMAKE_3_18" ]]
+echo "Check and install CMakecmake-3.23.2 "
+CMAKE_VER=$( find ~/ -iname 'cmake-*.tar.gz' -type f -size +1M -print | head -n 1 )
+CMAKE_DIR=${CMAKE_VER//.tar.gz/}
+CMAKE_DIR=$(basename $CMAKE_DIR)
+if [[ -n "$CMAKE_VER" ]]
 then
-    echo "$CMAKE_3_18 found, unzip and install it"
-    tar -xzvf  ${CMAKE_3_18} > cmake.log
-    pushd cmake-3.18.0
+    pushd ~/
+    echo "$CMAKE_VER found, unzip and install it"
+    tar -xzvf  ${CMAKE_VER} > cmake.log
+    pushd $CMAKE_DIR
     ./bootstrap && \
     make -j && \
     sudo make install
     popd
     type "cmake"
     cmake --version;
+    popd
 else
-    echo "CMake 3.18.0 not found. Current version: $(cmake --version)"
+    echo "CMake install not found. Current version: $(cmake --version)"
 fi
 
 echo "Check and install curl 7.67.0"
@@ -180,7 +184,6 @@ then
 else
     echo "curl 7.67.0 not found. Current version: $(curl --version)"
 fi
-
 echo "Install VCPKG stuff"
 wget https://pkg-config.freedesktop.org/releases/pkg-config-0.29.2.tar.gz
 tar xvfz pkg-config-0.29.2.tar.gz
@@ -189,15 +192,12 @@ pushd  /pkg-config-0.29.2
 make -j 8
 sudo make install
 popd
-
 sudo ln -s /usr/local/pkg_config/0_29_2/bin/pkg-config /usr/local/bin/
 mkdir /usr/local/share/aclocal
 sudo ln -s /usr/local/pkg_config/0_29_2/share/aclocal/pkg.m4 /usr/local/share/aclocal/
 echo "export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" |  sudo tee -a /etc/environment
 echo "export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" |  sudo tee -a /etc/environment
 echo "export ACLOCAL_PATH=/usr/local/share/aclocal:$ACLOCAL_PATH" |  sudo tee -a /etc/environment
-
-
 echo "VCPKG done."
 
 [[ -f ./build.new ]] && cp -v ./build.new build.sh
