@@ -184,6 +184,7 @@ then
 else
     echo "curl 7.67.0 not found. Current version: $(curl --version)"
 fi
+echo "................................................"
 echo "Install VCPKG stuff"
 wget https://pkg-config.freedesktop.org/releases/pkg-config-0.29.2.tar.gz
 tar xvfz pkg-config-0.29.2.tar.gz
@@ -199,6 +200,7 @@ echo "export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" |  sudo tee -a /et
 echo "export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" |  sudo tee -a /etc/environment
 echo "export ACLOCAL_PATH=/usr/local/share/aclocal:$ACLOCAL_PATH" |  sudo tee -a /etc/environment
 echo "VCPKG done."
+echo "................................................"
 
 [[ -f ./build.new ]] && cp -v ./build.new build.sh
 
