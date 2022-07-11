@@ -559,6 +559,9 @@ then
     fi
 fi
 
+# Now there is build problem with Casandra in 8.8.x, exclude it
+CMAKE_CMD+=$' -DUSE_CASSANDRA=OFF'
+
 CMAKE_CMD+=$' -D CMAKE_ECLIPSE_MAKE_ARGUMENTS=-30 ../HPCC-Platform'
 WritePlainLog "CMAKE_CMD:'${CMAKE_CMD}'\\n" "$logFile"
 
