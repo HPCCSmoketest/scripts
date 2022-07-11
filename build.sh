@@ -314,11 +314,11 @@ do
                 CONTAINERIZED=${param//containerized=True/1}
                 CONTAINERIZED=${CONTAINERIZED//containerized=False/0}
                 WritePlainLog "CONTAINERIZED Changed: ${CONTAINERIZED}" "$logFile"
-#                if [[ ${CONTAINERIZED} -eq 1 ]]
-#                then
-#                    WritePlainLog "Temporarily ignore CONTAINERIZED = ${CONTAINERIZED}, build and test as bare metal to ensure it is not broken." "$logFile"
-#                    CONTAINERIZED=0
-#                fi
+                if [[ ${CONTAINERIZED} -eq 1 ]]
+                then
+                    WritePlainLog "Temporarily ignore CONTAINERIZED = ${CONTAINERIZED}, build and test as bare metal to ensure it is not broken." "$logFile"
+                    CONTAINERIZED=0
+                fi
                     
                 ;;
         enableVcpkgBuild*)
