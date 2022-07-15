@@ -121,7 +121,8 @@ else
 fi
 
 #PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools bc psmisc"
-PACKAGES_TO_INSTALL="expect mailx dsc cassandra cassandra-tools bc psmisc git ncurses-devel"
+#PACKAGES_TO_INSTALL="expect mailx dsc cassandra cassandra-tools bc psmisc git ncurses-devel"
+PACKAGES_TO_INSTALL="expect mailx bc psmisc"
 
 #if [ $DOCS_BUILD -eq 1 ]
 #then
@@ -132,6 +133,18 @@ PACKAGES_TO_INSTALL="expect mailx dsc cassandra cassandra-tools bc psmisc git nc
 echo "Packages to install: ${PACKAGES_TO_INSTALL}"
 sudo yum install -y ${PACKAGES_TO_INSTALL}
 
+sudo yum install -y git zip unzip wget python3 libtool autoconf automake
+sudo yum install -y \
+    ncurses-devel \
+    libmemcached-devel \
+    numactl-devel \
+    heimdal-devel \
+    java-11-openjdk-devel \
+    libuv-devel \
+    python3-devel
+    
+sudo yum install -y centos-release-scl
+sudo yum install -y devtoolset-9
 
 GUILLOTINE=$( echo " 2 * $AVERAGE_SESSION_TIME * 60" | bc |  xargs printf "%.0f" ) # minutes ( 2 x AVERAGE_SESSION_TIME)
 printf "AVERAGE_SESSION_TIME = %f hours, GUILLOTINE = %d minutes\n" "$AVERAGE_SESSION_TIME" "$GUILLOTINE"
@@ -169,13 +182,15 @@ else
 fi
 
 echo "Check and install curl 7.67.0"
-CURL_7_67=$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
+CURL_7_67=1 #$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
 if [[ -n "$CURL_7_67" ]]
 then
-    echo "$CURL_7_67 found, unzip and install it"
-    gunzip -c $CURL_7_67 | tar xvf -
-    pushd curl-7.67.0
-    ./configure --with-ssl && \
+    wget --no-check-certificate https://curl.se/download/curl-7.81.0.tar.gz
+    echo "$CURL_7_81 found, unzip and install it"
+    gunzip -c curl-7.81.0.tar.gz | tar xvf -
+    pushd curl-7.81.0
+    #./configure --with-ssl && \
+    ./configure --with-gnutls --with-ssl
     make -j && \
     sudo make install
     popd
@@ -186,9 +201,9 @@ else
 fi
 echo "................................................"
 echo "Install VCPKG stuff"
-wget https://pkg-config.freedesktop.org/releases/pkg-config-0.29.2.tar.gz
+wget  --no-check-certificate https://pkg-config.freedesktop.org/releases/pkg-config-0.29.2.tar.gz
 tar xvfz pkg-config-0.29.2.tar.gz
-pushd  /pkg-config-0.29.2
+pushd  pkg-config-0.29.2
 ./configure --prefix=/usr/local/pkg_config/0_29_2 --with-internal-glib
 make -j 8
 sudo make install
@@ -278,7 +293,7 @@ then
         #( crontab -l; echo ""; echo "# Self destruction initiated in ${GUILLOTINE} minutes"; echo $( date  -d "$today + ${GUILLOTINE} minutes" "+%M %H %d %m") " * sleep 10; sudo shutdown now " ) | crontab
     else
         # For PR test
-        ( crontab -l; echo $( date  -d "$today + $timeStep minute" "+%M %H %d %m") " * cd ~/smoketest; ./update.sh; export commitId=${COMMIT_ID}; export addGitComment=${ADD_GIT_COMMENT}; export runOnce=1; export keepFiles=$KEEP_FILES; export testOnlyOnePR=1; export testPrNo=$prId; export runFullRegression=1; export useQuickBuild=0; export skipDraftPr=0; export AVERAGE_SESSION_TIME=$AVERAGE_SESSION_TIME; scl enable devtoolset-7 './smoketest.sh'" ) | crontab
+        ( crontab -l; echo $( date  -d "$today + $timeStep minute" "+%M %H %d %m") " * cd ~/smoketest; ./update.sh; export commitId=${COMMIT_ID}; export addGitComment=${ADD_GIT_COMMENT}; export runOnce=1; export keepFiles=$KEEP_FILES; export testOnlyOnePR=1; export testPrNo=$prId; export runFullRegression=1; export useQuickBuild=0; export skipDraftPr=0; export AVERAGE_SESSION_TIME=$AVERAGE_SESSION_TIME; scl enable $DEVTOOLSET './smoketest.sh'" ) | crontab
         
         # Add self destruction with email notification
         ( crontab -l; echo ""; echo "# Self destruction initiated in ${GUILLOTINE} minutes"; echo $( date  -d "$today + ${GUILLOTINE} minutes" "+%M %H %d %m") " * sleep 10; echo \"At $(date '+%Y.%m.%d %H:%M:%S') the ${INSTANCE_ID} is still running, terminate it.\" | mailx -s \"Instance self-destruction initiated\" attila.vamos@gmail.com; sudo shutdown now " ) | crontab
@@ -307,13 +322,17 @@ PROCESS_TO_KILL="build.sh"  #"ecl-test"
 ( crontab -l; echo ""; echo "# Send Ctrl - C to Regression Test Engine after ${BREAK_TIME} minutes"; echo $( date -d " + ${BREAK_TIME} minutes" "+%M %H %d %m") " * REGRESSION_TEST_ENGINE_PID=\$( pgrep -f $PROCESS_TO_KILL ); while [[ -z \"\$REGRESSION_TEST_ENGINE_PID\" ]] ; do date; sleep 10; REGRESSION_TEST_ENGINE_PID=\$( pgrep -f $PROCESS_TO_KILL ); done; echo \"Regression test engine PID(s): \$REGRESSION_TEST_ENGINE_PID\"; sudo kill -SIGINT -- \${REGRESSION_TEST_ENGINE_PID}; sleep 10; sudo kill -SIGINT -- \${REGRESSION_TEST_ENGINE_PID}; " ) | crontab
 
 # Install, prepare and start Bokeh
+echo "Python version: $( python --version )"
+echo "Python2 version: $( python2 --version )"
+echo "Python3 version: $( python3 --version )"
 echo install Bokeh
+sudo python2 /usr/bin/yum reinstall -y python3 python3-libs
 p3=$(which "pip3")
 echo "p3: '$p3'"
 sudo ${p3} install --upgrade pip
-sudo yum remove -y pyparsing
 p3=$(which "pip3")
 echo "p3: '$p3'"
+sudo yum remove -y pyparsing
 sudo ${p3} install pandas bokeh pyproj
 
 echo "LD_LIBRARY_PATH: '$LD_LIBRARY_PATH'"
