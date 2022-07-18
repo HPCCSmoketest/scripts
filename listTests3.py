@@ -240,7 +240,7 @@ def update():
                     end = ''
 
                     for i in items:
-                        if 'Process' in i:
+                        if 'Process PR' in i:  # The title can hold a text 'Process '
                             rPr = i.replace('Process','').strip()
                         elif 'sha' in i:
                             rCommit = i.replace('sha:','').strip()[0:8].upper()
