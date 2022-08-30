@@ -383,6 +383,11 @@ UninstallHpcc()
     WritePlainLog "Remove Cassandra leftovers." "$logFile"
     sudo rm -rf /var/lib/cassandra/*
     sudo rm -r /var/log/cassandra
+    WritePlainLog "    Done." "$logFile"
+    
+    WritePlainLog "Remove VCPKG leftovers." "$logFile"
+    [ -d ~/.cache/vcpkg/archieves] && rm -rf ~/.cache/vcpkg/archieves
+    WritePlainLog "    Done." "$logFile"
 }
 
 archiveOldLogs()
