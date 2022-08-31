@@ -475,7 +475,15 @@ cleanUpLeftovers()
     else
         WritePlainLog "There is not leftover /opt/HPCCSystems directory" "$logFile"
     fi
-    
+
+    if [ -d ~/.cache/vcpkg/archieves ]
+    then
+        WritePlainLog "Remove VCPKG leftovers." "$logFile"
+        rm -rf ~/.cache/vcpkg/archieves
+    else
+        WritePlainLog "There are not VCPKG leftovers." "$logFile"
+    fi
+   
     WritePlainLog "Done." "$logFile"
 }
 
