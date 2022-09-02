@@ -334,7 +334,7 @@ done
 LOGLEVEL=info
 WritePlainLog "Loglevel: ${LOGLEVEL}" "$logFile"
 
-GLOBAL_EXCLUSION="spray"
+GLOBAL_EXCLUSION="-e spray"
 
 #--------------------------------------
 # Check plugins (especially Pythons) and apply exclusion if it is need
