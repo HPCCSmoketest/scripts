@@ -146,6 +146,23 @@ sudo yum install -y \
 sudo yum install -y centos-release-scl
 sudo yum install -y devtoolset-9
 
+# Install  CPPUNIT 1.15.1
+pushd ~/
+echo "Update CPPUINT to 1.15.1."
+sudo yum remove -y  cppunit
+wget http://dev-www.libreoffice.org/src/cppunit-1.15.1.tar.gz
+tar xvf cppunit-1.15.1.tar.gz
+cd cppunit-1.15.1
+./autogen.sh
+./configure
+make
+make check # optional
+sudo make install
+echo "   Done"
+echo "-------------------------------------"
+popd
+
+
 GUILLOTINE=$( echo " 2 * $AVERAGE_SESSION_TIME * 60" | bc |  xargs printf "%.0f" ) # minutes ( 2 x AVERAGE_SESSION_TIME)
 printf "AVERAGE_SESSION_TIME = %f hours, GUILLOTINE = %d minutes\n" "$AVERAGE_SESSION_TIME" "$GUILLOTINE"
 
