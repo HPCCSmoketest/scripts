@@ -150,7 +150,7 @@ sudo yum install -y devtoolset-9
 pushd ~/
 echo "Update CPPUINT to 1.15.1."
 sudo yum remove -y  cppunit
-wget http://dev-www.libreoffice.org/src/cppunit-1.15.1.tar.gz
+wget --no-check-certificate http://dev-www.libreoffice.org/src/cppunit-1.15.1.tar.gz
 tar xvf cppunit-1.15.1.tar.gz
 cd cppunit-1.15.1
 ./autogen.sh
