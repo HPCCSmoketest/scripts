@@ -180,7 +180,7 @@ TIME_STAMP=$(date +%s)
 
 WriteLog "Execute unittests..." "$UNITTEST_LOG_FILE"
 
-${UNITTEST_BIN_PATH}/${UNITTEST_BIN} ${UNITTEST_LIST_PARAMS} | while read unittest
+${UNITTEST_BIN_PATH}/${UNITTEST_BIN} ${UNITTEST_LIST_PARAMS} | sort | while read unittest
 do 
     WriteLog "$unittest" "$UNITTEST_LOG_FILE"
     #result=$( sudo unbuffer ${UNITTEST_BIN} ${UNITTEST_EXEC_PARAMS} $unittest 2>&1 )
