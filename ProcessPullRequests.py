@@ -115,6 +115,12 @@ enableVcpkgBuild = False
 if ('enableVcpkgBuild' in os.environ) and (os.environ['enableVcpkgBuild'] == '1'):
     enableVcpkgBuild = True
 
+# This can use in Cloud (AWS) environment to stop an instance if there is no more PR ready to test. 
+# The instance can be restart by a scheduler or other mechanism.
+exitWhenLongWait = False
+if ('exitWhenLongWait' in os.environ) and (os.environ['exitWhenLongWait'] == '1'):
+    exitWhenLongWait = True
+
 verbose = False
 # Do not update PR source code - means use last PR code (Do not get new commit)
 # It has sense if and only if there is a previously updated HPCC platform code with merged PR code
@@ -2917,6 +2923,8 @@ if __name__ == '__main__':
     print("Average Session Time                               : " + str(averageSessionTime)) + " hours"
     print("Enable VCPKG build                                 : " + str(enableVcpkgBuild))
     print("Containerised environment                          : " + str(containerisedEnvironment))
+    print("Exit when it is a long wait and no PR to test is   : " + str(exitWhenLongWait))
+    
     
     if testPrNo > 0:
         print("Test PR-" + str(testPrNo) + " only (if it is open) and exit.")
@@ -3007,6 +3015,9 @@ if __name__ == '__main__':
         t = time.localtime()
         if (t[3] == 23) and (t[4] > 30):
             print("Finish this day at "+ time.asctime())
+            break
+        elif (exitWhenLongWait == True) and (idleTime >= maxIdleTime - 60):
+            print("Don't wait too long, stop Process at "+ time.asctime())
             break
         else:
             if runOnce:
