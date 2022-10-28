@@ -3010,14 +3010,14 @@ if __name__ == '__main__':
             # There wasn't any PR we can increase the idleTime
             if idleTime < maxIdleTime - 60:
                 idleTime += 60
+            elif exitWhenLongWait == True:
+                print("Don't wait too long, stop Process at "+ time.asctime())
+                break
 
 
         t = time.localtime()
         if (t[3] == 23) and (t[4] > 30):
             print("Finish this day at "+ time.asctime())
-            break
-        elif (exitWhenLongWait == True) and (idleTime >= maxIdleTime - 60):
-            print("Don't wait too long, stop Process at "+ time.asctime())
             break
         else:
             if runOnce:
