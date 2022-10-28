@@ -128,6 +128,9 @@ verbose = False
 doNotUpdate = True
 
 maxIdleTime = 600 # sec
+if exitWhenLongWait:
+    maxIdleTime /= 2
+    
 noEcho = False
 sysId = platform.dist()[0] + ' ' + platform.dist()[1] + ' (' + platform.system() + ' ' + platform.release() + ')'
 
