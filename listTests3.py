@@ -30,14 +30,19 @@ import platform
 
 source = ColumnDataSource(data = dict())
 updateInterval = 30 # sec
+updateCounter = 0
 tests = {}
 isReported = False
 statusColor = "blue"
+# Force to write out smoketest report,
+# True to report from the first time when a PR test started
+isForceToReport = True
 
 def update():
-    global isReported, statusColor 
+    global isReported, statusColor, updateCounter, isForceToReport
     counts = {'NumberOfTests' : 0, 'NumberOfClosed' : 0, 'NumberOfFinished' : 0, 'NumberOfRunning' : 0, 'NumberOfPassed' : 0, 'NumberOfFailed' : 0}
 
+    updateCounter += 1
     startTimestamp = time.time()
     nextUpdateTime = datetime.now() + timedelta(seconds = updateInterval)
     print("Update (%s)..." % (time.strftime("%Y-%m-%d %H:%M:%S"))) 
@@ -57,6 +62,9 @@ def update():
             isReported = False
             print("Result report re-enabled.")
             statusColor = "blue"
+    # Force to report in every second update (actually in minute)
+    if (updateCounter % 2) == 0:
+        isForceToReport = True
 
 #    currLogFile = "prp-" + time.strftime("%Y-%m-%d") + ".log"
     testDay = time.strftime("%y-%m-%d")
@@ -345,7 +353,9 @@ def update():
         counts['NumberOfFailed']  = counts['NumberOfTests'] - counts['NumberOfPassed'] - counts['NumberOfRunning']
         print(counts)
 
-        if smoketestIsUp == '0' and not isReported:
+        # Report smoketst result if Scheduler is stopped and not reported yet 
+        # or if it is forced
+        if (smoketestIsUp == '0' and not isReported) or (isForceToReport):
             # Smoketest stopped, but the results not (yet) reported
             print("Report the test results.")
             try:
@@ -355,7 +365,10 @@ def update():
                 outFile.close()
             finally:
                 print("\tDone")
-                isReported = True    
+                if isForceToReport:
+                    isForceToReport = False
+                else:
+                    isReported = True    
     else:
         print("\tlen prs: %d" % (len(prs)))
         if len(prs) == 0:
@@ -401,7 +414,7 @@ def update():
     }
 
         
-    print(" Done (%2d sec)." % (time.time()-startTimestamp))
+    print(" Done (%2d sec, updateCounter:%d, smoketestIsUp:%s, isForceToReport:%s)." % (time.time()-startTimestamp, updateCounter, str(smoketestIsUp) ,str(isForceToReport) ))
     
     divUpdate.text = "Updated. (Next: %s)" % (nextUpdateTime.time().strftime("%H:%M:%S"))
 
