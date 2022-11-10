@@ -373,12 +373,12 @@ cd ~/smoketest
 if [[ -n $PUBLIC_HOSTNAME ]]
 then
     echo "Use Public hostname: '$PUBLIC_HOSTNAME'"
-    sed -e 's/origin=\(ec2.*\)/origin='"$PUBLIC_HOSTNAME"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
+    sed -e 's/origin=\(hpcc-*\):5006/origin='"$PUBLIC_HOSTNAME"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
     echo "Bokeh address: $PUBLIC_HOSTNAME:5006"
     echo "http://$PUBLIC_HOSTNAME:5006/showStatus" > bokeh.url
 else
     echo "Perhaps we are in us-east-1 use Local IP: '$LOCAL_IP'"
-    sed -e 's/origin=\(ec2.*\):5006/origin='"$LOCAL_IP"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
+    sed -e 's/origin=\(hpcc-*\):5006/origin='"$LOCAL_IP"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
     echo "Bokeh address: $LOCAL_IP:5006"
     echo "http://$LOCAL_IP:5006/showStatus" > bokeh.url
 
