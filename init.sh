@@ -343,7 +343,12 @@ echo "Python version: $( python --version )"
 echo "Python2 version: $( python2 --version )"
 echo "Python3 version: $( python3 --version )"
 echo install Bokeh
+ls -l /usr/bin/python3*
 sudo python2 /usr/bin/yum reinstall -y python3 python3-libs
+sudo rm -v /usr/bin/python3
+sudo ln -s /usr/local/bin/python3.6 /usr/bin/python3
+ls -l /usr/bin/python3*
+
 p3=$(which "pip3")
 echo "p3: '$p3'"
 sudo ${p3} install --upgrade pip
