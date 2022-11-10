@@ -386,7 +386,7 @@ UninstallHpcc()
     WritePlainLog "    Done." "$logFile"
     
     WritePlainLog "Remove VCPKG leftovers." "$logFile"
-    [ -d ~/.cache/vcpkg/archives ] && rm -rf ~/.cache/vcpkg/archives
+    [ -d ~/.cache/vcpkg ] && rm -rf ~/.cache/vcpkg
     WritePlainLog "    Done." "$logFile"
 }
 
@@ -476,10 +476,10 @@ cleanUpLeftovers()
         WritePlainLog "There is not leftover /opt/HPCCSystems directory" "$logFile"
     fi
 
-    if [ -d ~/.cache/vcpkg/archives ]
+    if [ -d ~/.cache/vcpkg ]
     then
         WritePlainLog "Remove VCPKG leftovers." "$logFile"
-        rm -rf ~/.cache/vcpkg/archives
+        rm -rf ~/.cache/vcpkg
     else
         WritePlainLog "There are not VCPKG leftovers." "$logFile"
     fi
