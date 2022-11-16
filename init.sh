@@ -6,7 +6,7 @@ PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 . ./timestampLogger.sh
 
 LOG_FILE="/dev/null"
-myEcho ()
+myEcho()
 {
     msg=$1
     WriteLog "${msg}" "$LOG_FILE"
