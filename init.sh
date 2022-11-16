@@ -104,14 +104,15 @@ done
 #gpgcheck = 0
 #DATASTAX_ENTRIES
 
-cat << CASSANDRA_ENTRIES | sudo tee /etc/yum.repos.d/cassandra.repo
-[cassandra]
-name=Apache Cassandra
-baseurl=https://www.apache.org/dist/cassandra/redhat/311x/
-gpgcheck=0
-repo_gpgcheck=0
-gpgkey=https://www.apache.org/dist/cassandra/KEYS
-CASSANDRA_ENTRIES
+# Ignore Cassandra
+#cat << CASSANDRA_ENTRIES | sudo tee /etc/yum.repos.d/cassandra.repo
+#[cassandra]
+#name=Apache Cassandra
+#baseurl=https://www.apache.org/dist/cassandra/redhat/311x/
+#gpgcheck=0
+#repo_gpgcheck=0
+#gpgkey=https://www.apache.org/dist/cassandra/KEYS
+#CASSANDRA_ENTRIES
 
 
 # Commented out when the latest CentOS 7 AMI has this version of nodejs
@@ -188,7 +189,7 @@ cp scripts/*.sh .
 cp scripts/*.py .
 
 myEcho "Check and install CMakecmake-3.23.2 "
-CMAKE_VER=$( find ~/ -iname 'cmake-*.tar.gz' -type f -size +1M -print | head -n 1 )
+CMAKE_VER="" #$( find ~/ -iname 'cmake-*.tar.gz' -type f -size +1M -print | head -n 1 )
 CMAKE_DIR=${CMAKE_VER//.tar.gz/}
 CMAKE_DIR=$(basename $CMAKE_DIR)
 if [[ -n "$CMAKE_VER" ]]
