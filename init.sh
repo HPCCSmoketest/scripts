@@ -347,33 +347,35 @@ BREAK_TIME=27 # $(( ${GUILLOTINE} - 10 ))
 BREAK_TIME=$(( ${GUILLOTINE} * 8 / 10 ))
 PROCESS_TO_KILL="build.sh"  #"ecl-test"
 ( crontab -l; echo ""; echo "# Send Ctrl - C to Regression Test Engine after ${BREAK_TIME} minutes"; echo $( date -d " + ${BREAK_TIME} minutes" "+%M %H %d %m") " * REGRESSION_TEST_ENGINE_PID=\$( pgrep -f $PROCESS_TO_KILL ); while [[ -z \"\$REGRESSION_TEST_ENGINE_PID\" ]] ; do date; sleep 10; REGRESSION_TEST_ENGINE_PID=\$( pgrep -f $PROCESS_TO_KILL ); done; echo \"Regression test engine PID(s): \$REGRESSION_TEST_ENGINE_PID\"; sudo kill -SIGINT -- \${REGRESSION_TEST_ENGINE_PID}; sleep 10; sudo kill -SIGINT -- \${REGRESSION_TEST_ENGINE_PID}; " ) | crontab
-
+myEcho "Update Pyhon3"
 # Install, prepare and start Bokeh
-myEcho "Python version: $( python --version )"
-myEcho "Python2 version: $( python2 --version )"
+myEcho "Python version: $( python --version 2>&1 )"
+myEcho "Python2 version: $( python2 --version 2>&1 )"
 myEcho "Python3 version: $( python3 --version )"
-myEcho "install Bokeh"
-ls -l /usr/bin/python3*
+
+myEcho "Fix Pyhon3"
+myEcho "$(ls -l /usr/bin/python3*)"
 sudo python2 /usr/bin/yum reinstall -y python3 python3-libs
 sudo rm -v /usr/bin/python3
 sudo ln -s /usr/local/bin/python3.6 /usr/bin/python3
-ls -l /usr/bin/python3*
+myEcho "$(ls -l /usr/bin/python3*)"
 
+myEcho "Install Bokeh"
 p3=$(which "pip3")
 myEcho "p3: '$p3'"
 sudo ${p3} install --upgrade pip
 p3=$(which "pip3")
 myEcho "p3: '$p3'"
-myEcho "remove pyparsing"
+myEcho "Remove pyparsing"
 sudo yum remove -y pyparsing
-myEcho "install pandas bokeh pyproj"
+myEcho "Install pandas bokeh pyproj"
 sudo ${p3} install pandas bokeh pyproj
 
 myEcho "LD_LIBRARY_PATH: '$LD_LIBRARY_PATH'"
 export LD_LIBRARY_PATH=/usr/lib:/usr/lib64:$LD_LIBRARY_PATH
 myEcho "LD_LIBRARY_PATH: '$LD_LIBRARY_PATH'"
 bk=$(which 'bokeh')
-myEcho "bokeh: $bk"
+myEcho "Bokeh: $bk"
 myEcho "$(bokeh info)"
 
 myEcho "Prepare Bokeh"
