@@ -58,6 +58,7 @@ do
                 INSTANCE_NAME=${INSTANCE_NAME//\"/}
                 #INSTANCE_NAME=${INSTANCE_NAME//PR/PR-}
                 myEcho "Instance name: '${INSTANCE_NAME}'"
+                echo "Instance name: '${INSTANCE_NAME}'"
                 ;;
                 
         docs*)  DOCS_BUILD_STR=param
@@ -69,6 +70,7 @@ do
         addGitC*) ADD_GIT_COMMENT=${param//addGitComment=True/1}
                 ADD_GIT_COMMENT=${ADD_GIT_COMMENT//addGitComment=False/0}
                 myEcho "Add git comment: ${ADD_GIT_COMMENT}"
+                echo "Add git comment: ${ADD_GIT_COMMENT}"
                 ;;
                 
         commit*) COMMIT_ID=${param//commitId=/}
@@ -354,11 +356,12 @@ myEcho "Python version: $( python --version 2>&1 )"
 myEcho "Python2 version: $( python2 --version 2>&1 )"
 myEcho "Python3 version: $( python3 --version )"
 
-myEcho "Fix Pyhon3"
+myEcho "Before fix Pyhon3"
 myEcho "$(ls -l /usr/bin/python3*)"
 sudo python2 /usr/bin/yum reinstall -y python3 python3-libs
 sudo rm -v /usr/bin/python3
 sudo ln -s /usr/local/bin/python3.6 /usr/bin/python3
+myEcho "After fix Pyhon3"
 myEcho "$(ls -l /usr/bin/python3*)"
 
 myEcho "Install Bokeh"
@@ -390,11 +393,13 @@ then
     myEcho "Use Public hostname: '$PUBLIC_HOSTNAME'"
     sed -e 's/origin=\(10.*\):5006/origin='"$PUBLIC_HOSTNAME"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
     myEcho "Bokeh address: $PUBLIC_HOSTNAME:5006"
+    echo "Bokeh address: $PUBLIC_HOSTNAME:5006"
     echo "http://$PUBLIC_HOSTNAME:5006/showStatus" > bokeh.url
 else
     myEcho "Perhaps we are in us-east-1 use Local IP: '$LOCAL_IP'"
     sed -e 's/origin=\(10.*\):5006/origin='"$LOCAL_IP"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
     myEcho "Bokeh address: $LOCAL_IP:5006"
+    echo "Bokeh address: $LOCAL_IP:5006"
     echo "http://$LOCAL_IP:5006/showStatus" > bokeh.url
 
 fi
