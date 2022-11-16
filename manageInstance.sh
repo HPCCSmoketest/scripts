@@ -502,7 +502,7 @@ then
 
     WriteLog "Execute init.sh" "$LOG_FILE"
     res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT} ${COMMIT_ID} ${DRY_RUN} -sessionTime=${AVERAGE_SESSION_TIME} ${BASE_TEST}" 2>&1 )
-    WriteLog "Res: $res" "$LOG_FILE"
+    WriteLog "Res:\n$res" "$LOG_FILE"
 
     WriteLog "Check user directory" "$LOG_FILE"
     res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l" 2>&1 )

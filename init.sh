@@ -16,15 +16,15 @@ export PATH=$PATH:/usr/local/sbin:/usr/sbin:
 myEcho "path: $PATH"
 
 PUBLIC_IP=$( curl http://checkip.amazonaws.com )
-echo "PUBLIC_IP: '$PUBLIC_IP'"
+myEcho "PUBLIC_IP: '$PUBLIC_IP'"
 
 PUBLIC_HOSTNAME=$( wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname )
-echo "PUBLIC_HOSTNAME: '$PUBLIC_HOSTNAME'"
+myEcho "PUBLIC_HOSTNAME: '$PUBLIC_HOSTNAME'"
 
 IP_FULL_PATH=$( which "ip" )
-echo "IP_FULL_PATH: '$IP_FULL_PATH'"
+myEcho "IP_FULL_PATH: '$IP_FULL_PATH'"
 LOCAL_IP=$($IP_FULL_PATH -4 addr | egrep '10\.' | awk '{ print $2 }' | cut -d / -f1)
-echo "LOCAL_IP: '$LOCAL_IP'"
+myEcho "LOCAL_IP: '$LOCAL_IP'"
 
 INSTANCE_NAME="PR-12701"
 DOCS_BUILD=0
@@ -50,46 +50,46 @@ while [ $# -gt 0 ]
 do
     param=$1
     param=${param#-}
-    echo "Param: ${param}"
+    myEcho "Param: ${param}"
     case $param in
     
         instance*)  INSTANCE_NAME=${param//instanceName=/}
                 INSTANCE_NAME=${INSTANCE_NAME//\"/}
                 #INSTANCE_NAME=${INSTANCE_NAME//PR/PR-}
-                echo "Instance name: '${INSTANCE_NAME}'"
+                myEcho "Instance name: '${INSTANCE_NAME}'"
                 ;;
                 
         docs*)  DOCS_BUILD_STR=param
                 DOCS_BUILD=${param//docs=True/1}
                 DOCS_BUILD=${DOCS_BUILD//docs=False/0}
-                echo "Build docs: '${DOCS_BUILD}'"
+                myEcho "Build docs: '${DOCS_BUILD}'"
                 ;;
                
         addGitC*) ADD_GIT_COMMENT=${param//addGitComment=True/1}
                 ADD_GIT_COMMENT=${ADD_GIT_COMMENT//addGitComment=False/0}
-                echo "Add git comment: ${ADD_GIT_COMMENT}"
+                myEcho "Add git comment: ${ADD_GIT_COMMENT}"
                 ;;
                 
         commit*) COMMIT_ID=${param//commitId=/}
                 COMMIT_ID=${COMMIT_ID//\"/}
-                echo "Commit ID: ${COMMIT_ID}"
+                myEcho "Commit ID: ${COMMIT_ID}"
                 ;;
                 
         dryRun) DRY_RUN=1
-                echo "Dry run."
+                myEcho "Dry run."
                 ;;
                 
         sessionTime*)  AVERAGE_SESSION_TIME=${param//sessionTime=/}
-                echo "Average session time: ${AVERAGE_SESSION_TIME}"
+                myEcho "Average session time: ${AVERAGE_SESSION_TIME}"
                 ;;
                 
         baseTest*) BASE_TEST=1
 #                BASE_TAG=${param//baseTest=/}
 #                BASE_TAG=${BASE_TAG//\"/}
-#                echo "Execute base test with tag: ${BASE_TAG}"
+#                myEcho "Execute base test with tag: ${BASE_TAG}"
                 ;;
                 
-        *)  echo "Unknown parameter: ${param}."
+        *)  myEcho "Unknown parameter: ${param}."
                 ;;
     esac
     shift
@@ -114,19 +114,19 @@ CASSANDRA_ENTRIES
 
 
 # Commented out when the latest CentOS 7 AMI has this version of nodejs
-echo "Node version: $(node --version)"
+myEcho "Node version: $(node --version)"
 if [[ "$(node --version)" != "v16.13.1" ]]
 then
-    echo "Wrong version, remove and install 16.13.1"
+    myEcho "Wrong version, remove and install 16.13.1"
     sudo yum remove -y nodejs
     sudo yum --enablerepo=nodesource clean metadata
 
     # This approach works
     wget https://rpm.nodesource.com/pub_16.x/el/7/x86_64/nodejs-16.13.0-1nodesource.x86_64.rpm
     sudo rpm -i nodejs-16.13.0-1nodesource.x86_64.rpm
-    echo "Node version: $(node --version)"
+    myEcho "Node version: $(node --version)"
 else
-    echo "Good version, keep it"
+    myEcho "Good version, keep it"
 fi
 
 #PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools bc psmisc"
@@ -139,7 +139,7 @@ PACKAGES_TO_INSTALL="expect mailx bc psmisc"
     PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL fop-1.1"
 #fi
 
-echo "Packages to install: ${PACKAGES_TO_INSTALL}"
+myEcho "Packages to install: ${PACKAGES_TO_INSTALL}"
 sudo yum install -y ${PACKAGES_TO_INSTALL}
 
 sudo yum install -y git zip unzip wget python3 libtool autoconf automake
@@ -157,7 +157,7 @@ sudo yum install -y devtoolset-9
 
 # Install  CPPUNIT 1.15.1
 pushd ~/
-echo "Update CPPUINT to 1.15.1."
+myEcho "Update CPPUINT to 1.15.1."
 sudo yum remove -y  cppunit
 wget --no-check-certificate http://dev-www.libreoffice.org/src/cppunit-1.15.1.tar.gz
 tar xvf cppunit-1.15.1.tar.gz
@@ -167,8 +167,8 @@ cd cppunit-1.15.1
 make
 make check # optional
 sudo make install
-echo "   Done"
-echo "-------------------------------------"
+myEcho "   Done"
+myEcho "-------------------------------------"
 popd
 
 
@@ -186,14 +186,14 @@ git clone https://github.com/HPCCSmoketest/scripts.git
 cp scripts/*.sh .
 cp scripts/*.py .
 
-echo "Check and install CMakecmake-3.23.2 "
+myEcho "Check and install CMakecmake-3.23.2 "
 CMAKE_VER=$( find ~/ -iname 'cmake-*.tar.gz' -type f -size +1M -print | head -n 1 )
 CMAKE_DIR=${CMAKE_VER//.tar.gz/}
 CMAKE_DIR=$(basename $CMAKE_DIR)
 if [[ -n "$CMAKE_VER" ]]
 then
     pushd ~/
-    echo "$CMAKE_VER found, unzip and install it"
+    myEcho "$CMAKE_VER found, unzip and install it"
     tar -xzvf  ${CMAKE_VER} > cmake.log
     pushd $CMAKE_DIR
     ./bootstrap && \
@@ -204,15 +204,15 @@ then
     cmake --version;
     popd
 else
-    echo "CMake install not found. Current version: $(cmake --version)"
+    myEcho "CMake install not found. Current version: $(cmake --version)"
 fi
 
-echo "Check and install curl 7.67.0"
+myEcho "Check and install curl 7.67.0"
 CURL_7_67=1 #$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
 if [[ -n "$CURL_7_67" ]]
 then
     wget --no-check-certificate https://curl.se/download/curl-7.81.0.tar.gz
-    echo "$CURL_7_81 found, unzip and install it"
+    myEcho "$CURL_7_81 found, unzip and install it"
     gunzip -c curl-7.81.0.tar.gz | tar xvf -
     pushd curl-7.81.0
     #./configure --with-ssl && \
@@ -223,10 +223,10 @@ then
     type "curl"
     curl --version;
 else
-    echo "curl 7.67.0 not found. Current version: $(curl --version)"
+    myEcho "curl 7.67.0 not found. Current version: $(curl --version)"
 fi
-echo "................................................"
-echo "Install VCPKG stuff"
+myEcho "................................................"
+myEcho "Install VCPKG stuff"
 wget  --no-check-certificate https://pkg-config.freedesktop.org/releases/pkg-config-0.29.2.tar.gz
 tar xvfz pkg-config-0.29.2.tar.gz
 pushd  pkg-config-0.29.2
@@ -240,8 +240,8 @@ sudo ln -s /usr/local/pkg_config/0_29_2/share/aclocal/pkg.m4 /usr/local/share/ac
 echo "export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" |  sudo tee -a /etc/environment
 echo "export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" |  sudo tee -a /etc/environment
 echo "export ACLOCAL_PATH=/usr/local/share/aclocal:$ACLOCAL_PATH" |  sudo tee -a /etc/environment
-echo "VCPKG done."
-echo "................................................"
+myEcho "VCPKG done."
+myEcho "................................................"
 
 [[ -f ./build.new ]] && cp -v ./build.new build.sh
 
@@ -252,40 +252,40 @@ echo "Execute Smoketest on $INSTANCE_NAME" > test.log
 
 if [[ $BASE_TEST  -eq 1 ]]
 then
-    echo "Because build.sh will be executed instead of ProcessPullRequest.py"
-    echo "We need:"
-    echo "   Clone HPCC-Platform"
+    myEcho "Because build.sh will be executed instead of ProcessPullRequest.py"
+    myEcho "We need:"
+    myEcho "   Clone HPCC-Platform"
     res=$( git clone https://github.com/HPCC-Systems/HPCC-Platform.git 2>&1 )
-    echo "     Res: ${res}"
+    myEcho "     Res: ${res}"
     pushd HPCC-Platform
     # Should get RTE from master
     COMMON_RTE_DIR=~/smoketest/rte
     [[ ! -d $COMMON_RTE_DIR ]] && mkdir $COMMON_RTE_DIR
-    echo "   Checkout master"
+    myEcho "   Checkout master"
     res=( git checkout master )
-    echo "     Res: ${res}"
-    echo "   Copy Regression Test Engine to $COMMON_RTE_DIR"
+    myEcho "     Res: ${res}"
+    myEcho "   Copy Regression Test Engine to $COMMON_RTE_DIR"
     res=$(  cp -v testing/regress/ecl-test* $COMMON_RTE_DIR/  2>&1) 
-    echo "     Res: ${res}"
+    myEcho "     Res: ${res}"
     res=$(  cp -v -r testing/regress/hpcc $COMMON_RTE_DIR/hpcc  2>&1) 
-    echo "     Res: ${res}"
-    echo "   Checkout latest Git tag: ${INSTANCE_NAME} to build and test"
+    myEcho "     Res: ${res}"
+    myEcho "   Checkout latest Git tag: ${INSTANCE_NAME} to build and test"
     res=$( git checkout ${INSTANCE_NAME} -b latest )
-    echo "     Res: ${res}"
-    echo "   Check where we are"
+    myEcho "     Res: ${res}"
+    myEcho "   Check where we are"
     res=$( git log -1 )
-    echo "     Res: ${res}"
-    echo "   Submodule update"
+    myEcho "     Res: ${res}"
+    myEcho "   Submodule update"
     res=$( git submodule update --init --recursive )
-    echo "     Res: ${res}"
-    echo "   Check branch status"
+    myEcho "     Res: ${res}"
+    myEcho "   Check branch status"
     res=$( git status )
-    echo "     Res: ${res}"
+    myEcho "     Res: ${res}"
     popd
     cp -v ../build.sh .
-    #echo "Update PATH..."
+    #myEcho "Update PATH..."
     #export PATH=$PATH:/usr/local/bin:/bin:/usr/local/sbin:/sbin:/usr/sbin:
-    echo "path: $PATH"
+    myEcho "path: $PATH"
     type "cmake"
     cmake --version;
     type "git"
@@ -294,7 +294,7 @@ fi
 
 cd .. 
 
-echo "Add items for crontab"
+myEcho "Add items for crontab"
 
 prId=${INSTANCE_NAME//PR-/}
 INSTANCE_ID=$( wget -q -t1 -T1 -O - http://169.254.169.254/latest/meta-data/instance-id )
@@ -348,10 +348,10 @@ PROCESS_TO_KILL="build.sh"  #"ecl-test"
 ( crontab -l; echo ""; echo "# Send Ctrl - C to Regression Test Engine after ${BREAK_TIME} minutes"; echo $( date -d " + ${BREAK_TIME} minutes" "+%M %H %d %m") " * REGRESSION_TEST_ENGINE_PID=\$( pgrep -f $PROCESS_TO_KILL ); while [[ -z \"\$REGRESSION_TEST_ENGINE_PID\" ]] ; do date; sleep 10; REGRESSION_TEST_ENGINE_PID=\$( pgrep -f $PROCESS_TO_KILL ); done; echo \"Regression test engine PID(s): \$REGRESSION_TEST_ENGINE_PID\"; sudo kill -SIGINT -- \${REGRESSION_TEST_ENGINE_PID}; sleep 10; sudo kill -SIGINT -- \${REGRESSION_TEST_ENGINE_PID}; " ) | crontab
 
 # Install, prepare and start Bokeh
-echo "Python version: $( python --version )"
-echo "Python2 version: $( python2 --version )"
-echo "Python3 version: $( python3 --version )"
-echo install Bokeh
+myEcho "Python version: $( python --version )"
+myEcho "Python2 version: $( python2 --version )"
+myEcho "Python3 version: $( python3 --version )"
+myEcho install Bokeh
 ls -l /usr/bin/python3*
 sudo python2 /usr/bin/yum reinstall -y python3 python3-libs
 sudo rm -v /usr/bin/python3
@@ -359,42 +359,42 @@ sudo ln -s /usr/local/bin/python3.6 /usr/bin/python3
 ls -l /usr/bin/python3*
 
 p3=$(which "pip3")
-echo "p3: '$p3'"
+myEcho "p3: '$p3'"
 sudo ${p3} install --upgrade pip
 p3=$(which "pip3")
-echo "p3: '$p3'"
+myEcho "p3: '$p3'"
 sudo yum remove -y pyparsing
 sudo ${p3} install pandas bokeh pyproj
 
-echo "LD_LIBRARY_PATH: '$LD_LIBRARY_PATH'"
+myEcho "LD_LIBRARY_PATH: '$LD_LIBRARY_PATH'"
 export LD_LIBRARY_PATH=/usr/lib:/usr/lib64:$LD_LIBRARY_PATH
-echo "LD_LIBRARY_PATH: '$LD_LIBRARY_PATH'"
+myEcho "LD_LIBRARY_PATH: '$LD_LIBRARY_PATH'"
 bk=$(which 'bokeh')
-echo "bokeh: $bk"
-echo "$(bokeh info)"
+myEcho "bokeh: $bk"
+myEcho "$(bokeh info)"
 
-echo "Prepare Bokeh"
+myEcho "Prepare Bokeh"
 cd ~/smoketest
 # Don't use Public IP, out network may refuse to connect to it
 #sed -e 's/origin=\(ec2.*\)/origin='"$PUBLIC_IP"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
-#echo "Bokeh address: $PUBLIC_IP:5006"
+#myEcho "Bokeh address: $PUBLIC_IP:5006"
 
 if [[ -n $PUBLIC_HOSTNAME ]]
 then
-    echo "Use Public hostname: '$PUBLIC_HOSTNAME'"
+    myEcho "Use Public hostname: '$PUBLIC_HOSTNAME'"
     sed -e 's/origin=\(10.*\):5006/origin='"$PUBLIC_HOSTNAME"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
-    echo "Bokeh address: $PUBLIC_HOSTNAME:5006"
+    myEcho "Bokeh address: $PUBLIC_HOSTNAME:5006"
     echo "http://$PUBLIC_HOSTNAME:5006/showStatus" > bokeh.url
 else
-    echo "Perhaps we are in us-east-1 use Local IP: '$LOCAL_IP'"
+    myEcho "Perhaps we are in us-east-1 use Local IP: '$LOCAL_IP'"
     sed -e 's/origin=\(10.*\):5006/origin='"$LOCAL_IP"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
-    echo "Bokeh address: $LOCAL_IP:5006"
+    myEcho "Bokeh address: $LOCAL_IP:5006"
     echo "http://$LOCAL_IP:5006/showStatus" > bokeh.url
 
 fi
-echo "Start Bokeh"
+myEcho "Start Bokeh"
 chmod +x ./startBokeh.sh
 ./startBokeh.sh &
-echo "Bokeh pid: $!"
+myEcho "Bokeh pid: $!"
 
-echo "End of init.sh"
+myEcho "End of init.sh"
