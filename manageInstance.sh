@@ -505,8 +505,8 @@ then
     WriteLog "Res:\n$res" "$LOG_FILE"
 
     # Donwload init<-timestamp>.log file
-    WriteLog "Download /home/centos/smoketest/init-<timestamp>.log file" "$LOG_FILE"
-    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/init-*.log ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
+    WriteLog "Download /home/centos/init-<timestamp>.log file" "$LOG_FILE"
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/init-*.log ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
     
     WriteLog "Check user directory" "$LOG_FILE"
