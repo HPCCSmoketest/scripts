@@ -58,6 +58,7 @@ do
                 INSTANCE_NAME=${INSTANCE_NAME//\"/}
                 #INSTANCE_NAME=${INSTANCE_NAME//PR/PR-}
                 myEcho "Instance name: '${INSTANCE_NAME}'"
+                # To keep listTests3.py happy
                 echo "Instance name: '${INSTANCE_NAME}'"
                 ;;
                 
@@ -70,12 +71,13 @@ do
         addGitC*) ADD_GIT_COMMENT=${param//addGitComment=True/1}
                 ADD_GIT_COMMENT=${ADD_GIT_COMMENT//addGitComment=False/0}
                 myEcho "Add git comment: ${ADD_GIT_COMMENT}"
-                echo "Add git comment: ${ADD_GIT_COMMENT}"
                 ;;
                 
         commit*) COMMIT_ID=${param//commitId=/}
                 COMMIT_ID=${COMMIT_ID//\"/}
                 myEcho "Commit ID: ${COMMIT_ID}"
+                # To keep listTests3.py happy
+                echo "Commit ID: ${COMMIT_ID}"
                 ;;
                 
         dryRun) DRY_RUN=1
@@ -399,6 +401,7 @@ else
     myEcho "Perhaps we are in us-east-1 use Local IP: '$LOCAL_IP'"
     sed -e 's/origin=\(10.*\):5006/origin='"$LOCAL_IP"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
     myEcho "Bokeh address: $LOCAL_IP:5006"
+    # To keep listTests3.py happy
     echo "Bokeh address: $LOCAL_IP:5006"
     echo "http://$LOCAL_IP:5006/showStatus" > bokeh.url
 
