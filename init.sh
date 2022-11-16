@@ -6,11 +6,11 @@ PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 . ./timestampLogger.sh
 
 TIME_STAMPT=$( date "+%y-%m-%d_%H-%M-%S" )
-LOG_FILE="init-${TIME_STAMP}.log"
+LOG_FILE="init-${TIME_STAMPT}.log"
 myEcho()
 {
     msg=$1
-    WriteLog "${msg}" "$LOG_FILE"
+    WriteLog "$msg" "$LOG_FILE"
 }
 
 export PATH=$PATH:/usr/local/sbin:/usr/sbin:
@@ -352,7 +352,7 @@ PROCESS_TO_KILL="build.sh"  #"ecl-test"
 myEcho "Python version: $( python --version )"
 myEcho "Python2 version: $( python2 --version )"
 myEcho "Python3 version: $( python3 --version )"
-myEcho install Bokeh
+myEcho "install Bokeh"
 ls -l /usr/bin/python3*
 sudo python2 /usr/bin/yum reinstall -y python3 python3-libs
 sudo rm -v /usr/bin/python3
@@ -364,7 +364,9 @@ myEcho "p3: '$p3'"
 sudo ${p3} install --upgrade pip
 p3=$(which "pip3")
 myEcho "p3: '$p3'"
+myEcho "remove pyparsing"
 sudo yum remove -y pyparsing
+myEcho "install pandas bokeh pyproj"
 sudo ${p3} install pandas bokeh pyproj
 
 myEcho "LD_LIBRARY_PATH: '$LD_LIBRARY_PATH'"
