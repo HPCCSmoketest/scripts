@@ -3,6 +3,8 @@
 PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
 
+LOG_FILE="/dev/null"
+
 export PATH=$PATH:/usr/local/sbin:/usr/sbin:
 echo "path: $PATH"
 
