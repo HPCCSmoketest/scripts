@@ -3,10 +3,17 @@
 PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
 
+. ./timestampLogger.sh
+
 LOG_FILE="/dev/null"
+myEcho ()
+{
+    msg=$1
+    WriteLog "${msg}" "$LOG_FILE"
+}
 
 export PATH=$PATH:/usr/local/sbin:/usr/sbin:
-echo "path: $PATH"
+myEcho "path: $PATH"
 
 PUBLIC_IP=$( curl http://checkip.amazonaws.com )
 echo "PUBLIC_IP: '$PUBLIC_IP'"
