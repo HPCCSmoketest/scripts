@@ -504,6 +504,11 @@ then
     res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT} ${COMMIT_ID} ${DRY_RUN} -sessionTime=${AVERAGE_SESSION_TIME} ${BASE_TEST}" 2>&1 )
     WriteLog "Res:\n$res" "$LOG_FILE"
 
+    # Donwload init<-timestamp>.log file
+    WriteLog "Download /home/centos/smoketest/init-<timestamp>.log file" "$LOG_FILE"
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/init-*.log ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+    
     WriteLog "Check user directory" "$LOG_FILE"
     res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l" 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"

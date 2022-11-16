@@ -5,7 +5,8 @@ PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
 . ./timestampLogger.sh
 
-LOG_FILE="/dev/null"
+TIME_STAMPT=$( date "+%y-%m-%d_%H-%M-%S" )
+LOG_FILE="init-${TIME_STAMP}.log"
 myEcho()
 {
     msg=$1
