@@ -227,7 +227,7 @@ def update():
         resFiles = myProcRes.stdout.read() + myProcRes.stderr.read()
         resFiles = resFiles.decode("utf-8").splitlines()
         
-        print("\tlen result files: %d" % (len(resFiles)))
+        print("----------------------\nNumber of result files: %d" % (len(resFiles)))
 
         if len(resFiles) > 0:
             index = 0
@@ -304,7 +304,7 @@ def update():
                             tests[rPr][rInstance]['result'] = rResult
                             results[index] = rResult
                             if rResult != 'N/A' and statuses[index] == 'running':
-                                statusses[index] = 'finished'
+                                statuses[index] = 'finished'
 
                             tests[rPr][rInstance]['title'] = rTitle
                             tests[rPr][rInstance]['base'] = rBase
