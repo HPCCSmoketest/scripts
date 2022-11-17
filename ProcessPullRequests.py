@@ -1340,6 +1340,13 @@ def CatchUpMaster():
 #        formatResult(myProc)
 #        myProc = subprocess.Popen(["cp -v -r testing/regress/hpcc ../rte/hpcc"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
 #        formatResult(myProc)
+        
+        print("Remove 'commons-text-*.jar' files from source tree")
+        myProc = subprocess.Popen(["find . -iname 'commons-text-*.jar' -type f -exec rm -fv {} \;"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+        formatResult(myProc)
+        
+        
+
         print("\t\tDone")
             
     except OSError as e:

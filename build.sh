@@ -506,6 +506,9 @@ then
     removeLog4j=$( find . -iname '*log4j*' -type f -exec rm -fv {} \; )
     WritePlainLog "Remove LOG4J items result:\n${removeLog4j}" "$logFile"
     
+    removeCommonsText=$( find . -iname 'commons-text-*.jar' -type f -exec rm -fv {} \; )
+    WritePlainLog "Remove 'commons-text-*.jar' items result:\n${removeCommonsText}" "$OBT_BUILD_LOG_FILE"
+    
     if [[ ${VCPKG_BUILD} -eq 1 ]]
     then
         [ ! -d vcpkg-overlays ] && mkdir vcpkg-overlays
