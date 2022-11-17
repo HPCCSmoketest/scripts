@@ -117,7 +117,7 @@ done
 #repo_gpgcheck=0
 #gpgkey=https://www.apache.org/dist/cassandra/KEYS
 #CASSANDRA_ENTRIES
-
+myEcho "-------------------------------------"
 
 # Commented out when the latest CentOS 7 AMI has this version of nodejs
 myEcho "Node version: $(node --version)"
@@ -134,6 +134,7 @@ then
 else
     myEcho "Good version, keep it"
 fi
+myEcho "-------------------------------------"
 
 #PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools bc psmisc"
 #PACKAGES_TO_INSTALL="expect mailx dsc cassandra cassandra-tools bc psmisc git ncurses-devel"
@@ -160,6 +161,8 @@ sudo yum install -y \
     
 sudo yum install -y centos-release-scl
 sudo yum install -y devtoolset-9
+myEcho "Done"
+myEcho "-------------------------------------"
 
 # Install  CPPUNIT 1.15.1
 pushd ~/
@@ -212,6 +215,7 @@ then
 else
     myEcho "CMake install not found. Current version: $(cmake --version)"
 fi
+myEcho "-------------------------------------"
 
 myEcho "Check and install curl 7.67.0"
 CURL_7_67=$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
