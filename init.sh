@@ -193,7 +193,7 @@ cp scripts/*.sh .
 cp scripts/*.py .
 
 myEcho "Check and install CMakecmake-3.23.2 "
-CMAKE_VER="" #$( find ~/ -iname 'cmake-*.tar.gz' -type f -size +1M -print | head -n 1 )
+CMAKE_VER=$( find ~/ -iname 'cmake-*.tar.gz' -type f -size +1M -print | head -n 1 )
 CMAKE_DIR=${CMAKE_VER//.tar.gz/}
 CMAKE_DIR=$(basename $CMAKE_DIR)
 if [[ -n "$CMAKE_VER" ]]
@@ -214,7 +214,7 @@ else
 fi
 
 myEcho "Check and install curl 7.67.0"
-CURL_7_67=1 #$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
+CURL_7_67=$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
 if [[ -n "$CURL_7_67" ]]
 then
     wget --no-check-certificate https://curl.se/download/curl-7.81.0.tar.gz

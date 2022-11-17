@@ -444,8 +444,9 @@ then
         fi
     fi
 
+    VCPKG_INSTALLS_NEWER_VERSION=1    
     BOOST_PKG=$( find ~/ -iname 'boost_1_71*' -type f -size +100M -print | head -n 1 )
-    if [[ -n "$BOOST_PKG" ]]
+    if [[ (-n "$BOOST_PKG") &&  (${VCPKG_INSTALLS_NEWER_VERSION} -eq 0) ]]
     then
         WriteLog "Upload boost_1_71_0.tar.gz" "$LOG_FILE"
         res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${BOOST_PKG} centos@${instancePublicIp}:/home/centos/ 2>&1 )
@@ -454,7 +455,7 @@ then
         WriteLog "The boost_1_71_0.tar.gz not found." "$LOG_FILE"
     fi
 
-    if [[ ${NEW_AMI} -ge 0 ]]
+    if [[ (${NEW_AMI} -ge 0)  || (${VCPKG_INSTALLS_NEWER_VERSION} -eq 0) ]]
     then
         CMAKE_VER=$( find ~/ -iname 'cmake-*.tar.gz' -type f -size +5M -print | head -n 1 )
         if [[ -n "$CMAKE_VER" ]]
