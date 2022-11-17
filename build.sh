@@ -507,7 +507,7 @@ then
     WritePlainLog "Remove LOG4J items result:\n${removeLog4j}" "$logFile"
     
     removeCommonsText=$( find . -iname 'commons-text-*.jar' -type f -exec rm -fv {} \; )
-    WritePlainLog "Remove 'commons-text-*.jar' items result:\n${removeCommonsText}" "$OBT_BUILD_LOG_FILE"
+    WritePlainLog "Remove 'commons-text-*.jar' items result:\n${removeCommonsText}" "$logFile"
     
     if [[ ${VCPKG_BUILD} -eq 1 ]]
     then
