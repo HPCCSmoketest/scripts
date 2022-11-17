@@ -455,7 +455,7 @@ then
         WriteLog "The boost_1_71_0.tar.gz not found." "$LOG_FILE"
     fi
 
-    if [[ (${NEW_AMI} -ge 0)  || (${VCPKG_INSTALLS_NEWER_VERSION} -eq 0) ]]
+    if [[ (${NEW_AMI} -ge 0)  && (${VCPKG_INSTALLS_NEWER_VERSION} -eq 0) ]]
     then
         CMAKE_VER=$( find ~/ -iname 'cmake-*.tar.gz' -type f -size +5M -print | head -n 1 )
         if [[ -n "$CMAKE_VER" ]]

@@ -57,7 +57,7 @@ do
         instance*)  INSTANCE_NAME=${param//instanceName=/}
                 INSTANCE_NAME=${INSTANCE_NAME//\"/}
                 #INSTANCE_NAME=${INSTANCE_NAME//PR/PR-}
-                myEcho "Instance name: '${INSTANCE_NAME}'"
+                myEcho "Instance  name: '${INSTANCE_NAME}'"
                 # To keep listTests3.py happy
                 echo "Instance name: '${INSTANCE_NAME}'"
                 ;;
@@ -75,7 +75,7 @@ do
                 
         commit*) COMMIT_ID=${param//commitId=/}
                 COMMIT_ID=${COMMIT_ID//\"/}
-                myEcho "Commit ID: ${COMMIT_ID}"
+                myEcho "CommitID: ${COMMIT_ID}"
                 # To keep listTests3.py happy
                 echo "Commit ID: ${COMMIT_ID}"
                 ;;
@@ -394,13 +394,14 @@ if [[ -n $PUBLIC_HOSTNAME ]]
 then
     myEcho "Use Public hostname: '$PUBLIC_HOSTNAME'"
     sed -e 's/origin=\(10.*\):5006/origin='"$PUBLIC_HOSTNAME"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
-    myEcho "Bokeh address: $PUBLIC_HOSTNAME:5006"
+    myEcho "Bokeh IP address: $PUBLIC_HOSTNAME:5006"
+    # To keep listTests3.py happy
     echo "Bokeh address: $PUBLIC_HOSTNAME:5006"
     echo "http://$PUBLIC_HOSTNAME:5006/showStatus" > bokeh.url
 else
     myEcho "Perhaps we are in us-east-1 use Local IP: '$LOCAL_IP'"
     sed -e 's/origin=\(10.*\):5006/origin='"$LOCAL_IP"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
-    myEcho "Bokeh address: $LOCAL_IP:5006"
+    myEcho "Bokeh IP address: $LOCAL_IP:5006"
     # To keep listTests3.py happy
     echo "Bokeh address: $LOCAL_IP:5006"
     echo "http://$LOCAL_IP:5006/showStatus" > bokeh.url
