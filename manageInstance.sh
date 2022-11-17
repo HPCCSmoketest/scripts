@@ -444,7 +444,7 @@ then
         fi
     fi
 
-    VCPKG_INSTALLS_NEWER_VERSION=1    
+    VCPKG_INSTALLS_NEWER_VERSION=0    
     BOOST_PKG=$( find ~/ -iname 'boost_1_71*' -type f -size +100M -print | head -n 1 )
     if [[ (-n "$BOOST_PKG") &&  (${VCPKG_INSTALLS_NEWER_VERSION} -eq 0) ]]
     then
