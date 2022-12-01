@@ -82,7 +82,7 @@ TARGET=all
 GLOBAL_EXCLUSION="-e 3rdparty"
 GLOBAL_EXCLUSION="-e=embedded,3rdparty"
 #GLOBAL_EXCLUSION="--ef pipefail.ecl,layouttrans_disabled.ecl -e=embedded,3rdparty"
-GLOBAL_EXCLUSION="--ef pipefail.ecl -e=embedded,3rdparty,stress"
+GLOBAL_EXCLUSION="--ef pipefail.ecl -e=embedded,3rdparty,stress,spray"
 PYTHON_PLUGIN=''
 
 # Patch/hack some CMakeLists.txt to enable parallel build for them
