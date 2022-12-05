@@ -3587,7 +3587,7 @@ if __name__ == '__main__':
             idleTime = 0;
         else:
             # There wasn't any PR we can increase the idleTime
-            if idleTime < maxIdleTime - 60:
+            if idleTime < maxIdleTime:
                 idleTime += 60
 
 
