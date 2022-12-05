@@ -632,8 +632,9 @@ then
     res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "zip -m /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S') -r /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression/* > /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1" 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
     
-    WriteLog "Download log files from /home/centos/smoketest/${INSTANCE_NAME}/build/vcpkg_buildtrees/ directory" "$LOG_FILE"
-    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/build/vcpkg_buildtrees/*/*.log ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
+    WriteLog "Find and compress log files from /home/centos/smoketest/${INSTANCE_NAME}/build/vcpkg_buildtrees/ directory" "$LOG_FILE"
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "zip vcpkg_buildtrees_log $( find /home/centos/smoketest/${INSTANCE_NAME}/build/vcpkg_buildtrees/*/ -iname '*.log' -type f )"  2>&1 )
+   #res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/build/vcpkg_buildtrees/*/*.log ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
     
     WriteLog "Remove /home/centos/smoketest/${INSTANCE_NAME}/HPCC-Platform /home/centos/smoketest/${INSTANCE_NAME}/build directory" "$LOG_FILE"
