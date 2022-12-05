@@ -679,17 +679,23 @@ else
     MyExit "-2" "The try count exhausted before the instance became up and running." "$instance" "${INSTANCE_NAME}" "${C_ID}"
 fi
 
+KEEP_INSTANCE=0
 WAIT_BEFORE_TERMINATE=20s
 if [[ -n $DRY_RUN ]]
 then
     WAIT_BEFORE_TERMINATE=4m
 fi
 
-WriteLog "Wait $WAIT_BEFORE_TERMINATE before terminate" "$LOG_FILE"
-sleep ${WAIT_BEFORE_TERMINATE}
+if [[ ${KEEP_INSTANCE} -eq 0 ]]
+then
+    WriteLog "Wait $WAIT_BEFORE_TERMINATE before terminate" "$LOG_FILE"
+    sleep ${WAIT_BEFORE_TERMINATE}
 
-terminate=$( aws ec2 terminate-instances --instance-ids ${instanceId} 2>&1 )
-WriteLog "Terminate: ${terminate}" "$LOG_FILE"
+    terminate=$( aws ec2 terminate-instances --instance-ids ${instanceId} 2>&1 )
+    WriteLog "Terminate: ${terminate}" "$LOG_FILE"
+else
+    WriteLog "\nSkip auto terminate the instance: ${instanceId}. Do it manually! \n" "$LOG_FILE"
+fi
 
 sleep 10
 
