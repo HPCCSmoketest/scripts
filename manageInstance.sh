@@ -633,7 +633,7 @@ then
     WriteLog "Res: $res" "$LOG_FILE"
     
     WriteLog "Find and compress log files from /home/centos/smoketest/${INSTANCE_NAME}/build/vcpkg_buildtrees/ directory" "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "zip -u /home/centos/smoketest/${INSTANCE_NAME}/vcpkg_buildtrees_log-$(date '+%y-%m-%d_%H-%M-%S') $( find /home/centos/smoketest/${INSTANCE_NAME}/build/vcpkg_buildtrees/ -iname '*.log' -type f )"  2>&1 )
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "find /home/centos/smoketest/${INSTANCE_NAME}/build/vcpkg_buildtrees/ -iname '*.log' -type f | zip /home/centos/smoketest/${INSTANCE_NAME}/vcpkg_buildtrees_log-$(date '+%y-%m-%d_%H-%M-%S') -@ "  2>&1 )
    #res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/build/vcpkg_buildtrees/*/*.log ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
     
