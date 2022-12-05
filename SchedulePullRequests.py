@@ -123,7 +123,7 @@ verbose = False
 # Currently doesn't used
 doNotUpdate = True
 
-maxIdleTime = 180 # 600 # sec
+maxIdleTime = 120 # 600 # sec
 noEcho = False
 sysId = platform.dist()[0] + ' ' + platform.dist()[1] + ' (' + platform.system() + ' ' + platform.release() + ')'
 appId = "App"""
@@ -3587,7 +3587,7 @@ if __name__ == '__main__':
             idleTime = 0;
         else:
             # There wasn't any PR we can increase the idleTime
-            if idleTime < maxIdleTime:
+            if idleTime < maxIdleTime - 60:
                 idleTime += 60
 
 
