@@ -445,7 +445,7 @@ then
     fi
 
     WriteLog "Base:$BASE" "$LOG_FILE"
-    [[  "8.6 8.4 8.2" =~ "$BASE" ]] && VCPKG_INSTALLS_NEWER_VERSION=0 || VCPKG_INSTALLS_NEWER_VERSION=1
+    [[  "candidate-8.6.x candidate-8.4.x candidate-8.2.x" =~ "$BASE" ]] && VCPKG_INSTALLS_NEWER_VERSION=0 || VCPKG_INSTALLS_NEWER_VERSION=1
     WriteLog "VCPKG_INSTALLS_NEWER_VERSION:$VCPKG_INSTALLS_NEWER_VERSION" "$LOG_FILE"
     
     BOOST_PKG=$( find ~/ -iname 'boost_1_71*' -type f -size +100M -print | head -n 1 )
