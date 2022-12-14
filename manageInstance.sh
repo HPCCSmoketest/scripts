@@ -444,9 +444,12 @@ then
         fi
     fi
 
-    WriteLog "Base:$BASE" "$LOG_FILE"
-    [[  "candidate-8.6.x candidate-8.4.x candidate-8.2.x" =~ "$BASE" ]] && VCPKG_INSTALLS_NEWER_VERSION=0 || VCPKG_INSTALLS_NEWER_VERSION=1
-    WriteLog "VCPKG_INSTALLS_NEWER_VERSION:$VCPKG_INSTALLS_NEWER_VERSION" "$LOG_FILE"
+    WriteLog "Base: $BASE" "$LOG_FILE"
+    REQUIRED_FOR_VCPKG_BUILD=candidate-8.8.x
+    WriteLog "Required for VCPKG build: $REQUIRED_FOR_VCPKG_BUILD" "$LOG_FILE"
+    [ $(printf "%s\n" "$REQUIRED_FOR_VCPKG_BUILD" "$BASE" | sort -V | head -n1) = $REQUIRED_FOR_VCPKG_BUILD ] && VCPKG_INSTALLS_NEWER_VERSION=1 || VCPKG_INSTALLS_NEWER_VERSION=0
+    #[[  "candidate-8.6.x candidate-8.4.x candidate-8.2.x" =~ "$BASE" ]] && VCPKG_INSTALLS_NEWER_VERSION=0 || VCPKG_INSTALLS_NEWER_VERSION=1
+    WriteLog "VCPKG_INSTALLS_NEWER_VERSION: $VCPKG_INSTALLS_NEWER_VERSION" "$LOG_FILE"
     
     BOOST_PKG=$( find ~/ -iname 'boost_1_71*' -type f -size +100M -print | head -n 1 )
     if [[ (-n "$BOOST_PKG") &&  (${VCPKG_INSTALLS_NEWER_VERSION} -eq 0) ]]
