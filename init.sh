@@ -195,12 +195,13 @@ git clone https://github.com/HPCCSmoketest/scripts.git
 cp scripts/*.sh .
 cp scripts/*.py .
 
-myEcho "Check and install CMakecmake-3.23.2 "
+myEcho "Check and install CMake"
 CMAKE_VER=$( find ~/ -iname 'cmake-*.tar.gz' -type f -size +1M -print | head -n 1 )
-CMAKE_DIR=${CMAKE_VER//.tar.gz/}
-CMAKE_DIR=$(basename $CMAKE_DIR)
 if [[ -n "$CMAKE_VER" ]]
 then
+    CMAKE_DIR=${CMAKE_VER//.tar.gz/}
+    CMAKE_DIR=$(basename $CMAKE_DIR)
+
     pushd ~/
     myEcho "$CMAKE_VER found, unzip and install it"
     tar -xzvf  ${CMAKE_VER} > cmake.log

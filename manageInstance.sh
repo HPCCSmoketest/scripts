@@ -444,7 +444,7 @@ then
         fi
     fi
 
-    VCPKG_INSTALLS_NEWER_VERSION=1
+    [[  "8.6 8.4 8.2" =~ "$BASE" ]] && VCPKG_INSTALLS_NEWER_VERSION=0 || VCPKG_INSTALLS_NEWER_VERSION=1
     BOOST_PKG=$( find ~/ -iname 'boost_1_71*' -type f -size +100M -print | head -n 1 )
     if [[ (-n "$BOOST_PKG") &&  (${VCPKG_INSTALLS_NEWER_VERSION} -eq 0) ]]
     then
@@ -470,8 +470,7 @@ then
         WriteLog "We have a new AMI, don't upolad make-3.18.0." "$LOG_FILE"
     fi
 
-
-    if [[ (${NEW_AMI} -ge 0) && (${VCPKG_INSTALLS_NEWER_VERSION} -eq 0) ]]  # The new ami doesn't have curl 7.67, must upload and install
+     if [[ (${NEW_AMI} -ge 0) && (${VCPKG_INSTALLS_NEWER_VERSION} -eq 0) ]]  # The new ami doesn't have curl 7.67, must upload and install
     then 
         CURL_7_67=$( find ~/ -iname 'curl-7.67.0.tar.gz' -type f -size +1M -print | head -n 1 )
         if [[ -n "$CURL_7_67" ]]
