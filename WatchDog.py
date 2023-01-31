@@ -75,7 +75,7 @@ def handleProcess(maxLoop):
         # Get the pids of live processes filetered bu the content of process variable
         myProc = subprocess.Popen([psCmd],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
         mypid = myProc.pid
-        (myStdout,  myStderr) = myProc.communicate(input = "Boglarka990405")
+        (myStdout,  myStderr) = myProc.communicate()
         result = myStdout+ myStderr
         myPrintV('My pid is: ' + str(mypid))
         myPrintV("Result: ")
@@ -122,7 +122,7 @@ def handleProcess(maxLoop):
                 killCmd = 'sudo kill -9 ' + pid
                 myPrintV("Kill cmd:"+killCmd)
                 myProc = subprocess.Popen([killCmd],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                (myStdout,  myStderr) = myProc.communicate("Boglarka990405")
+                (myStdout,  myStderr) = myProc.communicate()
                 result = myStdout+ myStderr
                 myPrint("Still active "+ name + " ("+ pid + ") is ran out of time and killed.")
             else:
