@@ -492,7 +492,8 @@ then
     fi
     
     BASE_VERSION=${BASE#candidate-}
-    BASE_VERSION=${BASE_VERSION%.*}.x
+    BASE_VERSION=${BASE_VERSION%.*}
+    [[ "$BASE_VERSION" != "master" ]] && BASE_VERSION=$BASE_VERSION.x
     VCPKG_DOWNLOAD_ARCHIVE=~/vcpkg_downloads-${BASE_VERSION}.zip
     if [[ -f  $VCPKG_DOWNLOAD_ARCHIVE ]]
     then
