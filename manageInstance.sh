@@ -492,14 +492,15 @@ then
     fi
     
     BASE_VERSION=${BASE#candidate-}
-    VCPKG_DONWLOAD_ARCHIVE=~/vcpkg_downloads-${BASE_VERSION}.zip
-    if [[ -f  $VCPKG_DONWLOAD_ARCHIVE ]]
+    BASE_VERSION=${BASE_VERSION%.*}.x
+    VCPKG_DOWNLOAD_ARCHIVE=~/vcpkg_downloads-${BASE_VERSION}.zip
+    if [[ -f  $VCPKG_DOWNLOAD_ARCHIVE ]]
     then
-        WriteLog "Upload $VCPKG_DONWLOAD_ARCHIVE as vcpkg_donwloads.zip" "$LOG_FILE"
-        res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${VCPKG_DONWLOAD_ARCHIVE} centos@${instancePublicIp}:/home/centos/vcpkg_downloads.zip 2>&1 )
+        WriteLog "Upload $VCPKG_DOWNLOAD_ARCHIVE as vcpkg_donwloads.zip" "$LOG_FILE"
+        res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${VCPKG_DOWNLOAD_ARCHIVE} centos@${instancePublicIp}:/home/centos/vcpkg_downloads.zip 2>&1 )
         WriteLog "Res: $res" "$LOG_FILE"
     else
-        WriteLog "The $VCPKG_DONWLOAD_ARCHIVE not found." "$LOG_FILE"
+        WriteLog "The $VCPKG_DOWNLOAD_ARCHIVE not found." "$LOG_FILE"
     fi
     
     WriteLog "Upload init.sh" "$LOG_FILE"
