@@ -491,6 +491,17 @@ then
         WriteLog "We have a new AMI, don't upolad curl 7.67.0." "$LOG_FILE"
     fi
     
+    BASE_VERSION=${BASE#candidate-}
+    VCPKG_DONWLOAD_ARCHIVE="~/vcpkg_downloads-${BASE_VERSION}.zip"
+    if [[ -f  $VCPKG_DONWLOAD_ARCHIVE ]]
+    then
+        WriteLog "Upload $VCPKG_DONWLOAD_ARCHIVE as vcpkg_donwloads.zip" "$LOG_FILE"
+        res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${VCPKG_DONWLOAD_ARCHIVE} centos@${instancePublicIp}:/home/centos/vcpkg_downloads.zip 2>&1 )
+        WriteLog "Res: $res" "$LOG_FILE"
+    else
+        WriteLog "The $VCPKG_DONWLOAD_ARCHIVE not found." "$LOG_FILE"
+    fi
+    
     WriteLog "Upload init.sh" "$LOG_FILE"
     # CentOS 7
     res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init.sh ${SMOKETEST_HOME}/timestampLogger.sh centos@${instancePublicIp}:/home/centos/ 2>&1 )

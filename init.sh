@@ -259,7 +259,17 @@ myEcho "................................................"
 [ ! -d $INSTANCE_NAME ] && mkdir $INSTANCE_NAME
 
 cd $INSTANCE_NAME
-echo "Execute Smoketest on $INSTANCE_NAME" > test.log
+myEcho "Execute Smoketest on $INSTANCE_NAME" > test.log
+
+if [[ -f ~/vcpkg_downloads.zip ]]
+then
+    myEcho "vcpkg_downloads.zip found, extract it."
+    [[ ! -d build ]] && mkdir build
+    pushd build
+    unzip ~/vcpkg_downloads.zip
+    popd
+    myEcho "  Done."
+fi
 
 if [[ $BASE_TEST  -eq 1 ]]
 then
