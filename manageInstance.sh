@@ -492,7 +492,7 @@ then
     fi
     
     BASE_VERSION=${BASE#candidate-}
-    VCPKG_DONWLOAD_ARCHIVE="~/vcpkg_downloads-${BASE_VERSION}.zip"
+    VCPKG_DONWLOAD_ARCHIVE=~/vcpkg_downloads-${BASE_VERSION}.zip
     if [[ -f  $VCPKG_DONWLOAD_ARCHIVE ]]
     then
         WriteLog "Upload $VCPKG_DONWLOAD_ARCHIVE as vcpkg_donwloads.zip" "$LOG_FILE"
