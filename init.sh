@@ -157,7 +157,9 @@ sudo yum install -y \
     heimdal-devel \
     java-11-openjdk-devel \
     libuv-devel \
-    python3-devel
+    python3-devel \
+    kernel-dev \
+    perl-IPC-Cmd 
     
 sudo yum install -y centos-release-scl
 sudo yum install -y devtoolset-9
