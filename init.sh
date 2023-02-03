@@ -253,6 +253,10 @@ sudo ln -s /usr/local/pkg_config/0_29_2/share/aclocal/pkg.m4 /usr/local/share/ac
 echo "export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" |  sudo tee -a /etc/environment
 echo "export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" |  sudo tee -a /etc/environment
 echo "export ACLOCAL_PATH=/usr/local/share/aclocal:$ACLOCAL_PATH" |  sudo tee -a /etc/environment
+
+echo "export VCPKG_BINARY_SOURCES=\"clear;nuget,GitHub,readwrite\"" ~/.bashrc
+echo "export VCPKG_NUGET_REPOSITORY=https://github.com/hpcc-systems/vcpkg" ~/.bashrc
+
 myEcho "VCPKG done."
 myEcho "................................................"
 
