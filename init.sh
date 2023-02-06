@@ -255,8 +255,11 @@ make -j 8
 sudo make install
 popd
 sudo ln -s /usr/local/pkg_config/0_29_2/bin/pkg-config /usr/local/bin/
-mkdir /usr/local/share/aclocal
+[[ ! -d /usr/local/share/aclocal ]] && mkdir /usr/local/share/aclocal
 sudo ln -s /usr/local/pkg_config/0_29_2/share/aclocal/pkg.m4 /usr/local/share/aclocal/
+ls -l  /usr/local/bin/pkg*
+ls -l /usr/local/share/aclocal/pkg*
+type "pkg-config"
 
 echo -e "\n#=====================================================" >> ~/.bashrc
 echo "# For VCPKG stuff " >> ~/.bashrc
