@@ -146,6 +146,9 @@ PACKAGES_TO_INSTALL="expect mailx bc psmisc"
     PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL fop-1.1"
 #fi
 
+myEcho "Remove pyparsing"
+sudo yum remove -y pyparsing
+
 myEcho "Packages to install: ${PACKAGES_TO_INSTALL}"
 sudo yum install -y ${PACKAGES_TO_INSTALL}
 
@@ -400,8 +403,8 @@ myEcho "p3: '$p3'"
 sudo ${p3} install --upgrade pip
 p3=$(which "pip3")
 myEcho "p3: '$p3'"
-myEcho "Remove pyparsing"
-sudo yum remove -y pyparsing
+#myEcho "Remove pyparsing"
+#sudo yum remove -y pyparsing
 myEcho "Install pandas bokeh pyproj"
 sudo ${p3} install pandas bokeh pyproj
 
