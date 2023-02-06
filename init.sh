@@ -168,6 +168,14 @@ sudo yum install -y \
     autoconf \
     autoconf-archive 
     
+which autoconf
+autoconf --version
+rpm -q autoconf
+
+which automake
+automake --version
+rpm -q automake
+
 sudo yum install -y centos-release-scl
 sudo yum install -y devtoolset-9
 myEcho "Done"
