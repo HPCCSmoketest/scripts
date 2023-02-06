@@ -158,7 +158,7 @@ sudo yum install -y \
     java-11-openjdk-devel \
     libuv-devel \
     python3-devel \
-    kernel-dev \
+    kernel-devel \
     perl-IPC-Cmd 
     
 sudo yum install -y centos-release-scl
