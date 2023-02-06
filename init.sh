@@ -259,7 +259,7 @@ sudo ln -s /usr/local/pkg_config/0_29_2/bin/pkg-config /usr/local/bin/
 sudo ln -s /usr/local/pkg_config/0_29_2/share/aclocal/pkg.m4 /usr/local/share/aclocal/
 ls -l  /usr/local/bin/pkg*
 ls -l /usr/local/share/aclocal/pkg*
-type "pkg-config"
+type "pkg"
 
 echo -e "\n#=====================================================" >> ~/.bashrc
 echo "# For VCPKG stuff " >> ~/.bashrc
