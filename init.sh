@@ -146,6 +146,8 @@ PACKAGES_TO_INSTALL="expect mailx bc psmisc"
     PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL fop-1.1"
 #fi
 
+# This related to Bokeh installation, but should be here because it removes perl-IPC-Cmd 
+# (needs to build OpenSSL) as well.
 myEcho "Remove pyparsing"
 sudo yum remove -y pyparsing
 
@@ -162,7 +164,9 @@ sudo yum install -y \
     libuv-devel \
     python3-devel \
     kernel-devel \
-    perl-IPC-Cmd 
+    perl-IPC-Cmd \
+    autoconf \
+    autoconf-archive 
     
 sudo yum install -y centos-release-scl
 sudo yum install -y devtoolset-9
