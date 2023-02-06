@@ -271,6 +271,14 @@ echo "# end." >> ~/.bashrc
 
 myEcho " $(cat ~/.bashrc) "
 
+if [[ -d /usr/share/systemtap/tapset ]]
+then
+    myEcho "Set 777 to /usr/share/systemtap/tapset to enable VCPKG (which is not root in this time) \nto copy couchbase related stuff there."
+    myEcho "Before:\n $(ls -ld /usr/share/systemtap/tapset)"
+    sudo chmod 777 /usr/share/systemtap/tapset
+    myEcho "After:\n $(ls -ld /usr/share/systemtap/tapset)"
+fi
+
 myEcho "VCPKG done."
 myEcho "................................................"
 
