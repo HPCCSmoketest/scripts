@@ -281,7 +281,7 @@ then
     ./configure && \
     make && \
     sudo make install
-    popd.
+    popd
 
     curl -o autoconf-archive-2021.02.19.tar.xz http://ftp.gnu.org/gnu/autoconf-archive/autoconf-archive-2021.02.19.tar.xz && \
     xz -d -v autoconf-archive-2021.02.19.tar.xz && \
@@ -290,7 +290,7 @@ then
     ./configure && \
     make && \
     sudo make install
-    popd.
+    popd
 
     curl -o automake-1.16.5.tar.gz http://ftp.gnu.org/gnu/automake/automake-1.16.5.tar.gz && \
     tar xvzf automake-1.16.5.tar.gz && \
@@ -298,7 +298,7 @@ then
     ./configure && \
     make && \
     sudo make install
-    popd.
+    popd
 
     curl -o libtool-2.4.6.tar.gz http://ftp.jaist.ac.jp/pub/GNU/libtool/libtool-2.4.6.tar.gz && \
     tar xvfz libtool-2.4.6.tar.gz && \
@@ -306,7 +306,7 @@ then
     ./configure --prefix=/usr/local/libtool/2_4_6 && \
     make && \
     sudo make install
-    popd.
+    popd
 
     sudo ln -s /usr/local/libtool/2_4_6/bin/libtool /usr/local/bin/ && \
     sudo ln -s /usr/local/libtool/2_4_6/bin/libtoolize /usr/local/bin/ && \
