@@ -111,7 +111,8 @@ echo "ACLOCAL_PATH          : '$ACLOCAL_PATH'" >> $logFile 2>&1
 echo "VCPKG_BINARY_SOURCES  : '$VCPKG_BINARY_SOURCES'" >> $logFile 2>&1
 echo "VCPKG_NUGET_REPOSITORY: '$VCPKG_NUGET_REPOSITORY'" >> $logFile 2>&1
 echo "----------------------------------"   >> $logFile 2>&1
-ls -l  /usr/local/share/aclocal/ 
+echo "Content of /usr/local/share/aclocal/ " >> $logFile 2>&1
+ls -l  /usr/local/share/aclocal/ >> $logFile 2>&1
 echo "====================================================" >> $logFile 2>&1
 
 MyEcho ()

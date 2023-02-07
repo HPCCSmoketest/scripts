@@ -395,6 +395,7 @@ which libtool
 libtool --version
 rpm -q libtool
 
+myEcho "Content of /usr/local/share/aclocal/ "
 ls -l  /usr/local/share/aclocal/ 
 
 echo -e "\n#=====================================================" >> ~/.bashrc
