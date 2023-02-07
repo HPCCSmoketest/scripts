@@ -36,6 +36,7 @@ AVERAGE_SESSION_TIME=0.75 # Hours for m4.4xlarge instance
 AVERAGE_SESSION_TIME=1.2 # Hours for m4.2xlarge instance
 BASE_TEST=0
 BASE_TAG=''
+BASE='master'
 
 SYSTEM_ID=$( cat /etc/*-release | egrep -i "^PRETTY_NAME" | cut -d= -f2 | tr -d '"' )
 if [[ "${SYSTEM_ID}" == "" ]]
@@ -92,6 +93,10 @@ do
 #                BASE_TAG=${param//baseTest=/}
 #                BASE_TAG=${BASE_TAG//\"/}
 #                myEcho "Execute base test with tag: ${BASE_TAG}"
+                ;;
+                
+        base*) BASE=${param//base=/}
+                WriteLog "Base : ${BASE}" "$LOG_FILE"
                 ;;
                 
         *)  myEcho "Unknown parameter: ${param}."
@@ -154,7 +159,7 @@ sudo yum remove -y pyparsing
 myEcho "Packages to install: ${PACKAGES_TO_INSTALL}"
 sudo yum install -y ${PACKAGES_TO_INSTALL}
 
-sudo yum install -y git zip unzip wget python3 libtool autoconf automake
+sudo yum install -y git zip unzip wget python3 libtool
 sudo yum install -y \
     ncurses-devel \
     libmemcached-devel \
@@ -164,17 +169,7 @@ sudo yum install -y \
     libuv-devel \
     python3-devel \
     kernel-devel \
-    perl-IPC-Cmd \
-    autoconf \
-    autoconf-archive 
-    
-which autoconf
-autoconf --version
-rpm -q autoconf
-
-which automake
-automake --version
-rpm -q automake
+    perl-IPC-Cmd 
 
 sudo yum install -y centos-release-scl
 sudo yum install -y devtoolset-9
@@ -253,21 +248,121 @@ then
 else
     myEcho "curl 7.67.0 not found. Current version: $(curl --version)"
 fi
+
 myEcho "................................................"
 myEcho "Install VCPKG stuff"
-wget  --no-check-certificate https://pkg-config.freedesktop.org/releases/pkg-config-0.29.2.tar.gz
-tar xvfz pkg-config-0.29.2.tar.gz
-pushd  pkg-config-0.29.2
-./configure --prefix=/usr/local/pkg_config/0_29_2 --with-internal-glib
-make -j 8
-sudo make install
-popd
-sudo ln -s /usr/local/pkg_config/0_29_2/bin/pkg-config /usr/local/bin/
-[[ ! -d /usr/local/share/aclocal ]] && mkdir /usr/local/share/aclocal
-sudo ln -s /usr/local/pkg_config/0_29_2/share/aclocal/pkg.m4 /usr/local/share/aclocal/
-ls -l  /usr/local/bin/pkg*
-ls -l /usr/local/share/aclocal/pkg*
-type "pkg"
+
+myEcho "Base: $BASE" "$LOG_FILE"
+REQUIRED_FOR_NEW_VCPKG_BUILD=candidate-8.12.x
+myEcho "Required for new VCPKG build: $REQUIRED_FOR_VCPKG_BUILD"
+[ $(printf "%s\n" "$REQUIRED_FOR_NEW_VCPKG_BUILD" "$BASE" | sort -V | head -n1) = $REQUIRED_FOR_NEW_VCPKG_BUILD ] && VCPKG_NEWER_DEPENDENCIES=1 || VCPKG_NEWER_DEPENDENCIES=0
+
+myEcho "VCPKG_NEWER_DEPENDENCIES: $VCPKG_NEWER_DEPENDENCIES"
+
+if [[ ${VCPKG_NEWER_DEPENDENCIES} -eq 1 ]]
+then
+    # For 8.12.x and beyond
+    curl -o pkg-config-0.29.2.tar.gz https://pkg-config.freedesktop.org/releases/pkg-config-0.29.2.tar.gz && \
+    tar xvfz pkg-config-0.29.2.tar.gz
+    pushd  pkg-config-0.29.2
+    ./configure --prefix=/usr/local/pkg_config/0_29_2 --with-internal-glib && \
+    make && \
+    sudo make install 
+    popd
+    sudo ln -s /usr/local/pkg_config/0_29_2/bin/pkg-config /usr/local/bin/
+
+    [[ ! -d /usr/local/share/aclocal]] &&  sudo mkdir /usr/local/share/aclocal
+    sudo ln -s /usr/local/pkg_config/0_29_2/share/aclocal/pkg.m4 /usr/local/share/aclocal/
+
+    curl -o autoconf-2.71.tar.gz http://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz && \
+    gunzip autoconf-2.71.tar.gz && \
+    tar xvf autoconf-2.71.tar && \
+    pushd autoconf-2.71 && \
+    ./configure && \
+    make && \
+    sudo make install
+    popd.
+
+    curl -o autoconf-archive-2021.02.19.tar.xz http://ftp.gnu.org/gnu/autoconf-archive/autoconf-archive-2021.02.19.tar.xz && \
+    xz -d -v autoconf-archive-2021.02.19.tar.xz && \
+    tar xvf autoconf-archive-2021.02.19.tar && \
+    pushd autoconf-archive-2021.02.19 && \
+    ./configure && \
+    make && \
+    sudo make install
+    popd.
+
+    curl -o automake-1.16.5.tar.gz http://ftp.gnu.org/gnu/automake/automake-1.16.5.tar.gz && \
+    tar xvzf automake-1.16.5.tar.gz && \
+    pushd automake-1.16.5 && \
+    ./configure && \
+    make && \
+    sudo make install
+    popd.
+
+    curl -o libtool-2.4.6.tar.gz http://ftp.jaist.ac.jp/pub/GNU/libtool/libtool-2.4.6.tar.gz && \
+    tar xvfz libtool-2.4.6.tar.gz && \
+    pushd libtool-2.4.6 && \
+    ./configure --prefix=/usr/local/libtool/2_4_6 && \
+    make && \
+    sudo make install
+    popd.
+
+    sudo ln -s /usr/local/libtool/2_4_6/bin/libtool /usr/local/bin/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/bin/libtoolize /usr/local/bin/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/include/libltdl /usr/local/include/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/include/ltdl.h /usr/local/include/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/lib/libltdl.a /usr/local/lib/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/lib/libltdl.la /usr/local/lib/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/lib/libltdl.so /usr/local/lib/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/lib/libltdl.so.7 /usr/local/lib/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/lib/libltdl.so.7.3.1 /usr/local/lib/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/libtool.m4 /usr/local/share/aclocal/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/ltargz.m4 /usr/local/share/aclocal/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/ltdl.m4 /usr/local/share/aclocal/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/lt~obsolete.m4 /usr/local/share/aclocal/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/ltoptions.m4 /usr/local/share/aclocal/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/ltsugar.m4 /usr/local/share/aclocal/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/ltversion.m4 /usr/local/share/aclocal/ 
+
+    echo /usr/local/lib | sudo tee /etc/ld.so.conf.d/usr_local_lib.conf
+
+    # Build Tools - Mono  ---
+    sudo yum-config-manager --add-repo http://download.mono-project.com/repo/centos/
+    sudo yum clean all
+    sudo yum makecache
+    sudo rpm --import "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
+
+    sudo yum install -y mono-complete 
+
+else
+    # For 8.8x and 8.10.x
+    sudo yum install -y  autoconf automake autoconf-archive 
+    
+    wget  --no-check-certificate https://pkg-config.freedesktop.org/releases/pkg-config-0.29.2.tar.gz
+    tar xvfz pkg-config-0.29.2.tar.gz
+    pushd  pkg-config-0.29.2
+    ./configure --prefix=/usr/local/pkg_config/0_29_2 --with-internal-glib
+    make -j 8
+    sudo make install
+    popd
+    sudo ln -s /usr/local/pkg_config/0_29_2/bin/pkg-config /usr/local/bin/
+    [[ ! -d /usr/local/share/aclocal ]] && mkdir /usr/local/share/aclocal
+    sudo ln -s /usr/local/pkg_config/0_29_2/share/aclocal/pkg.m4 /usr/local/share/aclocal/
+    ls -l  /usr/local/bin/pkg*
+    ls -l /usr/local/share/aclocal/pkg*
+fi
+which pkg-config
+pkg-config --version
+rpm -q pkg-config
+
+which autoconf
+autoconf --version
+rpm -q autoconf
+
+which automake
+automake --version
+rpm -q automake
 
 echo -e "\n#=====================================================" >> ~/.bashrc
 echo "# For VCPKG stuff " >> ~/.bashrc

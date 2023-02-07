@@ -124,6 +124,7 @@ AVERAGE_SESSION_TIME=1.0 # Hours
 TIME_STAMPT=$( date "+%y-%m-%d_%H-%M-%S" )
 APP_ID=$(hostname)
 BASE_TEST=''
+BASE='master'
 
 while [ $# -gt 0 ]
 do
@@ -520,7 +521,7 @@ then
     WriteLog "Res: $res" "$LOG_FILE"
 
     WriteLog "Execute init.sh" "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT} ${COMMIT_ID} ${DRY_RUN} -sessionTime=${AVERAGE_SESSION_TIME} ${BASE_TEST}" 2>&1 )
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT} ${COMMIT_ID} ${DRY_RUN} -sessionTime=${AVERAGE_SESSION_TIME} ${BASE_TEST} -base=$BASE" 2>&1 )
     WriteLog "Res:\n$res" "$LOG_FILE"
 
     # Donwload init<-timestamp>.log file
