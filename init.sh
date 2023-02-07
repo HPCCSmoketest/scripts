@@ -351,6 +351,33 @@ else
     sudo ln -s /usr/local/pkg_config/0_29_2/share/aclocal/pkg.m4 /usr/local/share/aclocal/
     ls -l  /usr/local/bin/pkg*
     ls -l /usr/local/share/aclocal/pkg*
+    
+    curl -o libtool-2.4.6.tar.gz http://ftp.jaist.ac.jp/pub/GNU/libtool/libtool-2.4.6.tar.gz && \
+    tar xvfz libtool-2.4.6.tar.gz && \
+    pushd libtool-2.4.6 && \
+    ./configure --prefix=/usr/local/libtool/2_4_6 && \
+    make && \
+    sudo make install
+    popd
+
+    sudo ln -s /usr/local/libtool/2_4_6/bin/libtool /usr/local/bin/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/bin/libtoolize /usr/local/bin/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/include/libltdl /usr/local/include/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/include/ltdl.h /usr/local/include/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/lib/libltdl.a /usr/local/lib/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/lib/libltdl.la /usr/local/lib/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/lib/libltdl.so /usr/local/lib/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/lib/libltdl.so.7 /usr/local/lib/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/lib/libltdl.so.7.3.1 /usr/local/lib/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/libtool.m4 /usr/local/share/aclocal/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/ltargz.m4 /usr/local/share/aclocal/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/ltdl.m4 /usr/local/share/aclocal/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/lt~obsolete.m4 /usr/local/share/aclocal/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/ltoptions.m4 /usr/local/share/aclocal/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/ltsugar.m4 /usr/local/share/aclocal/ && \
+    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/ltversion.m4 /usr/local/share/aclocal/ 
+
+    echo /usr/local/lib | sudo tee /etc/ld.so.conf.d/usr_local_lib.conf
 fi
 which pkg-config
 pkg-config --version
