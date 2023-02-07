@@ -93,12 +93,18 @@ cleanUpLeftovers "$logFile"
 #echo "logFile:$logFile"
 
 echo "====================================================" >> $logFile 2>&1
+echo "I am $(whoami)"  >> $logFile 2>&1
+echo "----------------------------------"   >> $logFile 2>&1
+echo "~/.bashrc: ">> $logFile 2>&1
+cat ~/.bashrc   >> $logFile 2>&1
+echo "----------------------------------"   >> $logFile 2>&1
 echo "Versions:"  >> $logFile 2>&1
-gcc --version >> $logFile 2>&1
-pkg-config --version >> $logFile 2>&1
-autoconf --version >> $logFile 2>&1
-automake --version >> $logFile 2>&1
-libtool --version >> $logFile 2>&1
+gcc --version | head -n 1 >> $logFile 2>&1
+pkg-config --version | head 1 >> $logFile 2>&1
+autoconf --version | head -n 1 >> $logFile 2>&1
+automake --version | head -n 1 >> $logFile 2>&1
+libtool --version | head -n 1 >> $logFile 2>&1
+
 echo "LD_LIBRARY_PATH       : '$LD_LIBRARY_PATH'" >> $logFile 2>&1
 echo "PKG_CONFIG_PATH       : '$PKG_CONFIG_PATH'" >> $logFile 2>&1
 echo "ACLOCAL_PATH          : '$ACLOCAL_PATH'" >> $logFile 2>&1
