@@ -364,6 +364,10 @@ which automake
 automake --version
 rpm -q automake
 
+which libtool
+libtool --version
+rpm -q libtool
+
 echo -e "\n#=====================================================" >> ~/.bashrc
 echo "# For VCPKG stuff " >> ~/.bashrc
 echo "# " >> ~/.bashrc
