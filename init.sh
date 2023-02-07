@@ -271,7 +271,7 @@ then
     popd
     sudo ln -s /usr/local/pkg_config/0_29_2/bin/pkg-config /usr/local/bin/
 
-    [[ ! -d /usr/local/share/aclocal]] &&  sudo mkdir /usr/local/share/aclocal
+    [[ ! -d /usr/local/share/aclocal ]] &&  sudo mkdir /usr/local/share/aclocal
     sudo ln -s /usr/local/pkg_config/0_29_2/share/aclocal/pkg.m4 /usr/local/share/aclocal/
 
     curl -o autoconf-2.71.tar.gz http://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz && \
