@@ -395,6 +395,8 @@ which libtool
 libtool --version
 rpm -q libtool
 
+ls -l  /usr/local/share/aclocal/ 
+
 echo -e "\n#=====================================================" >> ~/.bashrc
 echo "# For VCPKG stuff " >> ~/.bashrc
 echo "# " >> ~/.bashrc

@@ -100,7 +100,7 @@ cat ~/.bashrc   >> $logFile 2>&1
 echo "----------------------------------"   >> $logFile 2>&1
 echo "Versions:"  >> $logFile 2>&1
 gcc --version | head -n 1 >> $logFile 2>&1
-pkg-config --version | head 1 >> $logFile 2>&1
+pkg-config --version | head -n 1 >> $logFile 2>&1
 autoconf --version | head -n 1 >> $logFile 2>&1
 automake --version | head -n 1 >> $logFile 2>&1
 libtool --version | head -n 1 >> $logFile 2>&1
@@ -110,6 +110,8 @@ echo "PKG_CONFIG_PATH       : '$PKG_CONFIG_PATH'" >> $logFile 2>&1
 echo "ACLOCAL_PATH          : '$ACLOCAL_PATH'" >> $logFile 2>&1
 echo "VCPKG_BINARY_SOURCES  : '$VCPKG_BINARY_SOURCES'" >> $logFile 2>&1
 echo "VCPKG_NUGET_REPOSITORY: '$VCPKG_NUGET_REPOSITORY'" >> $logFile 2>&1
+echo "----------------------------------"   >> $logFile 2>&1
+ls -l  /usr/local/share/aclocal/ 
 echo "====================================================" >> $logFile 2>&1
 
 MyEcho ()
