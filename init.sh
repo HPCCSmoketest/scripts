@@ -468,8 +468,14 @@ INSTANCE_ID=$( wget -q -t1 -T1 -O - http://169.254.169.254/latest/meta-data/inst
 [[ $(date "+%-S") -ge 50 ]] && timeStep=1 || timeStep=1
 
 # Add environment settings to crotab
-(echo "PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/sbin:/usr/sbin:"; echo "SHELL=/bin/bash"; crontab -l) | crontab
-(crontab -l; echo "source /home/centos/.bashrc"; crontab -l) | crontab
+(echo "PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/sbin:/usr/sbin:" && \
+ echo "SHELL=/bin/bash" && \
+ echo "export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH"  && \
+ echo "export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" && \
+ echo "export ACLOCAL_PATH=/usr/local/share/aclocal:$ACLOCAL_PATH"  && \
+ echo "export VCPKG_BINARY_SOURCES=\"clear;nuget,GitHub,readwrite\""  && \
+ echo "export VCPKG_NUGET_REPOSITORY=https://github.com/hpcc-systems/vcpkg" ; crontab -l ) | crontab
+
 if [[ $DRY_RUN -eq 0 ]]
 then
     DEVTOOLSET=$( scl -l | egrep 'devtoolset' | tail -n 1 )
