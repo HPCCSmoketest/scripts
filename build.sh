@@ -104,6 +104,7 @@ pkg-config --version | head -n 1 >> $logFile 2>&1
 autoconf --version | head -n 1 >> $logFile 2>&1
 automake --version | head -n 1 >> $logFile 2>&1
 libtool --version | head -n 1 >> $logFile 2>&1
+mono --version | head -n 1 >> $logFile 2>&1
 
 echo "LD_LIBRARY_PATH       : '$LD_LIBRARY_PATH'" >> $logFile 2>&1
 echo "PKG_CONFIG_PATH       : '$PKG_CONFIG_PATH'" >> $logFile 2>&1

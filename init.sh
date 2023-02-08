@@ -353,6 +353,14 @@ else
     ls -l /usr/local/share/aclocal/pkg*
     
     echo /usr/local/lib | sudo tee /etc/ld.so.conf.d/usr_local_lib.conf
+    
+    # Build Tools - Mono  ---
+    sudo yum-config-manager --add-repo http://download.mono-project.com/repo/centos/
+    sudo yum clean all
+    sudo yum makecache
+    sudo rpm --import "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
+
+    sudo yum install -y mono-complete 
 fi
 myEcho "Dependencies and versions:"
 which pkg-config
@@ -370,6 +378,11 @@ rpm -q automake
 which libtool
 libtool --version | head -n 1
 rpm -q libtool
+
+which mono
+mono --version | head -n 1
+rpm -q mono
+
 
 myEcho "Content of /usr/local/share/aclocal/ "
 ls -l  /usr/local/share/aclocal/ 
