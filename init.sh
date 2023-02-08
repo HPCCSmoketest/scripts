@@ -468,7 +468,7 @@ INSTANCE_ID=$( wget -q -t1 -T1 -O - http://169.254.169.254/latest/meta-data/inst
 [[ $(date "+%-S") -ge 50 ]] && timeStep=1 || timeStep=1
 
 # Add environment settings to crotab
-(echo "PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/sbin:/usr/sbin:"; echo "SHELL=/bin/bash"; crontab -l) | crontab
+(echo "PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/sbin:/usr/sbin:"; echo "SHELL=/bin/bash";  echo "source $HOME/.bashrc"; crontab -l) | crontab
 if [[ $DRY_RUN -eq 0 ]]
 then
     DEVTOOLSET=$( scl -l | egrep 'devtoolset' | tail -n 1 )
