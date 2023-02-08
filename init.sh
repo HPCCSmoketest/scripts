@@ -352,47 +352,23 @@ else
     ls -l  /usr/local/bin/pkg*
     ls -l /usr/local/share/aclocal/pkg*
     
-    curl -o libtool-2.4.6.tar.gz http://ftp.jaist.ac.jp/pub/GNU/libtool/libtool-2.4.6.tar.gz && \
-    tar xvfz libtool-2.4.6.tar.gz && \
-    pushd libtool-2.4.6 && \
-    ./configure --prefix=/usr/local/libtool/2_4_6 && \
-    make && \
-    sudo make install
-    popd
-
-    sudo ln -s /usr/local/libtool/2_4_6/bin/libtool /usr/local/bin/ && \
-    sudo ln -s /usr/local/libtool/2_4_6/bin/libtoolize /usr/local/bin/ && \
-    sudo ln -s /usr/local/libtool/2_4_6/include/libltdl /usr/local/include/ && \
-    sudo ln -s /usr/local/libtool/2_4_6/include/ltdl.h /usr/local/include/ && \
-    sudo ln -s /usr/local/libtool/2_4_6/lib/libltdl.a /usr/local/lib/ && \
-    sudo ln -s /usr/local/libtool/2_4_6/lib/libltdl.la /usr/local/lib/ && \
-    sudo ln -s /usr/local/libtool/2_4_6/lib/libltdl.so /usr/local/lib/ && \
-    sudo ln -s /usr/local/libtool/2_4_6/lib/libltdl.so.7 /usr/local/lib/ && \
-    sudo ln -s /usr/local/libtool/2_4_6/lib/libltdl.so.7.3.1 /usr/local/lib/ && \
-    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/libtool.m4 /usr/local/share/aclocal/ && \
-    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/ltargz.m4 /usr/local/share/aclocal/ && \
-    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/ltdl.m4 /usr/local/share/aclocal/ && \
-    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/lt~obsolete.m4 /usr/local/share/aclocal/ && \
-    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/ltoptions.m4 /usr/local/share/aclocal/ && \
-    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/ltsugar.m4 /usr/local/share/aclocal/ && \
-    sudo ln -s /usr/local/libtool/2_4_6/share/aclocal/ltversion.m4 /usr/local/share/aclocal/ 
-
     echo /usr/local/lib | sudo tee /etc/ld.so.conf.d/usr_local_lib.conf
 fi
+myEcho "Dependencies and versions:"
 which pkg-config
-pkg-config --version
+pkg-config --version | head -n 1
 rpm -q pkg-config
 
 which autoconf
-autoconf --version
+autoconf --version | head -n 1
 rpm -q autoconf
 
 which automake
-automake --version
+automake --version | head -n 1
 rpm -q automake
 
 which libtool
-libtool --version
+libtool --version | head -n 1
 rpm -q libtool
 
 myEcho "Content of /usr/local/share/aclocal/ "
@@ -401,9 +377,9 @@ ls -l  /usr/local/share/aclocal/
 echo -e "\n#=====================================================" >> ~/.bashrc
 echo "# For VCPKG stuff " >> ~/.bashrc
 echo "# " >> ~/.bashrc
-echo "export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> ~/.bashrc
-echo "export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" >> ~/.bashrc
-echo "export ACLOCAL_PATH=/usr/local/share/aclocal:$ACLOCAL_PATH" >> ~/.bashrc
+echo "export LD_LIBRARY_PATH=/usr/local/lib:\$LD_LIBRARY_PATH" >> ~/.bashrc
+echo "export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:\$PKG_CONFIG_PATH" >> ~/.bashrc
+echo "export ACLOCAL_PATH=/usr/local/share/aclocal:\$ACLOCAL_PATH" >> ~/.bashrc
 
 echo "export VCPKG_BINARY_SOURCES=\"clear;nuget,GitHub,readwrite\"" >> ~/.bashrc
 echo "export VCPKG_NUGET_REPOSITORY=https://github.com/hpcc-systems/vcpkg" >> ~/.bashrc
