@@ -206,7 +206,7 @@ then
     
     # An experiment from 2021-10-06
     INSTANCE_TYPE="c5.4xlarge"      # 0.744 USD per Hour (16 Cores, 3.4GHz, 32 GB RAM)
-    AVERAGE_SESSION_TIME=0.75       # Hours for m5.2xlarge instance
+    AVERAGE_SESSION_TIME=1.25       # Hours for c5.4xlarge instance with VCPKG build
     
     # An experiment from 2021-10-06 -> Can't create instance
     #INSTANCE_TYPE="c5a.8xlarge"      # 0.1.344 USD per Hour (32 Cores, 3.3 GHz, 64 GB RAM)
