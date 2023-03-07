@@ -583,6 +583,7 @@ then
 	CMAKE_CMD+=$' -DUSE_AWS=OFF'
 	CMAKE_CMD+=$' -D INCLUDE_PLUGINS=OFF -D TEST_PLUGINS=0 '${PYTHON_PLUGIN}
 	CMAKE_CMD+=$' -DUSE_CASSANDRA=OFF'
+    CMAKE_CMD+=$' -DUSE_JAVA=ON'
     else
         WritePlainLog "The '../HPCC-Platform/vcpkg/bootstrap-vcpkg.sh' not found, fall back to standard build." "$logFile"
     fi
