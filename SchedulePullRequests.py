@@ -102,7 +102,7 @@ skipDraftPr=True
 if ('skipDraftPr' in os.environ) and (os.environ['skipDraftPr'] == '0'):
     skipDraftPr = False
 
-averageSessionTime=0.5
+averageSessionTime=1.5
 if ('AVERAGE_SESSION_TIME' in os.environ):
     averageSessionTime = float(os.environ['AVERAGE_SESSION_TIME'])
 
@@ -3592,7 +3592,7 @@ if __name__ == '__main__':
 
 
         t = time.localtime()
-        if (t[3] == 23) and (t[4] > 30):
+        if (t[3] >= 22) and (t[4] >= 0):
             print("Finish this day at "+ time.asctime())
             break
         else:

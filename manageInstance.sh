@@ -120,7 +120,7 @@ SMOKETEST_HOME=$(pwd)
 ADD_GIT_COMMENT=0
 INSTANCE_NAME="PR-12701"
 DRY_RUN=''  #"-dryRun"
-AVERAGE_SESSION_TIME=1.0 # Hours
+AVERAGE_SESSION_TIME=1.5 # Hours
 TIME_STAMPT=$( date "+%y-%m-%d_%H-%M-%S" )
 APP_ID=$(hostname)
 BASE_TEST=''
@@ -206,7 +206,7 @@ then
     
     # An experiment from 2021-10-06
     INSTANCE_TYPE="c5.4xlarge"      # 0.744 USD per Hour (16 Cores, 3.4GHz, 32 GB RAM)
-    AVERAGE_SESSION_TIME=1.25       # Hours for c5.4xlarge instance with VCPKG build
+    AVERAGE_SESSION_TIME=1.5       # Hours for c5.4xlarge instance with VCPKG build
     
     # An experiment from 2021-10-06 -> Can't create instance
     #INSTANCE_TYPE="c5a.8xlarge"      # 0.1.344 USD per Hour (32 Cores, 3.3 GHz, 64 GB RAM)
