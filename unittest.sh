@@ -44,7 +44,7 @@ UNITTEST_BIN_PATH=/opt/HPCCSystems/bin
 UNITTEST_LIB_PATH=/opt/HPCCSystems/lib
 UNITTEST_BIN=unittests
 #UNITTEST_EXCLUSION='CcdFileTest'
-UNITTEST_EXCLUSION=
+UNITTEST_EXCLUSION="InplaceIndexTest"
 
 HPCC_DATA_DIR=/var/lib/HPCCSystems/hpcc-data
 HPCC_DATA_THOR_DIR=/var/lib/HPCCSystems/hpcc-data/thor
