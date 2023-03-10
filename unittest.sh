@@ -44,7 +44,7 @@ UNITTEST_BIN_PATH=/opt/HPCCSystems/bin
 UNITTEST_LIB_PATH=/opt/HPCCSystems/lib
 UNITTEST_BIN=unittests
 #UNITTEST_EXCLUSION='CcdFileTest'
-UNITTEST_EXCLUSION="InplaceIndexTest"
+UNITTEST_EXCLUSION=" InplaceIndexTest "
 
 HPCC_DATA_DIR=/var/lib/HPCCSystems/hpcc-data
 HPCC_DATA_THOR_DIR=/var/lib/HPCCSystems/hpcc-data/thor
@@ -183,6 +183,13 @@ WriteLog "Execute unittests..." "$UNITTEST_LOG_FILE"
 ${UNITTEST_BIN_PATH}/${UNITTEST_BIN} ${UNITTEST_LIST_PARAMS} | sort | while read unittest
 do 
     WriteLog "$unittest" "$UNITTEST_LOG_FILE"
+    
+    if [[ " ${UNITTESTS_EXCLUDE[@]} " =~ " ${unittest} " ]]
+    then
+        WriteLog "Excluded from this session." "$UNITTEST_LOG_FILE"
+        continue
+    fi
+    
     #result=$( sudo unbuffer ${UNITTEST_BIN} ${UNITTEST_EXEC_PARAMS} $unittest 2>&1 )
     result=$( ${UNITTEST_BIN_PATH}/${UNITTEST_BIN} ${UNITTEST_EXEC_PARAMS} $unittest 2>&1 )
     retCode=$( echo $?)
