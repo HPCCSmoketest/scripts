@@ -184,7 +184,7 @@ ${UNITTEST_BIN_PATH}/${UNITTEST_BIN} ${UNITTEST_LIST_PARAMS} | sort | while read
 do 
     WriteLog "$unittest" "$UNITTEST_LOG_FILE"
     
-    if [[ " ${UNITTESTS_EXCLUDE[@]} " =~ " ${unittest} " ]]
+    if [[ " ${UNITTEST_EXCLUSION[@]} " =~ " ${unittest} " ]]
     then
         WriteLog "Excluded from this session." "$UNITTEST_LOG_FILE"
         continue
