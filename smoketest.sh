@@ -212,6 +212,10 @@ fi
 find OldPrs/PR-*/ -maxdepth 1 -iname 'build' -type d -print -exec rm -rf '{}' \;
 find OldPrs/PR-*/ -maxdepth 1 -iname 'HPCC-Platform' -type d -print -exec rm -rf '{}' \;
 
+echo "Remove all core file and core archives older than 2 days"
+find PR-*/ OldPrs/PR-*/ -mtime +2 -iname '*-cores*' -type f -print -exec rm -v '{}' \;
+find PR-*/ OldPrs/PR-*/ -mtime +2 -iname '*core_*' -type f -print -exec rm -v '{}' \;
+
 if [[ -z "${MAX_CLOSED_PR_KEEPING_DAYS}" ]]
 then
     maxDays=30
