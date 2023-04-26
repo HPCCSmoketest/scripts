@@ -173,6 +173,7 @@ sudo yum install -y \
 
 sudo yum install -y centos-release-scl
 sudo yum install -y devtoolset-9
+sudo yum install -y devtoolset-11
 myEcho "Done"
 myEcho "-------------------------------------"
 
