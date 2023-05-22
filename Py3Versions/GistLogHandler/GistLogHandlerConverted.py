@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import os
 import subprocess
 import sys
@@ -20,7 +18,7 @@ class GistLogHandler(object):
         if self.resultFile == None:
             curTime = time.strftime("%y-%m-%d-%H-%M-%S")
             resultFileName= "gistloghandler-" + curTime + ".log"
-            self.resultFile = open(resultFileName,  "w")
+            self.resultFile = open(resultFileName,  "w", 0)
         self.distDir = 'gists'
         self.curDir =  os.getcwd()
         self.verbose = verbose
@@ -42,10 +40,10 @@ class GistLogHandler(object):
     
     def formatResult(self, proc):
         retcode = proc.wait()
-        stdout = proc.stdout.read().decode('utf-8').rstrip('\n').replace('\n','\n\t\t')
+        stdout = proc.stdout.read().rstrip('\n').replace('\n','\n\t\t')
         if len(stdout) == 0:
             stdout = 'None'
-        stderr = proc.stderr.read().decode('utf-8') .rstrip('\n').replace('\n','\n\t\t')
+        stderr = proc.stderr.read().rstrip('\n').replace('\n','\n\t\t')
         if len(stderr) == 0:
             stderr = 'None'
         result = "returncode: " + str(retcode) + "\n\t\tstdout: " + stdout + "\n\t\tstderr: " + stderr
@@ -150,7 +148,7 @@ class GistLogHandler(object):
         tryCount = 5
         while (True):
             result = self.execCmd(cmd)
-
+            #print("\tresult:"+result + "\n")
             if result[1]['returncode'] != 0:
                 tryCount -=1
                 if tryCount > 0:
@@ -171,10 +169,14 @@ class GistLogHandler(object):
         os.chdir(self.distDir)
         
         # Set origin to push
-
+        # git remote set-url origin https://gist.github.com/HPCCSmoketest/<gist_id>
+        #cmd = 'git remote set-url origin  https://gist.github.com/HPCCSmoketest/'+ self.id
+        # https://gist.github.com/3b01b4185f6919e4f47ff66a06ad8588.git
+        #cmd = 'git remote set-url origin  git@gist.github.com:'+ self.id + '.git'
+        #cmd = 'git remote set-url origin  https://' + self.token + '@gist.github.com/HPCCSmoketest/'+ self.id
         cmd = 'git remote set-url origin https://' + self.token + '@gist.github.com/'+ self.id
         result = self.execCmd(cmd)
-
+        #print("\tresult:"+result + "\n")
         
         os.chdir(self.curDir)
         pass
@@ -186,6 +188,7 @@ class GistLogHandler(object):
         # git add <filename>
         cmd = 'git add "' + filename + '"'
         result = self.execCmd(cmd)
+        #print("\tresult:"+result + "\n")
         
         os.chdir(self.curDir)
           
@@ -213,6 +216,7 @@ class GistLogHandler(object):
             # copy ./CMake* file to gists/.
             cmd = 'cp ' + cMakeResultFilesPath + cMakeResultFileName + ' "gists/' + cMakeResultFileName + '"'
             result = self.execCmd(cmd)
+            #print("\tresult:"+result + "\n")
             
             # Add CMake result file to git
             self.gistAddFile(cMakeResultFileName)
@@ -236,7 +240,7 @@ class GistLogHandler(object):
         isCoreFlesReported = False
         traceFilesPath = './'
         traceFileNames = glob.glob( traceFilesPath + '*.trace')
-        print("Tracefilenames:", end=' '),
+        print(("Tracefilenames:"), end=' ')
         print(traceFileNames)
         for traceFileName in traceFileNames:
             if not isCoreFlesReported:
@@ -250,7 +254,7 @@ class GistLogHandler(object):
             # copy trace file to gists/.
             cmd = 'mv ' + traceFilesPath + traceFileName + ' "gists/' + traceFileName + '"'
             result = self.execCmd(cmd)
-            print("\tresult:"+result[0] + "\n")
+            print(("\tresult:"+result[0] + "\n"))
             
             # Add CMake result file to git
             self.gistAddFile(traceFileName)
@@ -282,6 +286,7 @@ class GistLogHandler(object):
             # copy /HPCCSystems-regression/zap/<zapfile> to gists/.
             cmd = 'cp ' + zapFilePath + zapFileName + ' "gists/' + testname + '-' + zapFileName + '"'
             result = self.execCmd(cmd)
+            #print("\tresult:"+result[0] + "\n")
             
             # Add zapfile to git
             self.gistAddFile(testname + '-' + zapFileName)
@@ -345,13 +350,22 @@ class GistLogHandler(object):
         # git commit 
         cmd = 'git commit -a -s -m "Add logs and ZAPs"'
         result = self.execCmd(cmd)
+        #print("\tresult:"+result[0] + "\n")
         
         # git push 
         cmd = 'git push origin main'
         result = self.execCmd(cmd)
+        #print("\tresult:"+result[0] + "\n")
        
         os.chdir(self.curDir)
-       
+        
+        # save id
+#        if os.path.exists( 'messageId.dat'):
+#            file = open('messageId.dat' ,  "r") 
+#            line = file.readline()
+#            file.close()
+#            gistsIdFileName= line.strip().replace('\n','') + '.dat'
+#        else:
         
 
         gistFile = open(self.gistsIdFileName,  "a")
@@ -363,6 +377,7 @@ class GistLogHandler(object):
         gistsZipFileName = self.gistsIdFileName.replace('.dat','-' + curTime + '.zip')
         cmd = "zip " + gistsZipFileName + " -m -r gists"
         result = self.execCmd(cmd)
+        #print("\tresult:"+result[0] + "\n")
 
     def removeGists(self, removeAll = False):
         try:
@@ -387,6 +402,8 @@ class GistLogHandler(object):
                     # Re-write gists ID file with the last one
                     file = open(self.gistsIdFileName, "w")
                     for index in range(len(newGistsIds)):
+                        #(id,  link) = newGistsIds[index].replace('\n','').split(',')
+                        #file.write(id + ', ' + link + '\n')
                         file.write(newGistsIds[index])
                     file.close()
                 else:
@@ -394,7 +411,7 @@ class GistLogHandler(object):
                     os.unlink(self.gistsIdFileName)
                 
         except:
-            print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
+            print(("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" ))
             pass
         finally:
             pass
@@ -408,16 +425,11 @@ class GistLogHandler(object):
 
 if __name__ == '__main__':
     
-	try:
-		token = open("token.dat", "r")
-    	
-		gistHandler = GistLogHandler(token.readline().strip())
-		gistHandler.removeGists(True)
-		gistHandler.createGist(999, 'cafebabe')
-		gistHandler.cloneGist()
-		gistHandler.updateReadme('OS: blabla\n')
-		gistHandler.updateReadme('More blabla \\n ' + time.strftime("%y-%m-%d-%H-%M-%S") + ' \\n ')
-		gistHandler.commitAndPush()
-	except Exception as e:
-		print(str(e))
+    gistHandler = GistLogHandler()
+    gistHandler.removeGists(True)
+    gistHandler.createGist(999, 'cafebabe')
+    gistHandler.cloneGist()
+    gistHandler.updateReadme('OS: blabla\n')
+    gistHandler.updateReadme('More blabla \\n ' + time.strftime("%y-%m-%d-%H-%M-%S") + ' \\n ')
+    gistHandler.commitAndPush()
 
