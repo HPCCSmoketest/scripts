@@ -175,7 +175,7 @@ embededStuffTests = {
 
 def myPrint(Msg, *Args):
         if verbose:
-            format=''.join(['%s']*(len(Args)+1)) 
+            format=', '.join(['%s']*(len(Args)+1)) 
             print(format % tuple([Msg]+list(map(str,Args))))
 
 def WildGen( testFiles):
@@ -267,7 +267,7 @@ def CollectResultsOld(logPath, tests):
                     logFileName = sortedFiles[0] 
                     print(logFileName)
                     
-                    logFile = open(logFileName,  'rb')
+                    logFile = open(logFileName,  'r')
                     oldIndex = 1
                     for line in logFile:
                         line = line.strip().replace('\n', '')
@@ -350,7 +350,7 @@ def CollectResults(logPath, tests, prid=0, isGitHubComment=True):
                     logFileName = sortedFiles[0] 
                     print(logFileName)
 
-                    logFile = open(logFileName,  'rb')
+                    logFile = open(logFileName,  'r')
                     oldIndex = 1
                     errMsg=[]
                     inTests = True
@@ -833,7 +833,7 @@ def GetOpenPulls(knownPullRequests):
             outFile.close()
             
         # check sha.dat file
-        shaFile = open(shaFileName,  "rb")
+        shaFile = open(shaFileName,  "r")
         sha = shaFile.readline()
         shaFile.close()
         newSha=pr['head']['sha']
@@ -848,7 +848,7 @@ def GetOpenPulls(knownPullRequests):
             baseBranch = pr['base']['ref']
         else:    
             # check baseBranch.dat file
-            baseBranchFile = open(baseBranchFileName,  "rb")
+            baseBranchFile = open(baseBranchFileName,  "r")
             baseBranch = baseBranchFile.readline()
             baseBranchFile.close()
         
@@ -2435,7 +2435,7 @@ def HandleSkippedPulls(prSkipped):
             if "Skipped" in lines:
                 print("Already '%s'." % (lines))
                 # Check the sha.dat
-                shaFile = open('sha.dat',  "rb")
+                shaFile = open('sha.dat',  "r")
                 sha = shaFile.readline()
                 shaFile.close()
                 if sha != prSkipped[prid]['sha']:
