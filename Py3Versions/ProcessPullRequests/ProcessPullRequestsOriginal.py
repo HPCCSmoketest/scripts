@@ -1,7 +1,8 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import os
+#import system
 import json
 import sys
 import subprocess
@@ -14,8 +15,6 @@ import unicodedata
 import inspect
 import traceback
 import platform
-import threading
-import random
 
 from operator import xor
 from GistLogHandler import GistLogHandler
@@ -41,7 +40,7 @@ enableShallowClone=False
 if ('enableShallowClone' in os.environ) and (os.environ['enableShallowClone'] == '1'):
     addGitComment=True
     
-addGitComment=False
+addGitComment=True
 # For override addGitComment setting
 if ('addGitComment' in os.environ) and (os.environ['addGitComment'] == '0'):
     addGitComment=False
@@ -116,38 +115,56 @@ enableVcpkgBuild = False
 if ('enableVcpkgBuild' in os.environ) and (os.environ['enableVcpkgBuild'] == '1'):
     enableVcpkgBuild = True
 
+# This can use in Cloud (AWS) environment to stop an instance if there is no more PR ready to test. 
+# The instance can be restart by a scheduler or other mechanism.
+exitWhenLongWait = False
+if ('exitWhenLongWait' in os.environ) and (os.environ['exitWhenLongWait'] == '1'):
+    exitWhenLongWait = True
+
 verbose = False
 # Do not update PR source code - means use last PR code (Do not get new commit)
 # It has sense if and only if there is a previously updated HPCC platform code with merged PR code
 # Currently doesn't used
 doNotUpdate = True
 
-maxIdleTime = 120 # 600 # sec
+maxIdleTime = 600 # sec
+if exitWhenLongWait:
+    maxIdleTime /= 2
+    
 noEcho = False
-sysId = platform.uname()[0] + ' ' + platform.uname()[1] + ' (' + platform.system() + ' ' + platform.release() + ')'
-appId = "App"""
+sysId = platform.dist()[0] + ' ' + platform.dist()[1] + ' (' + platform.system() + ' ' + platform.release() + ')'
+
 gitHubToken=None
 curlTimeout=120
 
 if 'inux' in sysId:
-    myProc = subprocess.Popen(["gcc --version | head -n 1 "], shell=True,  bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    sysId += '\n GCC:  ' + myProc.stdout.read().decode('utf-8').rstrip('\n')
-    myProc = subprocess.Popen(["hostname"], shell=True, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    sysId += '\n Host: ' + myProc.stdout.read().decode('utf-8').rstrip('\n')
+    myProc = subprocess.Popen(["hostname"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    sysId += '\n Host: ' + myProc.stdout.read().rstrip('\n')
+    myProc = subprocess.Popen(["gcc --version | head -n 1 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    sysId += '\n GCC:  ' + myProc.stdout.read().rstrip('\n')
     myProc = subprocess.Popen(["git --version"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-    sysId += '\n Git:  ' + myProc.stdout.read().decode('utf-8').rstrip('\n')
-    
-    myProc = subprocess.Popen(['ps $PPID | tail -n 1 | awk "{print \$6}"'], shell=True, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    parentCommand = myProc.stdout.read().decode('utf-8').rstrip('\n')
-    
-    myProc = subprocess.Popen(['hostname'], shell=True, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    appId = myProc.stdout.read().decode('utf-8').rstrip('\n')
+    sysId += '\n Git: ' + myProc.stdout.read().rstrip('\n').split()[2]
+    myProc = subprocess.Popen(["cmake --version"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    sysId += ',  CMake: ' + myProc.stdout.read().rstrip('\n').split()[2]
+    myProc = subprocess.Popen(["curl --version"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    sysId += ',  cUrl: ' + myProc.stdout.read().rstrip('\n').split()[1]
+    myProc = subprocess.Popen(["node --version"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    sysId += ',  node.js: ' + myProc.stdout.read().rstrip('\n')
+    myProc = subprocess.Popen(["npm --version"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    sysId += ',  npm: ' + myProc.stdout.read().rstrip('\n')
 
+    myProc = subprocess.Popen(["wget -q -t1 -T1 -O - http://169.254.169.254/latest/meta-data/instance-id"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+    instanceId = myProc.stdout.read().rstrip('\n')
+    if len(instanceId) == 0:
+        myProc = subprocess.Popen(["l=$(readlink /var/lib/cloud/instance); echo ${l##*/}"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+        instanceId = myProc.stdout.read().rstrip('\n')
+        if len(instanceId) == 0:
+            instanceId = "NotInCloud"
+        
 failEmoji=':x:'
 passEmoji=':white_check_mark:'
 
-
-threads = {}
+testInfo = {}
 
 embededStuffTests = {
                             'Rembed':       ['testing/regress/ecl/embedR.ecl'], 
@@ -176,7 +193,7 @@ embededStuffTests = {
 def myPrint(Msg, *Args):
         if verbose:
             format=''.join(['%s']*(len(Args)+1)) 
-            print(format % tuple([Msg]+list(map(str,Args))))
+            print format % tuple([Msg]+map(str,Args))
 
 def WildGen( testFiles):
     files = []
@@ -197,11 +214,12 @@ def WildGen( testFiles):
         ch11 = (files[0][1])
         ch20 = (files[index][0])
         ch21 = (files[index][1])
-
+        #print "ch10:'"+str(ch10)+"', ch11:'"+str(ch11)+"'"
+        #print "ch20:'"+str(ch20)+"', ch21:'"+str(ch21)+"'"
         # With XOR separate the filenames started with different letter and it is generates a kind of
         # HASH value to separate filenames into clusters/groups
         val = xor(ord(ch10),  ord(ch20))*100 + xor(ord(ch11),  ord(ch21))
-
+        #print(val)
         id = str(val)
         if str(val) not in groups:
             groups[id] =  {'files': [],  'mask':'',  'maxlen': 9999}
@@ -210,7 +228,7 @@ def WildGen( testFiles):
             groups[id]['maxlen'] = len(files[index])
     
     myPrint(groups)
-
+    #print '\n\n'
     pass
     # If a group has only one element, then this element will be the mask
     # else we try to find the longest common starting string then add a '*' at its end and that will be the mask.
@@ -282,12 +300,12 @@ def CollectResultsOld(logPath, tests):
                             
                         if len(items)  in range (4, 6):
                             # This is a 'Test:' line with ot without version
-
+                            #testName = items[0]+'.'+items[2].strip()
                             testName = items[2].strip()
                             testNameLen = len(testName)
                             if testName not in logs[prefix]:
                                 logs[prefix][testName] = {}
-
+                            #logs[prefix][testName][target]
                         elif 'Fail' in line:
                             logs[prefix][testName][target]= 'Fail'
                         elif 'Pass' in line:
@@ -299,7 +317,8 @@ def CollectResultsOld(logPath, tests):
             result.append("\\n| " + prefix + " | " + targets[0] + " | " + targets[1] + " | " + targets[2] + " |")
             result.append("| ----- | ----- | ----- | ---- |")
             for testname in sorted(logs[prefix],  key=str.lower) :
-
+                #items = testname.split('.')
+                #line = "%-*s " % (20,  items[1])
                 line = "| "+ testname + " "
                 
                 for target in targets:
@@ -404,7 +423,8 @@ def CollectResults(logPath, tests, prid=0, isGitHubComment=True):
                                     pass
                                 errMsg = []
                                 
-
+                            # This is a 'Test:' line
+                            #testName = items[0]+'.'+items[2].strip()
                             if 'version' in items[3]:
                                 testName = items[2].strip() +' ('+''.join(items[4:]).strip().replace(' )', ')')
                                 testNameLen = len(testName)
@@ -418,7 +438,7 @@ def CollectResults(logPath, tests, prid=0, isGitHubComment=True):
                             elif inError:
                                 # Add error msg
                                 pass
-
+                            #logs[prefix][testName][target]
                             
                             logs[prefix][testName][target]['index'] = index
                         elif '. Fail' in line:
@@ -438,7 +458,7 @@ def CollectResults(logPath, tests, prid=0, isGitHubComment=True):
                             else:
                                 # zero length line at the end of error log
                                 if len(errMsg):
-
+                                    #inError=False
                                     pass
                                 else:
                                     errMsg.append("no error info")
@@ -477,11 +497,11 @@ def CollectResults(logPath, tests, prid=0, isGitHubComment=True):
                     executed = 0
                     passed = 0
                     failed = 0
-
+                    #for testname in sorted(logs[prefix],  key=str.lower) :
                     for testname in sorted(logs[prefix],  key=str) :
                         if target in logs[prefix][testname]:
                             executed += 1
-
+                            #print("%3d:%s-%s-%s" % (executed,  prefix,  target, testname))
                             if logs[prefix][testname][target]['result'] == 'Pass':
                                 passed += 1
                             elif logs[prefix][testname][target]['result'] == 'Fail':
@@ -509,7 +529,8 @@ def CollectResults(logPath, tests, prid=0, isGitHubComment=True):
                     table.addItem('fail:' + str(failed))
                     table.addItem('elaps#'+ elapsTimes[prefix][target], '#')
                     table.completteRow()
-
+                    testInfo[target + '_' + prefix + '_time'] = elapsTimes[prefix][target].split()[0]
+                    #print("total:%3d, pass: %3d, fails:%3d\n-----------------------\n" % (executed,  passed,  failed))
                 pass
             result += table.getTable()
 
@@ -559,7 +580,8 @@ def CollectResults(logPath, tests, prid=0, isGitHubComment=True):
                 errors = ''
                 
                 for testname in sorted(logs[prefix],  key=str.lower) :
-
+                    #items = testname.split('.')
+                    #line = "%-*s " % (20,  items[1])
                     if len(logs[prefix][testname]) == 0:
                         continue
                     if isGitHubComment:
@@ -611,7 +633,8 @@ def ProcessPrBody(bodyText):
             elif 'draft' in m.group(2):
                 retVal['testDraft'] = True
             
-
+#            print("\t%s" % (str(m.groups())))
+#            retVal[m.group(2)] = m.group(1)
             pass
         pass
     return retVal
@@ -620,8 +643,8 @@ def GetPullReqCommitId(prid):
     retVal = ''
     if gitHubToken != "":
         try:
-            myProc = subprocess.Popen(['curl --max-time %d --request GET -H "Content-Type: application/json" -H "Authorization: token %s" https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls/%s' % (curlTimeout,  gitHubToken, prid)],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = myProc.stdout.read().decode('utf-8')
+            myProc = subprocess.Popen(['curl --max-time %d --request GET -H "Content-Type: application/json" -H "Authorization: token %s" https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls/%s' % (curlTimeout, gitHubToken, prid)],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            result = myProc.stdout.read()
             pullInfo = json.loads(result)
             retVal = pullInfo['head']['sha']
         except:
@@ -633,7 +656,6 @@ def GetPullReqCommitId(prid):
     
 def GetOpenPulls(knownPullRequests):
     prs={}
-    prSkipped = {}
     openPRs = 0
     newPRs = 0
     buildPr = 0
@@ -654,25 +676,30 @@ def GetOpenPulls(knownPullRequests):
         # doesn't have 'draft' attribute then use the experimental API (via Accept header) to get extended result
         headers = '--header "Authorization: token ' +  gitHubToken + '"'
         headers += ' --max-time %d' % (curlTimeout)
+        # Using wget (problems on Replacement MFA machines)
+        #myProc = subprocess.Popen(["wget -S " + headers + " -OpullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
 
         # Using curl
         myProc = subprocess.Popen(["curl " + headers + " -opullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+
+        result = myProc.stdout.read() + myProc.stderr.read()
         
-        result = myProc.stdout.read().decode('utf-8') + myProc.stderr.read().decode('utf-8')
         pulls_data = open('pullRequests.json').read()
         if '"draft":' not in pulls_data:
             print("Use an experimental GitHub api to determine draft pull requests")
-            headers += " '--header=User-Agent: Mozilla/5.0 (Windows NT 6.0) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.97 Safari/537.11'"
-            headers += " '--header=Accept:application/vnd.github.shadow-cat-preview'"
-
+            headers   =" '--header=User-Agent: Mozilla/5.0 (Windows NT 6.0) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.97 Safari/537.11'"
+            headers +=" '--header=Accept:application/vnd.github.shadow-cat-preview'"
+            # Using wget (problems on Replacement MFA machines)
+            #myProc = subprocess.Popen(["wget -S " + headers + " -OpullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            
             # Using curl
             myProc = subprocess.Popen(["curl " + headers + " -opullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
  
-            result = myProc.stdout.read().decode('utf-8') + myProc.stderr.read().decode('utf-8')
+            result = myProc.stdout.read() + myProc.stderr.read()
             
         # get headers
         myProc = subprocess.Popen(["curl --head " + headers + " https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-        result = myProc.stdout.read().decode('utf-8') + myProc.stderr.read().decode('utf-8')
+        result = myProc.stdout.read() + myProc.stderr.read()
             
         morePages = []
         if 'Link:' in result:
@@ -686,11 +713,13 @@ def GetOpenPulls(knownPullRequests):
             lastPageUrl = lines[lastPageUrlIndex].replace('<', '').replace('>;', '')
             lastPageIndex = int(re.search('(?<=page=)\d+', lastPageUrl).group(0))
             for page in range(nextPageIndex,  lastPageIndex+1):
-            
+                #myProc = subprocess.Popen(["wget -S " + headers + " -OpullRequests"+str(page)+".json https://api.github.com/repositories/2030681/pulls?page="+str(page)],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                # Using wget (problems on Replacement MFA machines)
+                #myProc = subprocess.Popen(["wget -S " + headers + " -OpullRequests"+str(page)+".json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls?page="+str(page)], shell=True, bufsize=8192, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                # Using curl
                 myProc = subprocess.Popen(["curl " + headers + " -opullRequests"+str(page)+".json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls?page="+str(page)],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                result = myProc.stdout.read().decode('utf-8') + myProc.stderr.read().decode('utf-8')
+                result = myProc.stdout.read() + myProc.stderr.read()
 
-                result = myProc.stdout.read().decode('utf-8') + myProc.stderr.read().decode('utf-8')
                 pulls_data2 = open('pullRequests' + str(page) + '.json').read()
                 pulls_data2 = ',\n'+pulls_data2.lstrip('[').rstrip(']\n')
                 morePages.append(pulls_data2)
@@ -711,19 +740,19 @@ def GetOpenPulls(knownPullRequests):
         # Empty the knownPullRequest list ot avoid the further processing 
         # they are closed and move them out
         del knownPullRequests[:]
-        return (prs, buildPr, prSkipped)
+        return (prs, buildPr)
     except Exception as ex:
-        print("Unable to get pulls "+ str(ex))
-
+        print("Unable to get pulls "+ str(ex.reason))
+        #print("Result: " + str(result))
         # Something bad happened when try to get open pulls data 
         # Empty the knownPullRequest list ot avoid the further processing  
         # they are closed and move them out
         del knownPullRequests[:]
-        return (prs, buildPr, prSkipped)
+        return (prs, buildPr)
     finally:
         pass
 
-
+    #print(pulls)
     # It can be determine if a PR mergeable or not in two steps:
     # 1. wget -OpullRequest<PRID>.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls/<PRID>
     # 2. cat pullRequest<PRID>.json | grep -i 'mergeable"'
@@ -736,14 +765,14 @@ def GetOpenPulls(knownPullRequests):
             # Empty the knownPullRequest list ot avoid the further processing 
             # they are closed and move them out
             del knownPullRequests[:]
-            return (prs, buildPr, prSkipped)
+            return (prs, buildPr)
     except Exception as e:
         print("Something wrong with the pulls[] "+ str(e))
         print("Dump of pulls[]:")
         print(pulls)
         print("End.--------")
         del knownPullRequests[:]
-        return (prs, buildPr, prSkipped)
+        return (prs, buildPr)
         
     for pr in pulls:
         try:
@@ -753,22 +782,25 @@ def GetOpenPulls(knownPullRequests):
             print("Missing pr['number'] from pr(%s)" % (repr(pr)))
             continue
             pass
-        
-        prs[prid] = {'user':pr['user']['login'], 'code_base':pr['base']['ref'],  'label':pr['head']['ref'].encode('ascii','replace').decode('utf-8'),
+            
+        prs[prid] = {'user':pr['user']['login'], 'code_base':pr['base']['ref'],  'label':pr['head']['ref'].encode('ascii','replace'),
                             'sha':pr['head']['sha'], 'title':pr['title'], 'draft':False }
         
+        prs[prid] ['prBranchId'] = prs[prid]['label'] + '-smoketest'
         prs[prid]['checkBoxes'] = ProcessPrBody(pr['body'])
         
         if ('draft' in pr) and (skipDraftPr == False) and not prs[prid]['checkBoxes']['testDraft']:
             prs[prid]['draft'] = pr['draft']
+        
+        #prs[prid]['cmd'] = 'git fetch -ff upstream pull/'+str(prid)+'/head:'+repr(pr['head']['ref'])+'-smoketest'
 
         # 2018-05-02 -ff fall back to interactive, forbid it with --no-edit parameter.
         # It can be git/github or master branch problem and not Smoketest, but solved here
- 
-        prs[prid]['cmd'] = 'git pull -ff --no-edit upstream pull/'+str(prid)+'/head:'+repr(pr['head']['ref'])+'-smoketest'
+        #prs[prid]['cmd'] = 'git pull -ff upstream pull/'+str(prid)+'/head:'+repr(pr['head']['ref'])+'-smoketest'
+        prs[prid]['cmd'] = 'git pull -ff --no-edit upstream pull/'+str(prid)+'/head:' +  prs[prid] ['prBranchId'] 
 
         # On some version of git there is not "--no-edit" parameter like in OBT-011 system
-        prs[prid]['cmd2'] = 'git pull -ff  upstream pull/'+str(prid)+'/head:'+repr(pr['head']['ref'])+'-smoketest'
+        prs[prid]['cmd2'] = 'git pull -ff  upstream pull/'+str(prid)+'/head:' +  prs[prid] ['prBranchId'] 
         
         prs[prid]['addComment'] = {}
         prs[prid]['addComment']['cmd'] = 'curl --max-time '+ str(curlTimeout) + ' -H "Content-Type: application/json" '\
@@ -784,18 +816,18 @@ def GetOpenPulls(knownPullRequests):
         prs[prid]['runUnittests'] = False
         prs[prid]['runWutoolTests'] = False
         prs[prid]['buildEclWatch'] = buildEclWatch
+        prs[prid]['newEclWatchBuildMode'] = True
         prs[prid]['inQueue'] = False
         prs[prid]['reason'] = ''
         prs[prid]['buildOnly'] = False
         prs[prid]['sessionTime'] = averageSessionTime   # default, average full test competion time
         prs[prid]['enableStackTrace'] = True
-        prs[prid]['excludeFromTest'] = False
+        prs[prid]['rteChanged'] = False
         prs[prid]['containerized'] = False
         prs[prid]['containerizedOnly'] = False
-        prs[prid]['jira'] = pr['title'][0:10].replace(' ','_')
-        if  not prs[prid]['jira'].startswith('HPCC'):
-            prs[prid]['jira'] = 'JIRA-' + prs[prid]['jira']
-        
+        prs[prid]['jira'] = prs[prid]['label'][0:10]
+        prs[prid]['enableVcpkgBuild'] = False
+               
         testDir = 'smoketest-'+str(prid)
         # mkdir smoketest-<PRID>
         if not os.path.exists(testDir):
@@ -808,9 +840,11 @@ def GetOpenPulls(knownPullRequests):
                     # mv archived PR back from OldPrs directory
                     print ("Move closed "+ testDir + " directory from OldPrs/ back to smoketest directory.")
                     myProc = subprocess.Popen(["mv -f " + 'OldPrs/'+ testDir +" ."],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                    result = formatResult(myProc)
-                    print("Result: " + result['msg'])
+                    (myStdout,  myStderr) = myProc.communicate()
+                    result = "returncode:" + str(myProc.returncode) + ", stdout:'" + myStdout + "', stderr:'" + myStderr.replace('\n','') + "'."
+                    print("Result: "+result)
                     pass
+
 
         try:
             myPrint("testDir: " + testDir)
@@ -818,7 +852,6 @@ def GetOpenPulls(knownPullRequests):
             if testDir in knownPullRequests:
                 myPrint("Remove: " + testDir + " from knownPullRequests[]")
                 knownPullRequests.remove(testDir)
-                
         except:
             print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
             pass
@@ -828,7 +861,7 @@ def GetOpenPulls(knownPullRequests):
         shaFileName = os.path.join(testDir, 'sha.dat')
         if not os.path.exists(shaFileName):
             # Create sha.dat file
-            outFile = open(shaFileName,  "w")
+            outFile = open(shaFileName,  "wb")
             outFile.write(pr['head']['sha'])
             outFile.close()
             
@@ -842,7 +875,7 @@ def GetOpenPulls(knownPullRequests):
         newBaseBranch = pr['base']['ref']
         if not os.path.exists(baseBranchFileName):
             # Create sha.dat file
-            baseBranchFile = open(baseBranchFileName,  "w")
+            baseBranchFile = open(baseBranchFileName,  "wb")
             baseBranchFile.write(newBaseBranch)
             baseBranchFile.close()
             baseBranch = pr['base']['ref']
@@ -855,66 +888,24 @@ def GetOpenPulls(knownPullRequests):
         
         #check build.summary file
         buildSummaryFileName = os.path.join(testDir, 'build.summary')
-
+#        buildSuccess= False
         isBuilt = False
         if os.path.exists(buildSummaryFileName):
             isBuilt=True
-
+            # The result of this code block never used, remove 
+#            buildSummaryFile = open(buildSummaryFileName, 'r')
+#            buildSummary = buildSummaryFile.readlines()
+#            buildSummaryFile.close()
+#            for line in buildSummary:
+#                if "Build success" in line:
+#                    buildSuccess = True
+#                    break
                     
         if isBuilt and (testPrNo == str(prid)):
             # Force to rebuild and retest
             isBuilt = False
             
-        isNotDraft = prs[prid]['draft'] == False
-        isChangedOrNew = (sha != newSha) or (baseBranch != newBaseBranch) or (not isBuilt)
-        
-        if isNotDraft and isChangedOrNew:
-            # generates changed file list:
-            
-            # With curl
-            myProc = subprocess.Popen(["curl -L --connect-timeout 60 -o"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            # The myProc.stdout.read() hanged if there was a large (> 40MB) diff file to get.
-            (result,  err) = myProc.communicate()
-            result = result.decode('utf-8').rstrip('\n').split('\n')
-            err = err.decode('utf-8').rstrip('\n').split('\n')
-            
-            # cat <PRID>.diff | grep '[d]iff' | awk '{ print $3 }' | sed 's/a\///'
-            # gives the changes source files with path
-            #prs[pr['number']]['files'] = output of command
-            
-            myProc = subprocess.Popen(["cat "+testDir+"/"+str(prid)+".diff | grep '^[d]iff ' | awk '{ print $3 }' | sed 's/a\///'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = myProc.stdout.read().decode('utf-8').rstrip('\n').split('\n')
-            prs[prid]['files'] = result
-            
-            changedFilesFileName = os.path.join(testDir, 'changedFiles.txt')
-            oldChangedFilesFileName = os.path.join(testDir, 'changedFiles.old')
-            if os.path.exists(oldChangedFilesFileName):
-                os.unlink(oldChangedFilesFileName)
-                
-            if os.path.exists(changedFilesFileName):
-                os.rename(changedFilesFileName,  oldChangedFilesFileName)
-            
-            # Check directory exclusions
-            #prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if ('^helm/' in x ) or ('^dockerfiles/' in x) or ('.github/' in x)] )
-            
-           # Do we really consider any GH Action (changes) as a containerised envireonment?
-
-            excludePaths = ['helm/', 'dockerfiles/', 'testing/helm/', 'MyDockerfile/']
-            
-
-            t = [True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])]
-            
-            if len(t) > 0:
-                # Some changes in containerisation
-                prs[prid]['containerized'] = True
-                if len(t) == len(prs[prid]['files']):
-                    # if the number of files in exludePaths is equal to the number of changed files the change only related to containerisation
-                    prs[prid]['containerizedOnly'] = True
-                    prs[prid]['excludeFromTest'] = False  # Do not exlude but build it
-                    
-        isNotExcluded = prs[prid]['excludeFromTest'] == False
-        
-        if isNotDraft and isChangedOrNew and isNotExcluded:
+        if (prs[prid]['draft'] == False) and ((sha != newSha) or (baseBranch != newBaseBranch) or (not isBuilt)):
             # New commit occurred or it didn't build yet
             prs[prid]['reason']="Did not build yet"
             if sha != newSha:
@@ -925,7 +916,7 @@ def GetOpenPulls(knownPullRequests):
                     os.unlink(oldShaFileName)
                 os.rename(shaFileName,  oldShaFileName)
                 # Update sha.dat file
-                outFile = open(shaFileName,  "w")
+                outFile = open(shaFileName,  "wb")
                 outFile.write(pr['head']['sha'])
                 outFile.close()
                 prs[prid]['reason']="New commit"
@@ -937,7 +928,7 @@ def GetOpenPulls(knownPullRequests):
                     os.unlink(oldBaseBranchFileName)
                 os.rename(baseBranchFileName,  oldBaseBranchFileName)
                 # Update baseBranch.dat file
-                outFile = open(baseBranchFileName,  "w")
+                outFile = open(baseBranchFileName,  "wb")
                 outFile.write(newBaseBranch)
                 outFile.close()
                 prs[prid]['reason']="Base branch changed"
@@ -946,9 +937,55 @@ def GetOpenPulls(knownPullRequests):
                 prs[prid]['reason']="Forced to re-test"
             else:
                 newPRs += 1
-
-          
-            changedFilesFile = open(changedFilesFileName,  "w")
+            #print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' sheduled to testing ('+prs[prid]['reason']+')')
+    
+            # generates changed file list:
+            # wget -O<PRID>.diff https://github.com/hpcc-systems/HPCC-Platform/pull/<PRID>.diff
+            #myProc = subprocess.Popen(["wget --timeout=60 -O"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            # With curl
+            myProc = subprocess.Popen(["curl -L --connect-timeout 60 -o"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            # The myProc.stdout.read() hanged if there was a large (> 40MB) diff file to get.
+            (result,  err) = myProc.communicate()
+            result = result.rstrip('\n').split('\n')
+            err = err.rstrip('\n').split('\n')
+            
+            # cat <PRID>.diff | grep '[d]iff' | awk '{ print $3 }' | sed 's/a\///'
+            # gives the changes source files with path
+            #prs[pr['number']]['files'] = output of command
+            
+            myProc = subprocess.Popen(["cat "+testDir+"/"+str(prid)+".diff | grep '[d]iff ' | awk '{ print $3 }' | sed 's/a\///'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            result = myProc.stdout.read().rstrip('\n').split('\n')
+            prs[prid]['files'] = result
+            
+            changedFilesFileName = os.path.join(testDir, 'changedFiles.txt')
+            oldChangedFilesFileName = os.path.join(testDir, 'changedFiles.old')
+            if os.path.exists(oldChangedFilesFileName):
+                os.unlink(oldChangedFilesFileName)
+                
+            if os.path.exists(changedFilesFileName):
+                os.rename(changedFilesFileName,  oldChangedFilesFileName)
+                
+            # Check directory exclusions
+            #prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if ('^helm/' in x ) or ('^dockerfiles/' in x) or ('.github/' in x)] )
+            
+            # Do we really consider any GH Action (changes) as a containerised envireonment?
+            #excludePaths = ['helm/', 'dockerfiles/', '.github/', 'testing/helm/', 'MyDockerfile/'] 
+            excludePaths = ['helm/', 'dockerfiles/', 'testing/helm/', 'MyDockerfile/']
+            
+            #prs[prid]['excludeFromTest'] = any([True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])] )
+            t = [True for x in prs[prid]['files'] if any( [True for y in excludePaths if x.startswith(y) ])]
+            if len(t) > 0:
+                # Some changes in containerisation
+                prs[prid]['containerized'] = True
+                if len(t) == len(prs[prid]['files']):
+                    # if the number of files in exludePaths is equal to the number of changed files the change only related to containerisation
+                    prs[prid]['containerizedOnly'] = True
+            
+            # Uncomment to ad-hoc build, start and test a containerised platform
+            #prs[prid]['containerized'] = False
+                
+            eclWatchOnly=True
+            changedFilesFile = open(changedFilesFileName,  "wb")
             for changedFile in  prs[prid]['files']:
                 if changedFile.startswith('testing/regress/ecl/'):
                     # If a changed file is in the setup directory it shouldn't execute separately
@@ -961,10 +998,10 @@ def GetOpenPulls(knownPullRequests):
                     if changedFile.startswith('testing/regress/ecl/library'):
                         prs[prid]['testfiles'].append('testing/regress/ecl/aaalibrary*')
                 elif changedFile.startswith('testing/regress/'):
-                    if changedFile.endswith('.py') or changedFile.endswith('ecl-test'):
-                        print("RTE changed: %s" % (changedFile))
+                    
                         # Something changed in the engine should test it
                         prs[prid]['testfiles'].append('testing/regress/ecl/teststdlibrary.ecl')
+                        prs[prid]['rteChanged'] = True
                 elif changedFile.startswith('ecllibrary/teststd/') or changedFile.startswith('ecllibrary/std/') :
                     if changedFile.endswith('.ecl'):
                         prs[prid]['testfiles'].append('testing/regress/ecl/teststdlibrary.ecl')
@@ -974,15 +1011,14 @@ def GetOpenPulls(knownPullRequests):
                     prs[prid]['sourcefiles'].append(changedFile)
                 elif '.gitmodules' == changedFile:
                     prs[prid]['newSubmodule'] = True
-                elif changedFile.startswith('esp/src/'):
-                    # Buiild ECLWatch in and only if something changed in its source
+                elif changedFile.startswith('esp/src/') or changedFile.startswith('esp/files/'):
+                    # Build ECLWatch if and only if something changed in its source
                     prs[prid]['buildEclWatch'] = True
-
                     
                 changedFilesFile.write( changedFile+'\n' )
             changedFilesFile.close()
             
-            # If only the documentation or the ECLWatch changed, we skip testing
+            # If only the documentation or the ECLWatch changed, we skip testig
             if (prs[prid]['buildEclWatch'] or prs[prid]['isDocsChanged'] ) and ( len(prs[prid]['testfiles']) == 0 ) and (len(prs[prid]['sourcefiles']) == 0):
                     prs[prid]['buildOnly'] = True
                     # TO-DO we need some flexible solution
@@ -1019,20 +1055,16 @@ def GetOpenPulls(knownPullRequests):
                 elif (len(baseVersion) == 1) and ('master' == baseVersion[0]):
                     prs[prid]['runUnittests'] = True
                 
-                # Check base version to enable stack trace
-                stackTraceMinVersion={'major':7, 'minor':2,  'release':22}
+                # Check base version to build ECLWatch
+                newECLWatchBuildMinVersion={'major':7, 'minor':8,  'release':0}
                 baseVersion = prs[prid]['code_base'].split('-')
                 if len(baseVersion) >= 2:
                     baseVersionItems = baseVersion[1].split('.')
                     if len(baseVersionItems) >= 3:
-                        if int(baseVersionItems[0]) == stackTraceMinVersion['major']:
-                            if (int(baseVersionItems[1]) < stackTraceMinVersion['minor']):
-                                prs[prid]['enableStackTrace'] = False
-                            elif (int(baseVersionItems[1]) == stackTraceMinVersion['minor']):
-                               if ('x' not in baseVersionItems[2]) and (int(baseVersionItems[2]) < stackTraceMinVersion['release']):
-                                prs[prid]['enableStackTrace'] = False
-                        elif int(baseVersionItems[0]) < stackTraceMinVersion['major']:
-                            prs[prid]['enableStackTrace'] = False
+                        if int(baseVersionItems[0]) < newECLWatchBuildMinVersion['major']:
+                            prs[prid]['newEclWatchBuildMode'] = False
+                        elif (int(baseVersionItems[0]) == newECLWatchBuildMinVersion['major']) and (int(baseVersionItems[1]) < newECLWatchBuildMinVersion['minor']):
+                            prs[prid]['newEclWatchBuildMode'] = False
                         pass
                     pass
                 
@@ -1066,105 +1098,65 @@ def GetOpenPulls(knownPullRequests):
                 if len(prs[prid]['testfiles']) > 0:
                     prs[prid]['regSuiteTests'] ='"' + WildGen(prs[prid]['testfiles']) + '"'
                 
+                if enableVcpkgBuild == True:
+                    # Check base version for VCPKG build
+                    enableVcpkgBuildMinVersion={'major':8, 'minor':8,  'release':0}
+                    baseVersion = prs[prid]['code_base'].split('-')
+                    if len(baseVersion) >= 2:
+                        baseVersionItems = baseVersion[1].split('.')
+                        if len(baseVersionItems) >= 3:
+                            if (int(baseVersionItems[0]) >= enableVcpkgBuildMinVersion['major']) and (int(baseVersionItems[1]) >= enableVcpkgBuildMinVersion['minor']):
+                                prs[prid]['enableVcpkgBuild'] = True
+                    elif ('master' == baseVersion[0]):
+                            prs[prid]['enableVcpkgBuild'] = True
+                            pass
+                
             if isBuilt:
                 os.unlink(buildSummaryFileName)
                 
+            #if prs[prid]['isDocsChanged']: # and not os.path.exists(buildSummaryFileName):
+                # buildSummaryFile = open(buildSummaryFileName,  "wb")
+                # buildSummaryFile.write( "Only documentation changed! Don't build." )
+                # buildSummaryFile.close()
+                # print("In PR-"+str(prid)+", label: "+prs[prid]['label']+" only documentation changed! Don't sheduled to testing ")
 
-            if prs[prid]['excludeFromTest']:
-                print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' is excluded from test (helm or Dockerfile related), skip it!')
-                skippedPRs += 1
-            else:
-                prs[prid]['inQueue'] = True
-                buildPr += 1
-
-                print("Build PR-%s, label: %s scheduled to testing (reason:'%s', is DOCS changed: %s, is ECLWatch build: %s, is Containerized: %s)" % (str(prid), prs[prid]['label'], prs[prid]['reason'], str(prs[prid]['isDocsChanged']), str(prs[prid]['buildEclWatch']), str(prs[prid]['containerized']) ))
+            prs[prid]['inQueue'] = True
+            buildPr += 1
+            #print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+" scheduled to testing (reason:'"+prs[prid]['reason']+"', is DOCS changed:"+str(prs[prid]['isDocsChanged'])+")")
+            print("Build PR-%s, label: %s scheduled to testing (reason:'%s', is DOCS changed: %s, is ECLWatch build: %s, is Containerized: %s)" % (str(prid), prs[prid]['label'], prs[prid]['reason'], str(prs[prid]['isDocsChanged']), str(prs[prid]['buildEclWatch']),  str(prs[prid]['containerized']) ))
             pass
-           
             
-        elif prs[prid]['excludeFromTest']:
-            exlMsg = "Build PR-" + str(prid) + ", label: " + prs[prid]['label'] + " is excluded from test (helm or Dockerfile related), skip it!"
-            print(exlMsg)
-            #TODO should generate a result file with message about skipped
-            '''
-            # Wrong solution! It creates result file in every PR polling loop with differnt timestamp!
-            resultFileName= "result-" + time.strftime("%y-%m-%d-%H-%M-%S") + ".log"
-            try:
-                resultFile = open(resultFileName,  "w", 0)
-                resultFile.writeln("%s" % ( exlMsg ) )
-                resultFile.writeln("1/1. Process PR-%s, label: %s" % ( str(prid), prs[prid]['label'] ) )
-                resultFile.writeln(" sha : " % ( prs[prid]['sha'] ) )
-                resultFile.writeln(" Summary : 0 sec (00:00:00) ")
-                resultFile.writeln(" pass : False ")
-                resultFile.close()
-            except:
-                pass
-            '''    
-            skippedPRs += 1
+            
         else:
             if pr['draft'] == False:
                 print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' already tested!')
                 testedPRs += 1
             else:
-                draftMsg = "Build PR-" + str(prid) + ", label: " + prs[prid]['label'] + " is in draft state, skip it!"
-                print(draftMsg)
-                #TODO should generate a result file with message about skipped
-                '''
-                # Wrong solution! It creates result file in every PR polling loop with differnt timestamp!
-                resultFileName= "result-" + time.strftime("%y-%m-%d-%H-%M-%S") + ".log"
-                try:
-                    resultFile = open(resultFileName,  "w", 0)
-                    resultFile.writeln("%s" % (draftMsg) )
-                    resultFile.writeln("1/1. Process PR-%s, label: %s" % ( str(prid), prs[prid]['label'] ) )
-                    resultFile.writeln(" sha : " % ( prs[prid]['sha'] ) )
-                    resultFile.writeln(" Summary : 0 sec (00:00:00) ")
-                    resultFile.writeln(" pass : False ")
-                    resultFile.close()
-                except:
-                    pass
-                '''    
+                print("Build PR-"+str(prid)+", label: "+prs[prid]['label']+' is in draft state, skip it!')
+                buildSummaryFile = open(buildSummaryFileName,  "wb")
+                buildSummaryFile.write( prs[prid]['label'] + " is in draft state, skipped." )
+                buildSummaryFile.close()
                 skippedPRs += 1
-    
-    # Until this point all open PR is removed from knownPullRequests
-    closedActive = 0
-    print("[%s] - Check if there is any closed but still running task..." % (threading.current_thread().name))
-    for key in sorted(threads):
-        testDir = 'PR-' + key
-        if (testDir in knownPullRequests):
-            if threads[key]['thread'].is_alive():
-                elaps = time.time()-threads[key]['startTimestamp']
-                print("--- Keep PR-%s (%s) until it is finished. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['commitId'], threads[key]['startTime'], elaps,  elaps / 60 ) )
-                knownPullRequests.remove(testDir)
-                closedActive += 1
-    if closedActive == 0:
-        print("[%s] - None\n" % (threading.current_thread().name))
-    else:
-        print("[%s] - End of list\n" % (threading.current_thread().name))
-        
-    print("")
-    
-    print("Number of closed, but still active PRs : %2d" % (closedActive))
-    print("Number of open PRs                     : %2d" % (openPRs))
-    print("Number of tested PRs                   : %2d" % (testedPRs))
-    print("Number of skipped PRs                  : %2d" % (skippedPRs))
-    print("Number of new PRs                      : %2d" % (newPRs))
-    print("Number of updated PRs                  : %2d" % (updatedPRs))
-    print("Number of forced PRs                   : %2d" % (forcedPr))
-    print("-------------------------------------------")
+                
+    print("Number of open PRs      : %2d" % (openPRs))
+    print("Number of tested PRs    : %2d" % (testedPRs))
+    print("Number of skipped PRs   : %2d" % (skippedPRs))
+    print("Number of new PRs       : %2d" % (newPRs))
+    print("Number of updated PRs   : %2d" % (updatedPRs))
+    print("Number of forced PRs    : %2d" % (forcedPr))
+    print("-----------------------------")
     if forcedPr > 0:
-        print("Number of PRs to build                 : %2d (forced)" % (forcedPr))
+        print("Number of PRs to build  : %2d (forced)" % (forcedPr))
     else:
-        print("Number of PRs to build                 : %2d" % (buildPr))
+        print("Number of PRs to build  : %2d" % (buildPr))
     
-    prQueue = {}
+    queue = {}
     for pr in prs:
         if prs[pr]['inQueue']:
-            prQueue[pr] = prs[pr]
+            queue[pr] = prs[pr]
             
-        if prs[pr]['excludeFromTest']:
-            prSkipped[pr] = prs[pr]
-            
-
-    return (prQueue, buildPr, prSkipped)
+    #return (prs, buildPr)
+    return (queue, buildPr)
 
 def CleanUpClosedPulls(knownPullRequests, smoketestHome):
     # Clear old smoketets/pull request branches?
@@ -1173,28 +1165,16 @@ def CleanUpClosedPulls(knownPullRequests, smoketestHome):
     os.chdir(smoketestHome)
     newlyClosedPrs = 0;
     if 0 < len(knownPullRequests):
-        print("")
         # we have some closed PR
         for pullReqDir in knownPullRequests:
-            # Is this pull request under the testing (but, it is closed meanwhile, therefore not in open pull requests)
-            prIdStr=pullReqDir.replace('PR-', '')
-            if prIdStr in threads:
-                # Yes, skip it
-                print("%s" % (pullReqDir) )
-                if threads[prIdStr]['thread'].is_alive():
-                    print("\tIt is still in 'threads' and alive skip it.")
-                    continue
-                else:
-                    print("\tIt is finished and closed, remove from 'threads'")
-                    del threads[prIdStr]
-                
             newlyClosedPrs +=1
             # to save disk space delete its HPCC-Platfrom and build directories.
             if os.path.exists(pullReqDir+"/HPCC-Platform") or os.path.exists(pullReqDir+"/build") or os.path.exists(pullReqDir+"/HPCCSystems-regression") :
                 print ("Delete HPCC-Platform, build, HPCCSystems-regression/archives and HPCCSystems-regression/results directories of the closed "+pullReqDir)
                 myProc = subprocess.Popen(["sudo rm -rf "+pullReqDir+"/HPCC-Platform "+pullReqDir+"/build "+pullReqDir+"/HPCCSystems-regression/archives "+pullReqDir+"/HPCCSystems-regression/results "],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                result = formatResult(myProc)
-                print("Result: " + result['msg'])
+                (myStdout,  myStderr) = myProc.communicate()
+                result = "returncode:" + str(myProc.returncode) + ", stdout:'" + myStdout + "', stderr:'" + myStderr + "'."
+                print("Result: "+result)
             # Remove gists
             os.chdir(pullReqDir)
             try:
@@ -1207,41 +1187,40 @@ def CleanUpClosedPulls(knownPullRequests, smoketestHome):
                     errorStr += str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")\n" 
                     print(errorStr)
                     
-            print ("Move closed "+ pullReqDir + " directory to OldPrs/ .")
+            print ("Move "+ pullReqDir + " closed directory to OldPrs/ .")
             myProc = subprocess.Popen(["mv -f " + pullReqDir +" OldPrs/"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc)
-            print("Result:", result['msg'])
+            (myStdout,  myStderr) = myProc.communicate()
+            result = "returncode:" + str(myProc.returncode) + ", stdout:'" + myStdout + "', stderr:'" + myStderr.replace('\n','') + "'."
+            print("Result: "+result)
             
-            #result[3] is stderr
-            if myProc.returncode != 0 and 'cannot move' in result[3]:
+            if myProc.returncode != 0 and 'cannot move' in myStderr:
                 # Handle the rare situation when PR directory already exists in OldPrs
                 # Copy all files from <pullReqDir> dir to OldPrs/<pullReqDir>
                 print ("\tCopy files from "+ pullReqDir + " closed directory to OldPrs/ .")
                 cmd = "cp -rf " + pullReqDir +"/* OldPrs/" + pullReqDir + "/."
                 print ("\tcmd:" + cmd)
                 myProc = subprocess.Popen([ cmd ],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                result = formatResult(myProc)
-                print("Result: " + result['msg'])
+                (myStdout,  myStderr) = myProc.communicate()
+                result = "returncode:" + str(myProc.returncode) + ", stdout:'" + myStdout + "', stderr:'" + myStderr + "'."
+                print("\tResult: "+result)
                 if myProc.returncode == 0:
                     # Remove <pullReqDir>
                     print ("\tRemove "+ pullReqDir + " directory.")
                     cmd = "rm -rf " + pullReqDir
                     print ("\tcmd:" + cmd)
                     myProc = subprocess.Popen([ cmd],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                    result = formatResult(myProc)
-                    print("Result: " + result['msg'])
+                    (myStdout,  myStderr) = myProc.communicate()
+                    result = "returncode:" + str(myProc.returncode) + ", stdout:'" + myStdout + "', stderr:'" + myStderr + "'."
+                    print("\tResult: "+result)
                                
     if newlyClosedPrs == 0:
-        print("\nNo PR closed from last run.\n")
+        print("No PR closed from last run.")
     else:
-        print("\n%s PR(s) are closed and moved to OldPrs directory.\n" % ( str(newlyClosedPrs) ))
+        print(str(newlyClosedPrs) +" PR(s) are closed and moved to OldPrs directory")
 
 def formatResult(proc, resultFile = None, echo = True):
     (stdout, stderr) = proc.communicate()
     retcode = proc.wait()
-    
-    stdout = stdout.decode('utf-8')
-    stderr = stderr.decode('utf-8')
  
     if len(stdout) == 0:
         stdout = 'None'
@@ -1263,7 +1242,7 @@ def formatResult(proc, resultFile = None, echo = True):
         except:
             pass
             
-    return {'msg' : result, 'retcode' : retcode, 'stdout' : stdout, 'stderr' : stderr}
+    return (result, retcode)
     
 def CatchUpMaster():
     print("Catch up master")
@@ -1302,7 +1281,9 @@ def CatchUpMaster():
             myProc = subprocess.Popen(["git fetch upstream"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             formatResult(myProc)
             
-
+            #Add these
+            # git config --global user.name "HPCCSmoketest"
+            # git config --global user.email "hpccsmoketest@gmail.com"
         else:   
             # Catch up
             print("\tUpdate HPCC-Platform.")
@@ -1323,6 +1304,11 @@ def CatchUpMaster():
             myProc = subprocess.Popen(["git merge --ff-only upstream/master"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             formatResult(myProc)
             
+            # Smoketest has no right to push
+            # print("\tgit push origin master")
+            # myProc = subprocess.Popen(["git push origin master"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            # result = formatResult(myProc)
+            
         # Update submodule
         # git submodule update --init --recursive
         
@@ -1337,17 +1323,46 @@ def CatchUpMaster():
         # branchDate=$( git log -1 | grep '^Date' ) 
         # branchCrc=$( git log -1 | grep '^commit' )
         
+#        myProc = subprocess.Popen(["ecl --version"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+#        result = myProc.stdout.read() + myProc.stderr.read()
+#        #results = result.split('\n')
+#        print("\t"+result)
+
+#        # Get the latest Regression Test Engine
+#        print("\tGet the latest Regression Test Engine from the master branch")
+#        myProc = subprocess.Popen(["git checkout master"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+#        formatResult(myProc)
+#        
+#        if not os.path.exists('../rte'):
+#            os.mkdir('../rte')
+#        
+#        myProc = subprocess.Popen(["cp -v testing/regress/ecl-test* ../rte/"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+#        formatResult(myProc)
+#        myProc = subprocess.Popen(["cp -v -r testing/regress/hpcc ../rte/hpcc"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+#        formatResult(myProc)
+        
+        print("Remove 'commons-text-*.jar' files from source tree")
+        myProc = subprocess.Popen(["find . -iname 'commons-text-*.jar' -type f -exec rm -fv {} \;"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+        formatResult(myProc)
+        
+        
+
+        print("\t\tDone")
             
     except OSError as e:
         print("OS error:" + str(e) + " - " + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
-
+    #    err = Error("6002")
+    #    logging.error("%s. checkHpccStatus error:%s!" % (1,  err))
+    #    raise Error(err)
         pass
     
     except ValueError as e:
         print("Value error:" + str(e) + " - " + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
-
+    #    err = Error("6003")
+    #    logging.error("%s. checkHpccStatus error:%s!" % (1,  err))
+    #    raise Error(err)
         pass
-    
+        
     except:
         print("Internal error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
         pass
@@ -1359,7 +1374,7 @@ def CatchUpMaster():
     os.chdir("../")
     
 class TableGenerator():
-
+    #tableItems=[]
     def __init__(self):
         self.clear()
         pass
@@ -1405,7 +1420,7 @@ class TableGenerator():
             
         tableString="\n| "
         separator = "|"
-
+#        values ="|"
         #generate header
         for index in range(0,  len(self.tableItems['key'])):
             tableString += self.tableItems['key'][index] + " | "
@@ -1495,7 +1510,7 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
             print("\t"+result)
         else:
             resultFile.write("\t"+result+"\n")
-
+        #result = result.replace('\n', '\\n')+"\\n"
         if type(result) != type(u' '):
             result = repr(result).replace('\'', '') #.replace('\\\\','\\')+"\n"
 
@@ -1585,7 +1600,7 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
             msg += tempRes.replace('"','').replace('u\'',  '').replace('\'','')
             allPassed = False
             continue;
-        elif (buildFailed or not eclWatchBuildOk) and not (result.startswith('[sudo]') or result.startswith('sudo')):
+        elif (buildFailed or not eclWatchBuildOk) and not (result.startswith('[sudo]') or result.startswith('sudo') or 'HPCC-Platform/docs/' in result or 'docbookx.dtd' in result ):
             print("\t\t"+result)
             tempRes = result
             msg += tempRes.replace('"','').replace('u\'',  '').replace('\'','')
@@ -1624,11 +1639,12 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                         print(errorStr)
                         msg +=  '\n' + errorStr + '\n'
                     pass
-
+                #msg +=  '\n' + buildErrorStr + '\n'
+                #buildFailed=False
                 eclWatchBuildOk=True
             continue   
         elif result.startswith('Milestone:Build'):
-
+#            eclWatchBuild = False
             pass
             
         elif result.startswith('Milestone:Install'):
@@ -1703,18 +1719,26 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                 for res in unittestResults:
                     table.addItem(res.replace('_', ' '))
                     items = res.split(':')
+                    if 'Test' in items[0]:
+                        testName = items[1] + '_time'
+                        continue
+                    
                     try:
-                        uresults[items[0]] = int(items[1].replace('_sec',''))
+                        if 'sec' in items[1]:
+                            items[1] = items[1].replace('_sec','')
+                            testInfo[testName] = items[1]
+                            
+                        uresults[items[0]] = int(items[1])
                     except ValueError as e:
-                        print(str(e)+"(line: "+str(inspect.stack()[0][2])+")")
+                        print str(e)+"(line: "+str(inspect.stack()[0][2])+")"
                         pass
                     except KeyError as e:
                         print("items[0]:'%s', items[1]:'%s" % (items[0], items[1]))
-                        print("Exception:" + str(e) + "(line: "+str(inspect.stack()[0][2]) + ")")
+                        print "Exception:" + str(e) + "(line: "+str(inspect.stack()[0][2]) + ")"
                         pass
                     except IndexError as e:
                         print("items[0]:'%s', items[1]:'%s" % (items[0], items[1]))
-                        print("Exception:" + str(e) + "(line: "+str(inspect.stack()[0][2]) + ")")
+                        print "Exception:" + str(e) + "(line: "+str(inspect.stack()[0][2]) + ")"
                     except:
                         print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
                         print("items[0]:'%s', items[1]:'%s" % (items[0], items[1]))
@@ -1748,19 +1772,27 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                     for res in wutoolTestResults:
                         table.addItem(res.replace('_', ' '))
                         items = res.split(':')
+                        if 'Test' in items[0]:
+                            testName = items[1] + '_time'
+                            continue
+                        
                         try:
-                            wresults[line][items[0]] = int(items[1].replace('_sec',''))
+                            if 'sec' in items[1]:
+                                items[1] = items[1].replace('_sec','')
+                                testInfo[testName] = items[1]
+                                
+                            wresults[line][items[0]] = int(items[1])
                         except ValueError as e:
-                            print("Exception:" + str(e) + "(line: "+str(inspect.stack()[0][2]) + ")")
+                            print "Exception:" + str(e) + "(line: "+str(inspect.stack()[0][2]) + ")"
                             print("items[0]:'%s', items[1]:'%s" % (items[0], items[1]))
                             pass
                         except KeyError as e:
                             print("items[0]:'%s', items[1]:'%s" % (items[0], items[1]))
-                            print("Exception:" + str(e) + "(line: "+str(inspect.stack()[0][2]) + ")")
+                            print "Exception:" + str(e) + "(line: "+str(inspect.stack()[0][2]) + ")"
                             pass
                         except IndexError as e:
                             print("items[0]:'%s', items[1]:'%s" % (items[0], items[1]))
-                            print("Exception:" + str(e) + "(line: "+str(inspect.stack()[0][2]) + ")")
+                            print "Exception:" + str(e) + "(line: "+str(inspect.stack()[0][2]) + ")"
                         except:
                             print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
                             print("items[0]:'%s', items[1]:'%s" % (items[0], items[1]))
@@ -1778,10 +1810,10 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                         allPassed = False
                         pass
                 except ValueError as e:
-                    print("Exception:" + str(e) + "(line: "+str(inspect.stack()[0][2]) + ")")
+                    print "Exception:" + str(e) + "(line: "+str(inspect.stack()[0][2]) + ")"
                     pass
                 except KeyError as e:
-                    print("Exception:" + str(e) + "(line: "+str(inspect.stack()[0][2]) + ")")
+                    print "Exception:" + str(e) + "(line: "+str(inspect.stack()[0][2]) + ")"
                     pass
                
             if runUnittests or runWutoolTests:
@@ -1804,7 +1836,7 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
             continue
         elif result.startswith('[Error]'):
             # Suite Error
-
+#            print("\tSuite Error"+result)
             allPassed = False
             # Prevent to add more than one '```' if multiple '[Error] row find.
             if not inSuiteErrorLog:
@@ -1831,7 +1863,8 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                 # with list of errors (if any)
                 (testRes,  isCoreFlesReported) = CollectResults('HPCCSystems-regression/log', testfiles, prid)
                 if not runFullRegression:
-                    tempMsg = '\n'.join(testRes)
+                    #tempMsg = '\n'.join(testRes)
+                    tempMsg = testRes
                 else:
                     tempMsg = testRes
             else:
@@ -1850,12 +1883,12 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                 continue
             print("\t\t"+result)
             msg += result.replace('stopped',  'stopped,').replace('"','\'').replace(' \\x1b[32m ', '').replace(' \\x1b[33m ', '').replace(' \\x1b[31m ', '').replace(' \\x1b[0m', '')
-
+            #msg += result.replace('stopped',  'stopped,').replace('[32m','').replace('[33m','').replace('[0m', '\\n').replace('[31m', '\\n').replace("\\", "").replace('\<','<').replace('/>','>').replace('\xc2\xae','').replace('/*', '*').replace('*/', '*')
             allPassed = False
             continue
         elif eclWatchBuild and not npmTest:
             if not result.startswith('---- '):
-
+                #print(", "+result)
                 result = result.replace('\n','').replace('\t','').replace('\\t','')
                 items = result.split(':')
                 if (len(items) >= 2) and ('errors' in items[0]) and (0 < int(items[1])):
@@ -1870,6 +1903,7 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                     eclWatchTable.addItem(result)
                     continue
                     
+                #eclWatchBuildError += result + '\n'
                     
             continue
                 
@@ -1891,15 +1925,19 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                 result = result.replace('"','')
                 npmInstallResultWarn += result
             
-        elif result.startswith('npm test'):
+        elif result.startswith('npm test') or result.startswith('npm run test'):
             if not npmTest:
                 npmTest=True
-
+#                eclWatchBuild=True
                 eclWatchTable.clear()
             else:
                 npmTest=False
                 eclWatchTable.completteRow()
-
+#                msg += eclWatchTable.getTable()
+#                msg += '\n'
+#                if len(npmTestResultErr) > 0:
+#                    print(npmTestResultErr)
+#                    msg += npmTestResultErr + '\n'
             continue
         elif npmTest:
             result = result.replace('"','')
@@ -1907,7 +1945,9 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                 allPassed = False
                 eclWatchBuild=True
                 npmTestResultErr += result
-
+#                items = result.split()
+#                eclWatchTable.addItem("lint " + items[1]+':'+items[0])
+#                #npmTestResult += 'Error(s): \n'
                 
             elif result.startswith('eclwatch'):
                 eclWatchBuild=True
@@ -1944,10 +1984,19 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
         elif timeStats:
             items = result.replace('\n', '').split(': ')
             if len(items) == 2:
-
-                timeStatsTable.addItem(items[0].strip() +" : " + items[1], ' : ')
+                # That was a vertical table, I think it is too big.
+                #timeStatsTable.addItem('Stage:' + items[0].replace(' time', '').strip() )
+                #timeStatsTable.addItem('Time: ' + items[1], ': ')
+                # Create a horizontal table 
+                itemName = items[0].strip()
+                itemValue = items[1]
+                timeStatsTable.addItem(itemName + " : " + itemValue, ' : ')
+                testInfo[itemName.replace(' ','_')] = itemValue.strip().split(' ')[0] # We need the second value only
             pass
             
+#        if len(msg) > maxMsgLen:
+#            # Too much messsages something really wrong
+#            break
 
     # Add build error msg and link to log if happened
     if buildErrorLogAddedToGists:
@@ -1982,9 +2031,13 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
     else:
         resultFile.write("\ttype(msg) is : " + repr(type(msg)) +"\n")
 
-    msg = msg.replace('[32m','').replace('[33m','').replace('[0m', '\\n').replace('[31m', '\\n').replace('\<','').replace('/>','').replace('\n', '\\n')
+    msg = msg.replace('[32m','').replace('[33m','').replace('[0m', '\\n').replace('[31m', '\\n').replace('\<','').replace('/>','').replace('\n', '\\n').replace('"', '\'') #.replace('\\xc2\\xae', '\xc2\xae')
 
-    msg = repr(msg)
+    if type(msg) == type(u' '):
+        msg = unicodedata.normalize('NFKD', msg).encode('ascii','ignore').replace('\'','').replace('\\u', '\\\\u')
+        msg = repr(msg)
+    else:
+        msg = repr(msg)
     
     if allPassed:
         msg = msg.replace('Automated Smoketest',  'Automated Smoketest: '+ passEmoji)
@@ -2003,7 +2056,7 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
 def ProcessOpenPulls(prs,  numOfPrToTest):
     global testPrNo
     prSequnceNumber = 0
-
+    #curDir =  os.getcwd()
     isSelectedPrOpen = False
     sortedPrs = sorted(prs)
     for prid in sortedPrs:
@@ -2050,10 +2103,9 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                         
                     prIndexInQueue += 1
         
-
+        #testDir = "smoketest-"+str(prid)
         testDir = prs[prid]['testDir']
         
-        testInfo = {}
         testInfo['prid'] = str(prid)
         
         # cd smoketest-<PRID>
@@ -2062,7 +2114,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
         curTime = time.strftime("%y-%m-%d-%H-%M-%S")
         testInfo['startTime'] = curTime
         resultFileName= "result-" + curTime + ".log"
-        resultFile = open(resultFileName,  "w")
+        resultFile = open(resultFileName,  "w", 0)
         
         # First or new build
         isBuild=False
@@ -2077,7 +2129,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             newCommitId = GetPullReqCommitId(str(prid))
             if newCommitId != '':
                 prs[prid]['sha'] = newCommitId
-                outFile = open('sha.dat',  "w")
+                outFile = open('sha.dat',  "wb")
                 outFile.write( prs[prid]['sha'])
                 outFile.close()# store commit crc
                     
@@ -2085,11 +2137,25 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             testPrNo  = '0'
             isBuild = True
             
-            msg="Process of PR-%s, label: %s starts now.\\nThe reason of this test is: %s.\\nCommit ID: %s\\nEstimated completion time is ~%.1f hour(s)" % ( str(prid), prs[prid]['label'], prs[prid]['reason'], prs[prid]['sha'], prs[prid]['sessionTime'])
+            msg="Process of PR-%s, label: %s starts now.\\nThe reason of this test is: %s.\\nCommit ID: %s\\nEstimated completion time is %.2f hour(s)\\n%s" % ( str(prid), prs[prid]['label'], prs[prid]['reason'], prs[prid]['sha'], prs[prid]['sessionTime'],  sysId.replace('\n', '\\n'))
+            if  prs[prid]['containerized'] :
+                msg += "\\nBuild only for containerized environment."
+                
+            if prs[prid]['enableVcpkgBuild']:
+                msg += "\\nVCPKG build enabled."
+            else:
+                msg += "\\nVCPKG build disabled."
+                
+            msg += "\\n"
+                
             addCommentCmd = prs[prid]['addComment']['cmd'] +'\'{"body":"'+msg+'"}\' '+prs[prid]['addComment']['url']
             
             print("\tAdd comment to pull request")
-
+#            resultFile.write("\tAdd comment to pull request\n\tComment Cmd:\n")
+#            resultFile.write("------------------------------------------------------\n")
+#            resultFile.write(addCommentCmd+"\n")
+#            resultFile.write("------------------------------------------------------\n")
+#            if addGitComment:
             uploadGitHubComment(addCommentCmd,  resultFile)
             
             msg = "%d/%d. " % ( prSequnceNumber, numOfPrToTest) + msg.replace('\\n',' ')
@@ -2097,10 +2163,12 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             print("\ttitle: %s" % (prs[prid]['title']))
             print("\tuser : %s" % (prs[prid]['user']))
             print("\tsha  : %s" % (prs[prid]['sha']))
+            print("\tinstance : %s" % (instanceId))
             print("\tstart: %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
             resultFile.write("%d/%d. Process PR-%s, label: %s\n" % ( prSequnceNumber, numOfPrToTest, str(prid), prs[prid]['label']))
             resultFile.write("\ttitle: %s\n" % (repr(prs[prid]['title'])))
             resultFile.write("\tsha  : %s\n" % (prs[prid]['sha']))
+            resultFile.write("\tinstance : %s\n" % (instanceId))
             resultFile.write("\tStart: %s\n" % (time.strftime("%y-%m-%d %H:%M:%S")))
             if not os.path.exists('HPCC-Platform'):
                 # clone the HPCC-Platfrom directory into the smoketes-<PRID> directory
@@ -2110,6 +2178,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             resultFile.write("\tcp -r HPCC-Platfrom %s\n" % (testDir))
             myProc = subprocess.Popen(["cp -fr ../HPCC-Platform ."],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             result = formatResult(myProc, resultFile)
+            #resultFile.write("\tresult:"+result+"\n")
 
             # cd smoketest-<PRID>/HPCC-Platform
             os.chdir('HPCC-Platform')
@@ -2129,22 +2198,41 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             myProc = subprocess.Popen("git checkout -f "+prs[prid]['code_base'],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             result = formatResult(myProc, resultFile)
             #resultFile.write("\tresult:"+result+"\n")
-                
+            
+            # Clean-up base branch
+            s = "\tclean-up "
+            print(s)
+            resultFile.write(s + '\n')
+            myProc = subprocess.Popen("git clean -f -fd",  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            result = formatResult(myProc, resultFile)
+            #resultFile.write("\tresult:"+result+"\n")
+            
+            # Pull the base  branch
+            s = "\tpull base branch "
+            print(s)
+            resultFile.write(s + '\n')
+            myProc = subprocess.Popen("git pull",  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            result = formatResult(myProc, resultFile)
+            
+            
             # Pull the branch
             # git fetch upstream pull/<'number'>/head:<'label'>+'-smoketest'
             print("\t"+prs[prid]['cmd'])
             resultFile.write("\tPull\n")
             resultFile.write("\t"+prs[prid]['cmd']+"\n")
             myProc = subprocess.Popen(prs[prid]['cmd'],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc, resultFile)
-            if result['retcode'] != 0:
+            (result, retcode) = formatResult(myProc, resultFile)
+            if retcode != 0:
                 if 'unknown option' in result:
                     print("\tThere was a problem with prevoius command, try an alternative one")
                     print("\t"+prs[prid]['cmd2'])
                     myProc = subprocess.Popen(prs[prid]['cmd2'],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                    result = formatResult(myProc, resultFile)
+                    (result, retcode) = formatResult(myProc, resultFile)
                 
-            if (result['retcode'] != 0) and ('Merge conflict' not in result['msg']):
+            myProc = subprocess.Popen("git checkout " +  prs[prid] ['prBranchId'] ,  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            (result, retcode) = formatResult(myProc, resultFile)
+
+            if (retcode != 0) and ('Merge conflict' not in result) and ('Adding as' not in result) and ('needs merge' not in result):
                 noBuildReason = "Error in git command, should skip build and test."
                 resultFile.write("\tError in git command, should skip build and test.\n")
             else:    
@@ -2152,10 +2240,16 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 print("\tgit status")
                 resultFile.write("\tgit status\n")
                 myProc = subprocess.Popen("git status",  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                result = formatResult(myProc, resultFile)
+                (result, retcode) = formatResult(myProc, resultFile)
                 noBuildReason = ""
             
-            if ('Unmerged paths:' in result['msg']) or (result['retcode'] != 0):
+            if ('Unmerged paths:' in result) and ('added by us:' in result):
+                print("\tThere is one or more unmerged path. It can come from the not up-to-date base branch, skip it")
+                resultFile.write("\tThere is one or more unmerged path. It can come from the not up-to-date base branch, skip it\n")
+                result = ""
+                
+            
+            if ('Unmerged paths:' in result)  or ('needs merge' in result) or (retcode != 0):
                 # There is some conflict on this branch, I think it is better to skip build and test
                 if noBuildReason  == "":
                     noBuildReason = "Conflicting files, should skip build and test."
@@ -2166,7 +2260,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 # generate build.summary file
                 os.chdir("../")
                 buildSummaryFileName = 'build.summary'
-                buildSummaryFile = open(buildSummaryFileName,  "w")
+                buildSummaryFile = open(buildSummaryFileName,  "wb")
                 buildSummaryFile.write(noBuildReason+'\n')
                 buildSummaryFile.write(result)
                 buildSummaryFile.close()
@@ -2174,11 +2268,12 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 print(msg)
                 resultFile.write(msg + "\n")
                 
-                msg = "Delete source directory to save disk space %s (%s)." % (testDir, prs[prid]['label'])
-                print (msg)
-                resultFile.write(msg + "\n")
-                myProc = subprocess.Popen(["sudo rm -rf HPCC-Platform"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                result = formatResult(myProc, resultFile)
+                if not keepFiles:
+                    msg = "Delete source directory to save disk space %s (%s)." % (testDir, prs[prid]['label'])
+                    print (msg)
+                    resultFile.write(msg + "\n")
+                    myProc = subprocess.Popen(["sudo rm -rf HPCC-Platform"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                    result = formatResult(myProc, resultFile)
             
                 pass
             
@@ -2212,7 +2307,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 resultFile.write("\t%s" % (zipCmd))
                 myProc = subprocess.Popen([ zipCmd ],  shell=True,  bufsize=-1,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                 try:
-
+                    #result = formatResult(myProc, resultFile,  noEcho)
                     result = formatResult(myProc, open(regressionZipFileName+'.log',  'w'), noEcho)
                 except:
                     pass
@@ -2229,19 +2324,22 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 resultFile.write("\tcp -p "+smoketestHome+"/" + buildScript +" .\n")
                 myProc = subprocess.Popen(["cp -pf "+smoketestHome+"/" + buildScript +" ."],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                 result = formatResult(myProc, resultFile)
+                #resultFile.write("\tresult:"+result+"\n")
        
                 testInfo['codeBase'] =  prs[prid]['code_base']
                 testInfo['docsBuild'] = str(prs[prid]['isDocsChanged'])
                 testInfo['runUnittests'] = str(prs[prid]['runUnittests'])
                 testInfo['runWutoolTests'] = str(prs[prid]['runWutoolTests'])
                 testInfo['buildEclWatch'] = str(prs[prid]['buildEclWatch'])
+                testInfo['commitId'] = prs[prid]['sha'][0:8].upper()
                 
                 # Build it
                 # ./ build.sh
                 print("\tBuild PR-"+str(prid)+", label: "+prs[prid]['label'])
                 resultFile.write("\tBuild PR-"+str(prid)+", label: "+prs[prid]['label']+"\n")
                 try:
-
+                    #resultFile.write("\tscl enable devtoolset-2 "+os.getcwd()+"/build.sh " + prs[prid]['regSuiteTests'] + "\n")
+                    #myProc = subprocess.Popen(["scl enable devtoolset-2 "+os.getcwd()+"/build.sh " + prs[prid]['regSuiteTests'] ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
                     
                     cmd  = "./" + buildScript
                     cmd += " -tests='" + prs[prid]['regSuiteTests'] + "'"
@@ -2251,19 +2349,21 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                     cmd += " -buildEclWatch=" + str(prs[prid]['buildEclWatch'])
                     cmd += " -keepFiles=" + str(keepFiles)
                     cmd += " -enableStackTrace=" + str(prs[prid]['enableStackTrace'])
-                    cmd += " -base='"+prs[prid]['code_base'] +"'"
-                    cmd += " -jira='"+prs[prid]['jira'] +"'"
+                    cmd += " -newEclWatchBuildMode=" + str(prs[prid]['newEclWatchBuildMode'])
+                    if prs[prid]['rteChanged'] == True :
+                        cmd += " -rteChanged=" + str(prs[prid]['rteChanged'])
+                    cmd += " -containerized=" + str(prs[prid]['containerized'])
+                    cmd += " -enableVcpkgBuild=" + str(prs[prid]['enableVcpkgBuild'])
                     
                     resultFile.write("\t" + cmd + "\n")
                     myProc = subprocess.Popen([ cmd ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-
+                    #myProc = subprocess.Popen(["./build.sh " + prs[prid]['regSuiteTests']  ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
                     (myStdout,  myStderr) = myProc.communicate()
-                    myStdout = myStdout.decode('utf-8')
-                    myStderr = myStdout.decode('utf-8')
                 except:
                     print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
                     pass
-
+                #myStdout = myProc.stdout.read()
+                #myStderr = myProc.stderr.read()
                 result = myStdout
                 
                 if not myStderr.startswith('TERM'):
@@ -2283,18 +2383,28 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             
             print("\tend  : %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
             
-
+            #print("\t"+result)
             maxMsgLen = 4096
             maxLines = 60
             restMsgLen = 350
             msg= 'Automated Smoketest\n'
             msg += 'OS: ' + sysId + '\n'
             msg += 'Sha: '+prs[prid]['sha']+'\n'
+            msg += 'Containerized: ' + str(prs[prid]['containerized']) + '\n'
+            if prs[prid]['enableVcpkgBuild']:
+                msg += "VCPKG build enabled.\n"
+            else:
+                msg += "VCPKG build disabled.\n"
             msg = processResult(result, msg, resultFile, buildFailed,  testFailed, prs[prid]['testfiles'], maxMsgLen, prs[prid]['runUnittests'], prs[prid]['runWutoolTests'], prid, prs[prid]['buildEclWatch'])
             
             
             print("\tpass : %s" % (testInfo['status']))
-                        
+            resultFile.write("\tpass : %s\n" % (testInfo['status']))
+            
+            # Avoid orphan escape '\' char.
+            #while ( msg[maxMsgLen-1] == '\\' ):
+            #    maxMsgLen -= 1
+            
             numOfLines = msg.count('\\n')
             msgLen = len(msg)
 
@@ -2315,11 +2425,20 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             
             msg = (msg[:maxMsgLen-restMsgLen] + '\\n ... ( comment is too long, '+str(numOfLines)+' lines, '+str(len(msg))+' bytes, truncated) ... \\n'+ msg[msgLen - restMsgLen:] + '```' ) if ( msgLen > maxMsgLen) or (numOfLines > maxLines) else msg
 
+            #msg = msg.replace('stopped',  'stopped,').replace("\\", "").replace('[32m','').replace('[33m','').replace('[0m', '\\n').replace('[31m', '\\n').replace('\<','').replace('/>','').replace('\xc2\xae','')
 
             addCommentCmd = prs[prid]['addComment']['cmd'] +'\'{"body":"'+msg+'"}\' '+prs[prid]['addComment']['url']
             
             print("\tAdd comment to pull request")
-
+#            resultFile.write("\tAdd comment to pull request\n\tComment Cmd:\n")
+#            resultFile.write("------------------------------------------------------\n")
+#            resultFile.write(addCommentCmd+"\n")
+#            resultFile.write("------------------------------------------------------\n")
+#            if addGitComment:
+            uploadGitHubComment(addCommentCmd,  resultFile)
+#            else:
+#                msgId = MessageId(resultFile)
+#                msgId.addNewFromResult(result)
 
             actDir = os.getcwd()
             if (len(prs[prid]['sourcefiles']) > 0) and isClangTidy and isBuild:
@@ -2331,6 +2450,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                     resultFile.write("\t\tExecute clang-tidy on "+sourceFile+"\n")
                     myProc = subprocess.Popen(["clang-tidy HPCC-Platform/"+sourceFile+" -p build/compile_commands.json > clang-tidy-"+os.path.basename(sourceFile).replace('.','_')+'.log'],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                     result = formatResult(myProc, resultFile)
+                    #resultFile.write("\tresult:"+result+"\n")
 
                 print("\t\tFinished. Elaps time is:" + str(time.time()-clangTidyStart)+" sec.")
                 resultFile.write("\t\tFinished. Elaps time is:" + str(time.time()-clangTidyStart)+" sec\n")
@@ -2379,17 +2499,23 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             resultFile.write("Move hpcc package out from buld directory\n")
             myProc = subprocess.Popen(["mv build/hpccsystems-platform* ."],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             result = formatResult(myProc, resultFile)
+            #resultFile.write("\tresult:"+result+"\n")
             
-            print ("Delete source and build directory to save disk space "+testDir+" ("+prs[prid]['label']+").")
-            resultFile.write("Delete source and build directory to save disk space "+testDir+" ("+prs[prid]['label']+").\n")
-            myProc = subprocess.Popen(["sudo rm -rf HPCC-Platform build hpcc"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+            print ("Delete source, build, OBT and rte directory to save disk space "+testDir+" ("+prs[prid]['label']+").")
+            resultFile.write("Delete source, build, OBT and rte directory to save disk space "+testDir+" ("+prs[prid]['label']+").\n")
+            myProc = subprocess.Popen(["sudo rm -rf HPCC-Platform build hpcc OBT rte"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             result = formatResult(myProc, resultFile)
-              
+            #resultFile.write("\tresult:"+result+"\n")
+        else:
+            print("Keep files")
+
         endTimestamp = time.time()
         myPrint("\tElapsed time:"+str(endTimestamp-startTimestamp)+" sec.")
         resultFile.write("\tElapsed time:"+str(endTimestamp-startTimestamp)+" sec.\n")
         
         resultFile.close()
+#        if not isBuild and os.path.exists(resultFileName):
+#            os.unlink(resultFileName)
         
         os.chdir(smoketestHome)
         
@@ -2403,384 +2529,8 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
             print("\nIt seems the PR-%s is already closed." % (testPrNo))
         
     os.chdir(cwd)
-    
-def HandleSkippedPulls(prSkipped):
-    curDir =  os.getcwd()
-    sortedPrs = sorted(prSkipped)
-    for prid in sortedPrs:
-        print("Handle skipped PR-%s" % (prid))
-        testDir = prSkipped[prid]['testDir']
-        if not os.path.exists(testDir):
-            os.mkdir(testDir)
-        
-        os.chdir(testDir)
 
-        isAlreadyCommented = True
-        if not os.path.exists('build.summary'):
-            print("build.summary not exists in %s." % (testDir))
-            buildSummary = open('build.summary', "w")
-            if prSkipped[prid]['excludeFromTest'] == True:
-                buildSummary.write("Exclude from test, skipped")
-            else:
-                buildSummary.write("Skipped");
-            buildSummary.close()
-            isAlreadyCommented =  False
-        else:
-            print("build.summary exists.")
-
-                            
-            buildSummary = open('build.summary', "r")
-            lines = buildSummary.readline()
-            buildSummary.close()
-            if "Skipped" in lines:
-                print("Already '%s'." % (lines))
-                # Check the sha.dat
-                shaFile = open('sha.dat',  "rb")
-                sha = shaFile.readline()
-                shaFile.close()
-                if sha != prSkipped[prid]['sha']:
-                    print("Old commit id (%s) and the current (%s) is not match." % (sha, prSkipped[prid]['sha']))
-                    # There is a new comit store its id add comment the PR again 
-                    outFile = open('sha.dat',  "w")
-                    outFile.write( prSkipped[prid]['sha'])
-                    outFile.close()# store commit crc
-                    isAlreadyCommented =  False
-                    # Update build.summary timestamps with 'touch' command
-                    print("Update build.summary timestamp")
-                    myProc = subprocess.Popen(["touch build.summary"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                    result = formatResult(myProc, None)
-                    
-            else:
-                print("build.summary exists in %s but it's content not as expected. Correct it." % (testDir))
-                buildSummary = open('build.summary', "w")
-                buildSummary.write("Skipped");
-                buildSummary.close()
-                isAlreadyCommented =  False
-        
-        if  not isAlreadyCommented:
-            msg="Process of PR-%s, label: %s is skipped.\\nThe reason is: It is related to containerised environment only.\\nCommit ID: %s\\nOS: %s" % ( str(prid), prSkipped[prid]['label'], prSkipped[prid]['sha'],  sysId.replace('\n', '\\n'))
-            addCommentCmd = prSkipped[prid]['addComment']['cmd'] +'\'{"body":"'+msg+'"}\' '+prSkipped[prid]['addComment']['url']
-                
-
-            if addGitComment:
-                print("\tAdd comment to pull request")
-                uploadGitHubComment(addCommentCmd)
-            else:
-                print("\tGitHub commenting disabled")
-        else:
-            print("\tAlready commented as 'Skipped'.")
-    
-        os.chdir(curDir)
-    
-    print("\n")    
-    pass
-    
-def consumerTask(prId, pr, cmd, testInfo, resultFileName):
-    resultFile = open(resultFileName,  "a")
-    cwd = os.getcwd()
-    print("cmd:'%s', cwd: %s" % (cmd,  cwd))
-    testInfo['codeBase'] =  prs[prId]['code_base']
-    testInfo['docsBuild'] = str(prs[prId]['isDocsChanged'])
-    testInfo['runUnittests'] = str(prs[prId]['runUnittests'])
-    testInfo['runWutoolTests'] = str(prs[prId]['runWutoolTests'])
-    testInfo['buildEclWatch'] = str(prs[prId]['buildEclWatch'])
-    
-    retcode='0'
-    try:
-        myProc = subprocess.Popen([ cmd ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-        (result, retcode, stdout, stderr) = formatResult(myProc, resultFile, False)
-    except:
-        msg = "Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" 
-        print(msg)
-        resultFile.write(msg + '\n')
-        pass
-        
-    # End game
-    elapsTime = str(time.time()-testInfo['startTimestamp'])
-    testInfo['elapsTime'] = str(elapsTime)
-    testInfo['endTime'] = time.strftime("%y-%m-%d-%H-%M-%S")
-    testInfo['runFullRegression'] = str(runFullRegression)
-
-    storeTestInfo(smoketestHome, testInfo)
-    
-    
-    resultFile.close()
-    print("[%s] finished with retCode: %s." % (threading.current_thread().name, retcode ))
-    
-def ScheduleOpenPulls(prs,  numOfPrToTest):
-    global testPrNo
-    testPrNoId = int(testPrNo)
-    prSequnceNumber = 0
-
-    isSelectedPrOpen = False
-    sortedPrs = sorted(prs)
-    for prid in sortedPrs:
-
-        if testPrNoId != 0:
-            if testPrNoId != prid:
-                continue
-            else:
-                isSelectedPrOpen = True
-                numOfPrToTest = 1
-                    
-        
-        testDir = prs[prid]['testDir']
-        
-        # cd smoketest-<PRID>
-        os.chdir(testDir)
-        startTimestamp = time.time()
-        
-        # First or new build
-        isBuild=False
-        buildFailed = False
-        testFailed = False
-        if not os.path.exists('build.summary') or (testPrNoId == prid) or ( addGitComment and not os.path.exists('messageId.dat')):
-            
-        
-            prSequnceNumber += 1
-            testPrNo  = '0'
-            isBuild = True
-            
-            msg="Process of PR-%s, label: %s starts now.\\nThe reason of this test is: %s.\\nCommit ID: %s\\nEstimated completion time is ~%.1f hour(s)\\nOS: %s" % ( str(prid), prs[prid]['label'], prs[prid]['reason'], prs[prid]['sha'], prs[prid]['sessionTime'], sysId.replace('\n', '\\n'))
-            addCommentCmd = prs[prid]['addComment']['cmd'] +'\'{"body":"'+msg+'"}\' '+prs[prid]['addComment']['url']
-            
-            print("\tAdd comment to pull request")
-
-            
-            msg = "%d/%d. " % ( prSequnceNumber, numOfPrToTest) + msg.replace('\\n',' ')
-            print(msg)
-            print("\tuser : %s" % (prs[prid]['user']))
-            
-
-            if not os.path.exists('HPCC-Platform'):
-                # clone the HPCC-Platfrom directory into the smoketes-<PRID> directory
-                pass
-                
-  
-            key = str(prid)
-            if key in threads: 
-                if threads[key]['thread'].is_alive():
-                    elaps = time.time()-threads[key]['startTimestamp']
-                    print("--- PR-%s (%s) is scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['commitId'], threads[key]['startTime'], elaps,  elaps / 60 ) )
-                else:
-                    print("--- PR-%s (%s) is scheduled but already finished. Remove"  % (key, threads[key]['commitId']))
-                    del threads[key]
-            
-            if not key in threads:
-                print("\tsha  : %s" % (prs[prid]['sha'][0:8].upper() ))
-                print("\tstart: %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
-                print("\ttitle: %s" % (prs[prid]['title']))
-                curTime = time.strftime("%y-%m-%d-%H-%M-%S")
-                resultFileName= "scheduler-" + curTime + ".test"
-                resultFile = open(resultFileName,  "a")
-                resultFile.write("\tStart: %s\n" % (time.strftime("%y-%m-%d %H:%M:%S")))
-                testInfo = {}
-                testInfo['prid'] = str(prid)
-                testInfo['startTime'] = curTime
-                testInfo['startTimestamp'] = time.time()
-                testInfo['commitId'] = prs[prid]['sha'][0:8].upper()
-                # Schedule it
-                print("\tSchedule PR-"+str(prid)+", label: "+prs[prid]['label'])
-                resultFile.write("\tSchedule PR-"+str(prid)+", label: "+prs[prid]['label']+"\n")
-                resultFile.write("%d/%d. Process PR-%s, label: %s\n" % ( prSequnceNumber, numOfPrToTest, str(prid), prs[prid]['label']))
-                resultFile.write("\ttitle: %s\n" % (repr(prs[prid]['title'])))
-                resultFile.write("\tsha  : %s\n" % (prs[prid]['sha']))
-                
-                try:
-                    buildScript='manageInstance.sh'
-                    cmd  = smoketestHome + "/" + buildScript
-                    cmd += " -instanceName='" + "PR-" + key + "'"
-                    cmd += " -smoketestHome='" + smoketestHome + "'"
-                    cmd += " -addGitComment=" + str(addGitComment)
-
-                    cmd += " -docs=" +  str(prs[prid]['isDocsChanged'])
-                    cmd += " -commitId=" + prs[prid]['sha'][0:8].upper() 
-
-                    cmd += " -appId='" + appId + "'"
-                    cmd += " -base="+prs[prid]['code_base']
-                    cmd += " -jira='"+prs[prid]['jira']+"'"
-                    
-                    resultFile.write("\t" + cmd + "\n")
-                 
-                    threads[key] =  prs[prid]
-                    threads[key]['thread'] = threading.Thread(target=consumerTask, name="PR-" + key, args=(prid, prs[prid], cmd, testInfo, resultFileName))
-                    threads[key]['thread'].daemon = True
-                    threads[key]['thread'].start()
-                    threads[key]['startTime'] = curTime
-                    threads[key]['startTimestamp'] = time.time()
-                    threads[key]['resultFileName'] = resultFileName
-                    threads[key]['commitId'] = testInfo['commitId']
-                    print("--- Scheduled, new (key:%s)"  % (key))
-                    print("\tend  : %s" % (time.strftime("%y-%m-%d %H:%M:%S")))
-
-                    elapsTime = str(time.time()-startTimestamp)
-                    print("\tFinished: %s, elaps time is: %s sec" % ( time.strftime("%y-%m-%d %H:%M:%S"), str(elapsTime) ))
-                    resultFile.write("\tFinished: %s, elaps time is: %s sec" % ( time.strftime("%y-%m-%d %H:%M:%S"), str(elapsTime) ))
-
-                except:
-                    print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
-                    pass
-                    
-                resultFile.close()
-                
-            
-#            # Write out the content of "result" into buildResult-<date>.log file.
-#            # This file will be useful to test result/log processing without rebuild
-#            buildFinishedTime = time.strftime("%y-%m-%d-%H-%M-%S")
-#            buildResultFileName= "buildResult-" + buildFinishedTime + ".log"
-#            buildResultFile = open(buildResultFileName,  "w")
-#            buildResultFile.write(result)
-#            buildResultFile.close()
-#            
-#            #print("\t"+result)
-#            maxMsgLen = 4096
-#            maxLines = 60
-#            restMsgLen = 350
-#            msg= 'Automated Smoketest\n'
-#            msg += 'OS: ' + sysId + '\n'
-#            msg += 'Sha: '+prs[prid]['sha']+'\n'
-#            msg = processResult(result, msg, resultFile, buildFailed,  testFailed, prs[prid]['testfiles'], maxMsgLen, prs[prid]['runUnittests'], prs[prid]['runWutoolTests'], prid, prs[prid]['buildEclWatch'])
-#            
-#            
-#            print("\tpass : %s" % (testInfo['status']))
-#            
-#            # Avoid orphan escape '\' char.
-#            #while ( msg[maxMsgLen-1] == '\\' ):
-#            #    maxMsgLen -= 1
-#            
-#            numOfLines = msg.count('\\n')
-#            msgLen = len(msg)
-#
-#            # Check it don't overlap if truncated!!
-#            if (msgLen < (2 * restMsgLen)) and (numOfLines > maxLines):
-#                maxLines = numOfLines
-#                
-#            if msgLen < maxMsgLen:
-#                maxMsgLen = msgLen
-#            
-#            print("msgLen:%d, maxMsgLen:%d, restMsgLen:%d" % (msgLen, maxMsgLen, restMsgLen))
-#            suffixPos = msg.find('[Build error:]')
-#            if  suffixPos == -1:
-#                suffixPos = msg.find('Time stats:')
-#                    
-#            restMsgLen = msgLen - suffixPos
-#            print("msgLen:%d, maxMsgLen:%d, restMsgLen:%d" % (msgLen, maxMsgLen, restMsgLen))
-#            
-#            msg = (msg[:maxMsgLen-restMsgLen] + '\\n ... ( comment is too long, '+str(numOfLines)+' lines, '+str(len(msg))+' bytes, truncated) ... \\n'+ msg[msgLen - restMsgLen:] + '```' ) if ( msgLen > maxMsgLen) or (numOfLines > maxLines) else msg
-#
-#            #msg = msg.replace('stopped',  'stopped,').replace("\\", "").replace('[32m','').replace('[33m','').replace('[0m', '\\n').replace('[31m', '\\n').replace('\<','').replace('/>','').replace('\xc2\xae','')
-#
-#            addCommentCmd = prs[prid]['addComment']['cmd'] +'\'{"body":"'+msg+'"}\' '+prs[prid]['addComment']['url']
-#            
-#            print("\tAdd comment to pull request")
-##            resultFile.write("\tAdd comment to pull request\n\tComment Cmd:\n")
-##            resultFile.write("------------------------------------------------------\n")
-##            resultFile.write(addCommentCmd+"\n")
-##            resultFile.write("------------------------------------------------------\n")
-##            if addGitComment:
-#            uploadGitHubComment(addCommentCmd,  resultFile)
-##            else:
-##                msgId = MessageId(resultFile)
-##                msgId.addNewFromResult(result)
-#
-#            actDir = os.getcwd()
-#            if (len(prs[prid]['sourcefiles']) > 0) and isClangTidy and isBuild:
-#                clangTidyStart=time.time()
-#                print("\tExecute clang-tidy on source files:")
-#                resultFile.write("\tExecute clang-tidy ons ource files:\n")
-#                for sourceFile in prs[prid]['sourcefiles']:
-#                    print("\t\tExecute clang-tidy on "+sourceFile)
-#                    resultFile.write("\t\tExecute clang-tidy on "+sourceFile+"\n")
-#                    myProc = subprocess.Popen(["clang-tidy HPCC-Platform/"+sourceFile+" -p build/compile_commands.json > clang-tidy-"+os.path.basename(sourceFile).replace('.','_')+'.log'],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-#                    result = formatResult(myProc, resultFile)
-#                    #resultFile.write("\tresult:"+result+"\n")
-#
-#                print("\t\tFinished. Elaps time is:" + str(time.time()-clangTidyStart)+" sec.")
-#                resultFile.write("\t\tFinished. Elaps time is:" + str(time.time()-clangTidyStart)+" sec\n")
-#            
-            
-            # Create a PR related directory called 'PR<PRID>' for 
-            #       - build
-            #       - archives
-            #       - results
-            #       - logs
-            #       - ecl testcases, keys subdirectories
-            
-            # Check out this new smoketest branch (if the pull doesn't do that)
-            
-            # Start a thread to build it in the directory created earlier
-            
-            # Start a thread to generate smoke test suite
-            # Get the name of the changed sourcefiles and possible the changes/diff to get function name(s)
-            # 1. query the source files/function names to get regression suite test name(s) and completion times
-            # 2. build a list and ensure all source testing at least once, if the commulative execution time for selected test cases less than the limit add more test cases
-            # 3. Copy selected testcases into a separate directory and wait for 2. finished
-            # 4. Generate a new config file called  'smoketest-<PRID>.json' which is 
-            #           - points to het new smoketest ecl directory
-            #           - set all other directory to a smoke test specific ones
-            #           - set timeout to the limit (in 2.) and execute ecl-test
-            
-            # Build it
-            
-            # Report the result
-            
-        else:
-            myPrint("PR-"+str(prid)+", label: "+prs[prid]['label']+ ' already tested!')
-#            resultFile.write("PR-"+str(prid)+", label: "+prs[prid]['label']+ ' already tested!\n')
-
-#        if (not keepFiles) and ((not testFailed) and (not buildFailed) and (os.path.exists('build') or os.path.exists('HPCC-Platform') or os.path.exists('hpcc'))):
-#            # remove build files to free disk space
-#            print("Move hpcc package out from buld directory")
-#            resultFile.write("Move hpcc package out from buld directory\n")
-#            myProc = subprocess.Popen(["mv build/hpccsystems-platform* ."],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-#            result = formatResult(myProc, resultFile)
-#            #resultFile.write("\tresult:"+result+"\n")
-#            
-#            print ("Delete source and build directory to save disk space "+testDir+" ("+prs[prid]['label']+").")
-#            resultFile.write("Delete source and build directory to save disk space "+testDir+" ("+prs[prid]['label']+").\n")
-#            myProc = subprocess.Popen(["sudo rm -rf HPCC-Platform build hpcc"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-#            result = formatResult(myProc, resultFile)
-#            #resultFile.write("\tresult:"+result+"\n")
-              
-        endTimestamp = time.time()
-        myPrint("\tElapsed time:"+str(endTimestamp-startTimestamp)+" sec.")
-#        resultFile.write("\tElapsed time:"+str(endTimestamp-startTimestamp)+" sec.\n")
-        
-#        resultFile.close()
-#        if not isBuild and os.path.exists(resultFileName):
-#            os.unlink(resultFileName)
-        
-        os.chdir(smoketestHome)
-        
-        if testOnlyOnePR:
-            print("It was one PR build attempt.")
-            break;
-            
-    # TODO this must sorted out
-    if (testPrNoId != 0) and not isSelectedPrOpen:
-        if skipDraftPr and (testPrNoId != prid):
-            print("\nThe PR-%s is in draft state and testing a draft PR is disabled." % (testPrNoId))
-        else:
-            print("\nIt seems the PR-%s is skipped or draft or already closed." % (testPrNoId))
-        
-    # Until this point all open PR is checked/scheduled
-    isNotThere = True
-    print("[%s] - Check if there is any closed but still running task..." % (threading.current_thread().name))
-    for key in sorted(threads):
-        if threads[key]['thread'].is_alive():
-            if (int(key) not in sortedPrs):
-                elaps = time.time()-threads[key]['startTimestamp']
-                print("--- PR-%s (%s) is closed but scheduled and active. (started at: %s, elaps: %d sec, %d min))"  % (key, threads[key]['commitId'], threads[key]['startTime'], elaps,  elaps / 60 ) )
-                isNotThere = False
-    if isNotThere:
-        print("[%s] - None\n" % (threading.current_thread().name))
-    else:
-        print("[%s] - End of list\n" % (threading.current_thread().name))
-        
-    os.chdir(cwd)
-
-
-def storeTestInfo(path, testInfo):
+def storeTestInfo(path):
     print(testInfo)
     smoketestInfoFileName = path+'/SmoketestInfo.csv'
     smoketestInfoFile = open(smoketestInfoFileName ,  "a")
@@ -2878,9 +2628,9 @@ class MessageId(object):
                 self.resultFile.write("\tcmd:"+cmd + "\n")
                 
             myProc = subprocess.Popen(cmd,  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc)
+            (result, retcode) = formatResult(myProc)
             if self.resultFile != None:
-                self.resultFile.write("\tresult"+ result['msg'] + "\n")
+                self.resultFile.write("\tresult"+result + "\n")
         
 
 def uploadGitHubComment(addCommentCmd,  resultFile = None):
@@ -2901,9 +2651,11 @@ def uploadGitHubComment(addCommentCmd,  resultFile = None):
     while attempts:
         attempts -= 1
         myProc = subprocess.Popen(addCommentCmd,  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-
-        result = formatResult(myProc)
-        resultFileWrite("\tresult:"+ result['msg'] +"\n")
+#                    result = myProc.stdout.read() + myProc.stderr.read()
+#                    print("\t"+result)
+#                    resultFile.write("\tresult:"+result+"\n")
+        (result, retcode) = formatResult(myProc)
+        resultFileWrite("\tresult:"+result+"\n")
 
         if 'created_at' in result:
             print("\tComment added.")
@@ -2975,6 +2727,17 @@ def cleanUp(smoketestHome):
     os.chdir(smoketestHome)
     print("cleanUp()\ncwd:" +  os.getcwd())
     try:
+#        oldPRsDir='OldPrs'
+#        if not os.path.exists(oldPRsDir):
+#                os.mkdir(oldPRsDir)
+#                
+#        print("\nMove old PRs (>30 days) into " + oldPRsDir +" directory.")
+#        #  find . -maxdepth 1 -type d -ctime +30 ! -name HPCC-Platform ! -name OldPrs -exec mv  '{}' OldPrs/. \;
+#        # Move all directory which is older than 30 days, but not HPCC-Platform or OldPrs to OldPrs directory
+#        myProc = subprocess.Popen(["find . -maxdepth 1 -type d -mtime +30 ! -name HPCC-Platform ! -name 'Old*' -print -exec mv '{}' "+ oldPRsDir +"/. \;"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+#        (myStdout,  myStderr) = myProc.communicate()
+#        result = myStdout+ myStderr
+#        print("Result:"+result)
 
         oldLogsDir='OldLogs'
         if not os.path.exists(oldLogsDir):
@@ -2983,19 +2746,22 @@ def cleanUp(smoketestHome):
 
         print("\nMove old logs (>6 days) onto " + oldLogsDir +" directory.")
         myProc = subprocess.Popen(["find . -maxdepth 1 -type f -mtime +6 -name 'prp-*' -print -exec mv '{}' " + oldLogsDir +"/. \;"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-        result = formatResult(myProc)
-        print("Result: " + result['msg'])
+        (myStdout,  myStderr) = myProc.communicate()
+        result = "returncode:" + str(myProc.returncode) + ", stdout:'" + myStdout + "', stderr:'" + myStderr + "'."
+        print("Result:"+result)
 
         myProc = subprocess.Popen(["find . -maxdepth 1 -type f -mtime +6 -name 'bokeh-*' -print -exec mv '{}' " + oldLogsDir +"/. \;"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-        result = formatResult(myProc)
-        print("Result: " + result['msg'])
+        (myStdout,  myStderr) = myProc.communicate()
+        result = "returncode:" + str(myProc.returncode) + ", stdout:'" + myStdout + "', stderr:'" + myStderr + "'."
+        print("Result:"+result)
 
         
         if removeMasterAtExit:
             print("\nRemove HPCC-Platform (master) to force clone it at the next start.")
             myProc = subprocess.Popen(["sudo rm -rf HPCC-Platform"],  shell=True,  bufsize=8192, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc)
-            print("Result: " + result['msg'])
+            (myStdout,  myStderr) = myProc.communicate()
+            result = "returncode:" + str(myProc.returncode) + ", stdout:'" + myStdout + "', stderr:'" + myStderr + "'."
+            print("Result:"+result)
             
     except:
         print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
@@ -3032,12 +2798,12 @@ def doTest():
     elif testMode == 2:
         testRes = collectECLWatchBuildErrors()
     elif testMode == 3:
-
-        result = 'Build: failed \xc2\xae\n'
+        #unicodestring = '\xa0'
+        result = u'Build: failed \n' # '\xc2\xae\n'
         result += "Error(s): 7\n"
-        result += "/mnt/disk1/home/vamosax/smoketest/smoketest-8652/HPCC-Platform/roxie/ccd/ccdfile.cpp:595:27: error: expected initializer before ‘-’ token\n"
-        result += "/mnt/disk1/home/vamosax/smoketest/smoketest-8652/HPCC-Platform/roxie/ccd/ccdfile.cpp:596:13: error: ‘fileSize’ was not declared in this scope\n"
-        result += "/mnt/disk1/home/vamosax/smoketest/smoketest-8652/HPCC-Platform/roxie/ccd/ccdfile.cpp:606:5: error: control reaches end of non-void function [-Werror=return-type]\n"
+        result += u"/mnt/disk1/home/vamosax/smoketest/smoketest-8652/HPCC-Platform/roxie/ccd/ccdfile.cpp:595:27: error: expected initializer before ‘-’ token\n"
+        result += u"/mnt/disk1/home/vamosax/smoketest/smoketest-8652/HPCC-Platform/roxie/ccd/ccdfile.cpp:596:13: error: ‘fileSize’ was not declared in this scope\n"
+        result += u"/mnt/disk1/home/vamosax/smoketest/smoketest-8652/HPCC-Platform/roxie/ccd/ccdfile.cpp:606:5: error: control reaches end of non-void function [-Werror=return-type]\n"
         result += "cc1plus: some warnings being treated as errors\n"
         result += "make[2]: *** [roxie/ccd/CMakeFiles/ccd.dir/ccdfile.cpp.o] Error 1\n"
         result += "make[1]: *** [roxie/ccd/CMakeFiles/ccd.dir/all] Error 2\n"
@@ -3050,7 +2816,7 @@ def doTest():
         result += "-- Configuring incomplete, errors occurred!\n"
         """
         
-        result = "Build: failed \xc2\xae\n"
+        result = "Build: failed\n ' # \xc2\xae\n"
         result += "../../Release/libs/libccd.so: undefined reference to `RowFilter::extractFilter(unsigned int)'\n"
         result += "../../Release/libs/libccd.so: undefined reference to `RowFilter::addFilter(IFieldFilter const&)'\n"
         result += "../../Release/libs/libccd.so: undefined reference to `RowFilter::recalcFieldsRequired()'\n"
@@ -3060,7 +2826,7 @@ def doTest():
         result += "../../Release/libs/libccd.so: undefined reference to `RowFilter::matches(RtlRow const&) const'\n"
         result += "Error(s): 7"
         
-        msg= 'Automated Smoketest \n  \xe2\x80\x98 Test \xe2\x80\x99 \n'
+        msg= u'Automated Smoketest \n ' #'  \xe2\x80\x98 Test \xe2\x80\x99 \n'
             
         testRes = processResult(result,  msg, '')
         
@@ -3090,7 +2856,7 @@ def doTest():
         result += "Install HPCC Platform\n"
 
         
-        msg= 'Automated Smoketest \n  \xe2\x80\x98 Test \xe2\x80\x99 \n'
+        msg= u'Automated Smoketest \n  \xe2\x80\x98 Test \xe2\x80\x99 \n'
         
             
         testRes = processResult(result,  msg, '')
@@ -3101,7 +2867,7 @@ def doTest():
         result += "Install ECLWatch build dependencies.\n"
         result += "sudo npm install -g jshint@2.9.4\n"
         result += "res:/usr/bin/jshint -> /usr/lib/node_modules/jshint/bin/jshint\n"
-        result += "+ jshint@2.9.4\n"
+        result += "+ jshint@2.9.4\N"
         result += "updated 1 package in 2.979s\n"
         result += "npm install end.\n"
         result += "npm test\n"
@@ -3111,11 +2877,11 @@ def doTest():
         result += "> eclwatch@1.0.0 lint /mnt/disk1/home/vamosax/smoketest/PR-12233/HPCC-Platform/esp/src\n"
         result += "> jshint --config ./.jshintrc ./eclwatch\n"
         result += "npm test end\n"
-        result += "Makefiles created (2019-02-28_09-07-19 45 sec )\n"
+        result += "Makefiles created (2019-02-28_09-07-19 45 sec )\N"
         result += "Build it\n"
         result += "Install HPCC Platform\n"
 
-        msg= 'Automated Smoketest \n  \xe2\x80\x98 Test \xe2\x80\x99 \n'
+        msg= u'Automated Smoketest \n  \xe2\x80\x98 Test \xe2\x80\x99 \n'
             
         testRes = processResult(result,  msg, '')
         
@@ -3124,9 +2890,9 @@ def doTest():
         pages = open(buildLogFile,  "r").readlines()
         result = ''.join(pages)
         result = result.replace('\t','')
-        msg= 'Automated Smoketest \n  \xe2\x80\x98 Test \xe2\x80\x99 \n'
+        msg= u'Automated Smoketest \n  \xe2\x80\x98 Test \xe2\x80\x99 \n'
             
-
+        # processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=False,  testfiles=None,
         testRes = processResult(result,  msg, '',   buildFailed=False,  testFailed=True,  testfiles='*.ecl')
         
         
@@ -3154,7 +2920,6 @@ if __name__ == '__main__':
     print("Runtime paramters:")
     print("------------------")
     print("Operating system is                                : " + sysId)
-    print("Parent Command is                                  : " + parentCommand)
     print("Enable to remove HPCC-Platform directory at exit is: " + str(removeMasterAtExit))
     print("Enable shallow clone is                            : " + str(enableShallowClone))
     print("Add git comment is                                 : " + str(addGitComment))
@@ -3165,11 +2930,13 @@ if __name__ == '__main__':
     print("Use quick build is                                 : " + str(useQuickBuild))
     print("Build ECLWatch is                                  : " + str(buildEclWatch))
     print("Skip draft PR is                                   : " + str(skipDraftPr))
-    print("Average Session Time                               : " + str(averageSessionTime) + " hours")
+    print("Average Session Time                               : " + str(averageSessionTime)) + " hours"
     print("Enable VCPKG build                                 : " + str(enableVcpkgBuild))
     print("Containerised environment                          : " + str(containerisedEnvironment))
+    print("Exit when it is a long wait and no PR to test is   : " + str(exitWhenLongWait))
     
-    if int(testPrNo) > 0:
+    
+    if testPrNo > 0:
         print("Test PR-" + str(testPrNo) + " only (if it is open) and exit.")
 
     print("\n")
@@ -3184,7 +2951,7 @@ if __name__ == '__main__':
     if isClangTidy:
         print("The clang-tidy is installed and use to check c* code.")
     else:
-        print("The clang-tidy is not installed.")
+        print("The clang-tidy is not istalled.")
 
     #Change to smoketest
     cwd = os.getcwd()
@@ -3197,7 +2964,7 @@ if __name__ == '__main__':
     os.chdir(smoketestHome)
 
     # Read GitHub access token
-    if os.path.isfile("token.dat"):
+    if os.path.exists('token.dat'):
         file = open('token.dat', "r") 
         line = file.readline()
         gitHubToken = line.strip().replace('\n','')[0:40]
@@ -3206,7 +2973,7 @@ if __name__ == '__main__':
     else:
         gitHubToken = ''
         print("\nWARNING:\n--------\nThe GitHub access token file not found!")
-        print("The Pull Request processing unable to access GitHub without token.\nExit.")
+        print("The Pull Request processing unable to access GitHub without token.\nnExit.")
         exit()
         
     idleTime = 60
@@ -3215,52 +2982,47 @@ if __name__ == '__main__':
         startScriptTimestamp = time.time()
         print("Start: "+time.asctime())
         os.chdir(smoketestHome)
-
+        #smoketestHome = os.getcwd()
+        #knownPullRequests = glob.glob("smoketest-*") + glob.glob("PR-*")
         knownPullRequests = glob.glob("PR-*")
-        (prs, numOfPrToTest, prSkipped) = GetOpenPulls(knownPullRequests)
+        (prs, numOfPrToTest) = GetOpenPulls(knownPullRequests)
 
         #print prs
-        CleanUpClosedPulls(knownPullRequests, smoketestHome)
+        CleanUpClosedPulls(knownPullRequests,  smoketestHome)
 
+        CatchUpMaster()
 
-        if prSkipped:
-            HandleSkippedPulls(prSkipped)
-            pass
-        else:
-            print("There is not skipped PR\n")
-            
         if prs:
             try:
                 # TODO Should check if there is enough time to finish all tests today.
                 # If not then 
                 #   a. Decrease the number of PRs to fit
                 #   b. Postpone all to tomorrow
-#                ProcessOpenPulls(prs,  numOfPrToTest)
-                ScheduleOpenPulls(prs,  numOfPrToTest)
-                pass
+                ProcessOpenPulls(prs,  numOfPrToTest)
             except:
                 print("Unexpected error:" + str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")" )
-                print("Exception in user code:")
-                print('-'*60)
+                print "Exception in user code:"
+                print '-'*60
                 traceback.print_exc(file=sys.stdout)
-                print('-'*60)
+                print '-'*60
                 # To ensure we will go back to the Smokatest directory
                 os.chdir(smoketestHome)
-        else:
-            print("Tere is not PR to process.\n")
-            
+
         endScriptTimestamp = time.time()
         print("End:"+time.asctime())
         ellaps = endScriptTimestamp-startScriptTimestamp
         print("Total time:"+str(ellaps)+" sec.")
         
-        if ellaps > 120:
+        if ellaps > 60:
             # There was at least one PR don't wait to much to next check
             idleTime = 0;
         else:
             # There wasn't any PR we can increase the idleTime
             if idleTime < maxIdleTime - 60:
                 idleTime += 60
+            elif exitWhenLongWait == True:
+                print("Don't wait too long, stop Process at "+ time.asctime())
+                break
 
 
         t = time.localtime()
@@ -3269,7 +3031,7 @@ if __name__ == '__main__':
             break
         else:
             if runOnce:
-                print("It was an one-off attempt, exit.\n")
+                print("It was an one-off attempt, exit.\nFinish at "+ time.asctime())
                 break
         
             checkStop()
@@ -3299,28 +3061,8 @@ if __name__ == '__main__':
                         
         pass
     
-    print("[%s] - Wait for all (%d) tasks finish..." % (threading.current_thread().name,  len(threads)))
-    stillActive = True
-    while stillActive:
-        print("Check at " + time.strftime("%Y.%m.%d %H:%M:%S"))
-        stillActive = False
-        for key in sorted(threads):
-            if threads[key]['thread'].is_alive():
-                elaps = time.time()-threads[key]['startTimestamp']
-                print("--- PR-%s (%s) is scheduled and active. (started at: %s, elaps: %6d sec, %4d min))"  % (key, threads[key]['commitId'], threads[key]['startTime'], elaps,  elaps / 60 ) ) 
-                stillActive = True
-            else:
-                print("--- PR-%s (%s) is finished" % (key,  threads[key]['commitId']))    
-        
-        if stillActive:
-            time.sleep(120)
-        
-    print("All tasks are done")
-        
     if stopSmoketest:
-        print("\nExternal stop request received, exit.\n")    
-    
-    print("Finish at "+ time.asctime())
-    
+        print("\nExternal stop request received, exit.\nFinish at "+ time.asctime() + "\n")    
+        
     cleanUp(smoketestHome)
     
