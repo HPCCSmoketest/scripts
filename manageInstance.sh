@@ -214,7 +214,7 @@ then
 
     #INSTANCE_TYPE="m4.10xlarge"    # 2.22 USD per Hour (40 Cores, 163GB RAM)
     #INSTANCE_TYPE="m4.16xlarge"    # 3.552 USD per Hour (64 Cores, 256 GB RAM)
-    instanceDiskVolumeSize=40       # GB
+    instanceDiskVolumeSize=80       # GB
 else
     INSTANCE_TYPE="t2.micro"
     instanceDiskVolumeSize=8        # GB    
