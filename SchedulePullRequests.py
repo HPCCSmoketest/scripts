@@ -707,7 +707,7 @@ def GetOpenPulls(knownPullRequests):
             
         morePages = []
         if 'Link:' in result['msg']:
-            lines = result.split()
+            lines = result['msg'].split()
             # <https://api.github.com/repositories/2030681/pulls?page=2>;
             nextPageUrlIndex = lines.index('Link:') + 1
             nextPageUrl = lines[nextPageUrlIndex].replace('<', '').replace('>;', '')
@@ -783,7 +783,7 @@ def GetOpenPulls(knownPullRequests):
             continue
             pass
         
-        prs[prid] = {'user':pr['user']['login'], 'code_base':pr['base']['ref'],  'label':pr['head']['ref'].encode('ascii','replace'),
+        prs[prid] = {'user':pr['user']['login'], 'code_base':pr['base']['ref'],  'label':pr['head']['ref'],
                             'sha':pr['head']['sha'], 'title':pr['title'], 'draft':False }
         
         prs[prid]['checkBoxes'] = ProcessPrBody(pr['body'])
@@ -2590,9 +2590,9 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
                 testInfo['startTimestamp'] = time.time()
                 testInfo['commitId'] = prs[prid]['sha'][0:8].upper()
                 # Schedule it
-                print("\tSchedule PR-"+str(prid)+", label: "+prs[prid]['label'].decode('utf-8'))
-                resultFile.write("\tSchedule PR-"+str(prid)+", label: "+prs[prid]['label'].decode('utf-8')+"\n")
-                resultFile.write("%d/%d. Process PR-%s, label: %s\n" % ( prSequnceNumber, numOfPrToTest, str(prid), prs[prid]['label'].decode('utf-8')))
+                print("\tSchedule PR-"+str(prid)+", label: "+prs[prid]['label'])
+                resultFile.write("\tSchedule PR-"+str(prid)+", label: "+prs[prid]['label']+"\n")
+                resultFile.write("%d/%d. Process PR-%s, label: %s\n" % ( prSequnceNumber, numOfPrToTest, str(prid), prs[prid]['label']))
                 resultFile.write("\ttitle: %s\n" % (repr(prs[prid]['title'])))
                 resultFile.write("\tsha  : %s\n" % (prs[prid]['sha']))
                 
