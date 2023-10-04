@@ -136,7 +136,7 @@ def update():
                                     if len(subPhase) > 0:
                                         subPhase +="<br>"
                                         
-                                    myProc3 = subprocess.Popen([" egrep -i -A1 'Suite:' " + logFile + " |  egrep -v 'Cluster: ' | tail -n 2 "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                                    myProc3 = subprocess.Popen([" egrep -i 'Suite:|Queries:' " + logFile ],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                                     result3 = myProc3.stdout.read() + myProc3.stderr.read()
                                     if len(result3) > 0:
                                         prefix = ["E: ", ", T: "]
