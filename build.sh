@@ -1117,6 +1117,7 @@ then
                             if [[ ${REGRESSION_TEST} == "*" ]]
                             then
                                 # Run whole Regression Suite
+                                # See utlis.sh for GLOBAL_EXCLUSION
                                 #cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
                                 cmd="./ecl-test run -t ${TARGET} ${GLOBAL_EXCLUSION} --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${REGRESSION_TIMEOUT} ${THOR_CONNECT_TIMEOUT} --pq ${PARALLEL_QUERIES} ${STORED_PARAMS} ${ENABLE_STACK_TRACE}"
                             else
