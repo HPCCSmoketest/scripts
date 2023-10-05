@@ -155,16 +155,16 @@ def formatResult(proc, resultFile = None, echo = True):
 
 	if not 'remote upstream already exists' in result:
 		if len(result) > 0 and echo:
-		    print("\t\t"+result)
+			print("\t\t"+result)
 		else:
-		    print("\t\tOK")
+			print("\t\tOK")
 
 	if resultFile != None:
 		try:
-		    resultFile.write("\tresult:"+result+"\n")
+			resultFile.write("\tresult:"+result+"\n")
 		except:
-		    pass
-		    
+			pass
+
 	return {'msg' : result, 'retcode' : retcode, 'stdout' : stdout, 'stderr' : stderr}
 
 if 'inux' in sysId:
@@ -2551,7 +2551,7 @@ class MessageId(object):
                 self.resultFile.write("\tcmd:"+cmd + "\n")
                 
             myProc = subprocess.Popen(cmd,  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            result = formatResult(myProc, resultFile)
+            result = formatResult(myProc, self.resultFile)
         
 
 def uploadGitHubComment(addCommentCmd,  resultFile = None):

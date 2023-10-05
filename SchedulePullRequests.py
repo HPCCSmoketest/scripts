@@ -1486,7 +1486,7 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
     coreGenerated = False
     coreMsg = ''
     isCoreFlesReported = False
-    
+    testInfo = {}
     # TO-DO Check and report core files
     
     for result in results:
@@ -1998,11 +1998,15 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
     else:
         resultFile.write("\tfinal type(msg) is : " + repr(type(msg)) +"\n")
         
+    storeTestInfo(smoketestHome, testInfo)
+
     return msg.replace('\'', '').replace('\\\\n', '\\n')
 
 def ProcessOpenPulls(prs,  numOfPrToTest):
     global testPrNo
     prSequnceNumber = 0
+
+    curDir =  os.getcwd()
 
     isSelectedPrOpen = False
     sortedPrs = sorted(prs)
@@ -2015,6 +2019,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 isSelectedPrOpen = True
                 numOfPrToTest = 1
                     
+        os.chdir(curDir)
         
         # Notify PRs behind this about their position in the queue
         # Get the index of the current
