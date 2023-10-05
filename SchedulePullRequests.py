@@ -172,6 +172,23 @@ embededStuffTests = {
                                                  'testing/regress/ecl/embedjs.ecl'], 
                             '_common':   ['testing/regress/ecl/streamread.ecl'], 
                             }
+isTrace = 1
+
+def trace(func):
+    def wrapper(*args, **kwargs):
+        if isTrace:
+            print(f'\n---------------------------------------------------\n'
+                f'Trace: calling {func.__name__}() '
+                f'with args: {args}\n kwargs: {kwargs}\n')
+        
+        original_result = func(*args, **kwargs)
+
+        if isTrace:
+            print(f'TRACE: {func.__name__} \n'
+                f'returned {original_result}\n'
+                f'---------------------------------------------------\n')
+        return original_result
+    return wrapper
 
 def myPrint(Msg, *Args):
         if verbose:
@@ -334,7 +351,7 @@ def formatResult(proc, resultFile = None, echo = True):
     if not 'remote upstream already exists' in result:
         if len(result) > 0 and echo:
             print("\t\t"+result)
-        else:
+        elif echo:
             print("\t\tOK")
     
     if resultFile != None:
@@ -647,6 +664,7 @@ def ProcessPrBody(bodyText):
         pass
     return retVal
 
+@trace
 def GetPullReqCommitId(prid):
     retVal = ''
     if gitHubToken != "":
@@ -662,6 +680,7 @@ def GetPullReqCommitId(prid):
     pass
     return retVal
     
+@trace
 def GetOpenPulls(knownPullRequests):
     prs={}
     prSkipped = {}
@@ -689,7 +708,7 @@ def GetOpenPulls(knownPullRequests):
         # Using curl
         myProc = subprocess.Popen(["curl " + headers + " -opullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
         
-        result = formatResult(myProc)
+        result = formatResult(myProc, echo=False)
         pulls_data = open('pullRequests.json').read()
         if '"draft":' not in pulls_data:
             print("Use an experimental GitHub api to determine draft pull requests")
@@ -699,11 +718,11 @@ def GetOpenPulls(knownPullRequests):
             # Using curl
             myProc = subprocess.Popen(["curl " + headers + " -opullRequests.json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
  
-            result = formatResult(myProc)
+            result = formatResult(myProc, echo=False)
             
         # get headers
         myProc = subprocess.Popen(["curl --head " + headers + " https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-        result = formatResult(myProc)
+        result = formatResult(myProc, echo=False)
             
         morePages = []
         if 'Link:' in result['msg']:
@@ -719,7 +738,7 @@ def GetOpenPulls(knownPullRequests):
             for page in range(nextPageIndex,  lastPageIndex+1):
             
                 myProc = subprocess.Popen(["curl " + headers + " -opullRequests"+str(page)+".json https://api.github.com/repos/hpcc-systems/HPCC-Platform/pulls?page="+str(page)],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                result = formatResult(myProc)
+                result = formatResult(myProc, echo=False)
                 pulls_data2 = open('pullRequests' + str(page) + '.json').read()
                 pulls_data2 = ',\n'+pulls_data2.lstrip('[').rstrip(']\n')
                 morePages.append(pulls_data2)
@@ -904,7 +923,7 @@ def GetOpenPulls(knownPullRequests):
             myProc = subprocess.Popen(["curl -L --connect-timeout 60 -o"+testDir+"/"+str(prid)+".diff https://github.com/hpcc-systems/HPCC-Platform/pull/"+str(prid)+".diff"],  shell=True,  bufsize=65536,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
             # The myProc.stdout.read() hanged if there was a large (> 40MB) diff file to get.
             
-            result = formatResult(myProc)
+            result = formatResult(myProc, echo=False)
             res = result['stdout'].rstrip('\n').split('\n')
             err = result['stderr'].rstrip('\n').split('\n')
             
@@ -913,7 +932,7 @@ def GetOpenPulls(knownPullRequests):
             #prs[pr['number']]['files'] = output of command
             
             myProc = subprocess.Popen(["cat "+testDir+"/"+str(prid)+".diff | grep '^[d]iff ' | awk '{ print $3 }' | sed 's/a\///'"],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-            prs[prid]['files'] = formatResult(myProc)['stdout'].rstrip('\n').split('\n')
+            prs[prid]['files'] = formatResult(myProc, echo=False)['stdout'].rstrip('\n').split('\n')
             
             changedFilesFileName = os.path.join(testDir, 'changedFiles.txt')
             oldChangedFilesFileName = os.path.join(testDir, 'changedFiles.old')
@@ -1195,6 +1214,7 @@ def GetOpenPulls(knownPullRequests):
 
     return (prQueue, buildPr, prSkipped)
 
+@trace
 def CleanUpClosedPulls(knownPullRequests, smoketestHome):
     # Clear old smoketets/pull request branches?
     # The old (closed) pull request branch is which left in knownPullRequests array after the 
@@ -2410,6 +2430,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
         
     os.chdir(cwd)
     
+@trace
 def HandleSkippedPulls(prSkipped):
     curDir =  os.getcwd()
     sortedPrs = sorted(prSkipped)
@@ -2522,6 +2543,7 @@ def consumerTask(prId, pr, cmd, testInfo, resultFileName):
     resultFile.close()
     print("[%s] finished with retCode: %s." % (threading.current_thread().name, retcode ))
     
+@trace
 def ScheduleOpenPulls(prs,  numOfPrToTest):
     global testPrNo
     testPrNoId = int(testPrNo)
@@ -2765,7 +2787,7 @@ def ScheduleOpenPulls(prs,  numOfPrToTest):
 #        if not isBuild and os.path.exists(resultFileName):
 #            os.unlink(resultFileName)
         
-        #os.chdir(smoketestHome)
+        os.chdir(smoketestHome)
         
         if testOnlyOnePR:
             print("It was one PR build attempt.")
