@@ -427,6 +427,10 @@ then
     unzip ~/vcpkg_downloads.zip
     popd
     myEcho "  Done."
+    
+    myEcho "Delete vcpkg_downloads.zip."
+    myEcho "$(rm -v ~/vcpkg_downloads.zip)"
+    myEcho "  Done."
 fi
 
 if [[ $BASE_TEST  -eq 1 ]]

@@ -684,6 +684,11 @@ then
     res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/rte/ecl-test.json ${SMOKETEST_HOME}/${INSTANCE_NAME}/ecl-test-${C_ID}-$(date '+%Y-%m-%d').json 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
    
+    WriteLog "Try to download /home/centos/vcpkg_downloads.zip" "$LOG_FILE"
+    # See build.sh to build it if CMake takes too long
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/vcpkg_downloads.zip ${SMOKETEST_HOME}/${INSTANCE_NAME}/vcpkg_downloads-${BASE_VERSION}.zip  2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+   
     CompressAndDownload
 
 else

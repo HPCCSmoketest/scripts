@@ -112,8 +112,8 @@ echo "ACLOCAL_PATH          : '$ACLOCAL_PATH'" >> $logFile 2>&1
 echo "VCPKG_BINARY_SOURCES  : '$VCPKG_BINARY_SOURCES'" >> $logFile 2>&1
 echo "VCPKG_NUGET_REPOSITORY: '$VCPKG_NUGET_REPOSITORY'" >> $logFile 2>&1
 echo "----------------------------------"   >> $logFile 2>&1
-echo "Content of /usr/local/share/aclocal/ " >> $logFile 2>&1
-ls -l  /usr/local/share/aclocal/ >> $logFile 2>&1
+#echo "Content of /usr/local/share/aclocal/ " >> $logFile 2>&1
+#ls -l  /usr/local/share/aclocal/ >> $logFile 2>&1
 echo "====================================================" >> $logFile 2>&1
 
 MyEcho ()
@@ -447,9 +447,9 @@ WritePlainLog "Current core generation is: $(cat /proc/sys/kernel/core_pattern)"
 #
 # Patch system/jlib/jthread.hpp to build in c++11 
 #
-echo 'Patch system/jlib/jthread.hpp to build in c++11 '
+#echo 'Patch system/jlib/jthread.hpp to build in c++11 '
 
-sed 's/%8"I64F"X %6"I64F"d/%8" I64F "X %6" I64F "d/g' "../HPCC-Platform/system/jlib/jthread.hpp" > temp.xml && mv -f temp.xml "../HPCC-Platform/system/jlib/jthread.hpp"
+#sed 's/%8"I64F"X %6"I64F"d/%8" I64F "X %6" I64F "d/g' "../HPCC-Platform/system/jlib/jthread.hpp" > temp.xml && mv -f temp.xml "../HPCC-Platform/system/jlib/jthread.hpp"
 
 #-------------------------------------------------
 #
@@ -463,66 +463,66 @@ cd $PR_ROOT
 
 cd ${BUILD_ROOT}
 
-MAKE_FILE="$SOURCE_ROOT/cmake_modules/buildBOOST_REGEX.cmake"
-BOOST_URL=$( egrep 'URL ' $MAKE_FILE | awk '{print $2}')
-BOOST_PKG=${BOOST_URL##*/}; 
-res=$( wget -v --spider  $BOOST_URL )
-isDownloadable=$?
-
-if [[ "${isDownloadable}" -ne 0 ]]
-then
-    WritePlainLog "* * * * Can't download file from $BOOST_URL, use local copy." "$logFile"
-
-    if [[ -f $HOME/$BOOST_PKG ]]
-    then
-        if [[ ! -f ${BUILD_ROOT}/downloads/$BOOST_PKG ]]
-        then
-            WritePlainLog "There is not '${BUILD_ROOT}/downloads/$BOOST_PKG' file." "$logFile"
-            #mkdir -p ${BUILD_ROOT}/downloads/boost_1_71_0
-            #res=$( cp -v $HOME/boost_1_71_0.tar.gz ${BUILD_ROOT}/downloads/ 2>&1 )
-            #WritePlainLog "res: ${res}" "$logFile"
-            #chmod 0766 ${BUILD_ROOT}/downloads/*.gz
-            #pushd ${BUILD_ROOT}/downloads
-            #tar -xzvf boost_1_71_0.tar.gz
-            #WritePlainLog "retcode: $?" "$logFile"
-            #popd
-
-            WritePlainLog "Hack 'HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake' to use local copy" "$logFile"
-            sed -i -e 's/URL \(.*\)$/URL '"${HOME//\//\\/}\/$BOOST_PKG"'/g' -e 's/URL_HASH/# URL_HASH/g' -e 's/TIMEOUT \(.*\)/TIMEOUT 90/g'  $MAKE_FILE
-            res=$( egrep 'URL |URL_HASH|TIMEOUT' $MAKE_FILE )
-            WritePlainLog "res:\n$res" "$logFile"
-
-            #wget -v  -O ${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz  https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
-            WritePlainLog "$( ls -l ${BUILD_ROOT}/downloads/*.gz )" "$logFile"
-            
-            #MAKE_FILE="../HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake"
-            #sed -e 's/TIMEOUT \(.*\)/TIMEOUT 60/g' ${MAKE_FILE} >temp.cmake && sudo mv -f temp.cmake ${MAKE_FILE}
-            #WritePlainLog "There is $( egrep 'TIMEOUT' ${MAKE_FILE} )" "$logFile"
-        fi
-    else
-        WritePlainLog "The $BOOST_PKG not found." "$logFile"
-    fi    
-else
-    WritePlainLog "The $BOOST_PKG is downloadable." "$logFile"
-    sed -e 's/TIMEOUT \(.*\)/TIMEOUT 180/g' ${MAKE_FILE} >temp.cmake && sudo mv -f temp.cmake ${MAKE_FILE}
-    res=$( egrep 'URL |TIMEOUT' $MAKE_FILE )
-    WritePlainLog "res:\n$res" "$logFile"
-fi
+#MAKE_FILE="$SOURCE_ROOT/cmake_modules/buildBOOST_REGEX.cmake"
+#BOOST_URL=$( egrep 'URL ' $MAKE_FILE | awk '{print $2}')
+#BOOST_PKG=${BOOST_URL##*/}; 
+#res=$( wget -v --spider  $BOOST_URL )
+#isDownloadable=$?
+#
+#if [[ "${isDownloadable}" -ne 0 ]]
+#then
+#    WritePlainLog "* * * * Can't download file from $BOOST_URL, use local copy." "$logFile"#
+#
+#    if [[ -f $HOME/$BOOST_PKG ]]
+#    then
+#        if [[ ! -f ${BUILD_ROOT}/downloads/$BOOST_PKG ]]
+#        then
+#            WritePlainLog "There is not '${BUILD_ROOT}/downloads/$BOOST_PKG' file." "$logFile"
+#            #mkdir -p ${BUILD_ROOT}/downloads/boost_1_71_0
+#            #res=$( cp -v $HOME/boost_1_71_0.tar.gz ${BUILD_ROOT}/downloads/ 2>&1 )
+#            #WritePlainLog "res: ${res}" "$logFile"
+#            #chmod 0766 ${BUILD_ROOT}/downloads/*.gz
+#            #pushd ${BUILD_ROOT}/downloads
+#            #tar -xzvf boost_1_71_0.tar.gz
+#            #WritePlainLog "retcode: $?" "$logFile"
+#            #popd
+#
+#            WritePlainLog "Hack 'HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake' to use local copy" "$logFile"
+#            sed -i -e 's/URL \(.*\)$/URL '"${HOME//\//\\/}\/$BOOST_PKG"'/g' -e 's/URL_HASH/# URL_HASH/g' -e 's/TIMEOUT \(.*\)/TIMEOUT 90/g'  $MAKE_FILE
+#            res=$( egrep 'URL |URL_HASH|TIMEOUT' $MAKE_FILE )
+#            WritePlainLog "res:\n$res" "$logFile"
+#
+#            #wget -v  -O ${BUILD_ROOT}/downloads/boost_1_71_0.tar.gz  https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
+#            WritePlainLog "$( ls -l ${BUILD_ROOT}/downloads/*.gz )" "$logFile"
+#            
+#            #MAKE_FILE="../HPCC-Platform/cmake_modules/buildBOOST_REGEX.cmake"
+#            #sed -e 's/TIMEOUT \(.*\)/TIMEOUT 60/g' ${MAKE_FILE} >temp.cmake && sudo mv -f temp.cmake ${MAKE_FILE}
+#            #WritePlainLog "There is $( egrep 'TIMEOUT' ${MAKE_FILE} )" "$logFile"
+#        fi
+#    else
+#        WritePlainLog "The $BOOST_PKG not found." "$logFile"
+#    fi    
+#else
+#    WritePlainLog "The $BOOST_PKG is downloadable." "$logFile"
+#    sed -e 's/TIMEOUT \(.*\)/TIMEOUT 180/g' ${MAKE_FILE} >temp.cmake && sudo mv -f temp.cmake ${MAKE_FILE}
+#    res=$( egrep 'URL |TIMEOUT' $MAKE_FILE )
+#    WritePlainLog "res:\n$res" "$logFile"
+#fi
 
 pushd ${PR_ROOT}
 if [[ ${ENABLE_CMakeLists_HACK} -eq 1 ]]
 then
-    WritePlainLog "Patch/hack some CMakeLists.txt" "$logFile"
-    pushd HPCC-Platform
-    sed -i -e 's/COMMAND make/COMMAND make -j '"${NUMBER_OF_BUILD_THREADS}"'/g' plugins/cassandra/CMakeLists.txt
-    sed -i -e 's/\${CMAKE_MAKE_PROGRAM}/\${CMAKE_MAKE_PROGRAM} -j '"${NUMBER_OF_BUILD_THREADS}"'/g' plugins/couchbase/CMakeLists.txt
-    sed -i -e 's/COMMAND make/COMMAND \${CMAKE_MAKE_PROGRAM} -j '"${NUMBER_OF_BUILD_THREADS}"'/g' plugins/redis/CMakeLists.txt
-    sed -i -e 's/\${CMAKE_MAKE_PROGRAM}/\${CMAKE_MAKE_PROGRAM} -j '"${NUMBER_OF_BUILD_THREADS}"'/g' system/aws/CMakeLists.txt
-    sed -i -e 's/\${CMAKE_MAKE_PROGRAM}/\${CMAKE_MAKE_PROGRAM} -j '"${NUMBER_OF_BUILD_THREADS}"'/g' system/azure/CMakeLists.txt
-    
-    res=$( git status )
-    ret=$?
-    WritePlainLog "ret: ${ret}\nres:\n$res" "$logFile"
+#    WritePlainLog "Patch/hack some CMakeLists.txt" "$logFile"
+#    pushd HPCC-Platform
+#    sed -i -e 's/COMMAND make/COMMAND make -j '"${NUMBER_OF_BUILD_THREADS}"'/g' plugins/cassandra/CMakeLists.txt
+#    sed -i -e 's/\${CMAKE_MAKE_PROGRAM}/\${CMAKE_MAKE_PROGRAM} -j '"${NUMBER_OF_BUILD_THREADS}"'/g' plugins/couchbase/CMakeLists.txt
+#    sed -i -e 's/COMMAND make/COMMAND \${CMAKE_MAKE_PROGRAM} -j '"${NUMBER_OF_BUILD_THREADS}"'/g' plugins/redis/CMakeLists.txt
+#    sed -i -e 's/\${CMAKE_MAKE_PROGRAM}/\${CMAKE_MAKE_PROGRAM} -j '"${NUMBER_OF_BUILD_THREADS}"'/g' system/aws/CMakeLists.txt
+#    sed -i -e 's/\${CMAKE_MAKE_PROGRAM}/\${CMAKE_MAKE_PROGRAM} -j '"${NUMBER_OF_BUILD_THREADS}"'/g' system/azure/CMakeLists.txt
+#    
+#    res=$( git status )
+#    ret=$?
+#    WritePlainLog "ret: ${ret}\nres:\n$res" "$logFile"
     
     removeLog4j=$( find . -iname '*log4j*' -type f -exec rm -fv {} \; )
     WritePlainLog "Remove LOG4J items result:\n${removeLog4j}" "$logFile"
@@ -626,6 +626,20 @@ fi
 
 PREP_TIME=$(( $(date +%s) - $TIME_STAMP ))
 WritePlainLog "Makefiles created ($(date +%Y-%m-%d_%H-%M-%S) $PREP_TIME sec )" "$logFile"
+
+if (( $PREP_TIME -gt 300))
+then
+    # Something is odd related to CMake/VCPKG stuff
+    # See manageInstances.sh to upload into the instance and init.sh to extract there and delete
+    WritePlainLog "Generate new ~/vcpkg_downloads.zip." "$logFile"
+    [[ -f ~/vcpkg_downloads.zip ]] && rm ~/vcpkg_downloads.zip
+
+    # Generate a new vcpkg_downloads.zip
+    # see manageInstances.sh to try to download it at the end of the session
+    rm -rf vcpkg_downloads/tools vcpkg_downloads/temp
+    zip -r ~/vcpkg_downloads.zip vcpkg_installed/ vcpkg_downloads/
+fi
+
 
 #
 # ------------------------------------------------
