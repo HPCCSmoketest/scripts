@@ -430,10 +430,18 @@ popd
 WritePlainLog "Done." "$logFile"
 
 
-#echo "Update Git submodules"
-#echo "Update Git submodules" >> $logFile 2>&1
+#-------------------------------------------------
+#
+# Update submodules in the final source tree
+# (Hoping it can help to fix the long vcpkg stuff)
+#
+pushd $SOURCE_ROOT
 
-#git submodule update --init --recursive
+WritePlainLog "Update Git submodules" "$logFile"
+res=$(git submodule update --init --recursive 2>&1)
+WritePlainLog "res:${res}" "$logFile"
+
+popd
 
 #-------------------------------------------------
 #
