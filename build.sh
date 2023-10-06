@@ -439,6 +439,7 @@ WritePlainLog "$(pushd $SOURCE_ROOT 2>&1)" "$logFile"
 
 WritePlainLog "Update Git submodules" "$logFile"
 res=$(git submodule update --init --recursive 2>&1)
+[[ -z "$res" ]] && res="  Done."
 WritePlainLog "res:${res}" "$logFile"
 
 WritePlainLog "$(popd 2>&1)" "$logFile"
@@ -645,7 +646,8 @@ then
     # Generate a new vcpkg_downloads.zip
     # see manageInstances.sh to try to download it at the end of the session
     rm -rf vcpkg_downloads/tools vcpkg_downloads/temp
-    zip -r ~/vcpkg_downloads.zip vcpkg_installed/ vcpkg_downloads/
+    #zip -r ~/vcpkg_downloads.zip vcpkg_installed/ vcpkg_downloads/
+    WritePlainLog "  Skip its." "$logFile"
 fi
 
 
