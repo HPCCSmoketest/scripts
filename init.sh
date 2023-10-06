@@ -492,7 +492,7 @@ INSTANCE_ID=$( wget -q -t1 -T1 -O - http://169.254.169.254/latest/meta-data/inst
 
 if [[ $DRY_RUN -eq 0 ]]
 then
-    DEVTOOLSET=$( scl -l | egrep 'devtoolset' | tail -n 1 )
+    DEVTOOLSET=$( scl -l | egrep 'devtoolset' | sort -V | tail -n 1 )
     if [[ $BASE_TEST  -eq 1 ]]
     then
         # For base test
