@@ -627,7 +627,7 @@ fi
 PREP_TIME=$(( $(date +%s) - $TIME_STAMP ))
 WritePlainLog "Makefiles created ($(date +%Y-%m-%d_%H-%M-%S) $PREP_TIME sec )" "$logFile"
 
-if (( $PREP_TIME -gt 300))
+if [[ $PREP_TIME -gt 300 ]]
 then
     # Something is odd related to CMake/VCPKG stuff
     # See manageInstances.sh to upload into the instance and init.sh to extract there and delete
