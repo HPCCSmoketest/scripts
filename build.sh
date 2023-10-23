@@ -219,6 +219,10 @@ then
 fi
 WritePlainLog "BUILD_ROOT:$BUILD_ROOT" "$resultFile"
 
+
+[[ -f handleVcpkg.sh ]] && ./handleVcpkg.sh "$logFile"
+
+
 HAVE_PKG=$( find $PR_ROOT/ -maxdepth 1 -iname '*'"$PKG_EXT" -type f -print | wc -l)
 #CAN NOT BE USED in real Smoketest envireonment! Set it and export into the environment
 #SKIP_BUILD=1
