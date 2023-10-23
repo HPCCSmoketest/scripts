@@ -220,7 +220,7 @@ fi
 WritePlainLog "BUILD_ROOT:$BUILD_ROOT" "$resultFile"
 
 
-[[ -f handleVcpkg.sh ]] && ./handleVcpkg.sh "$logFile"
+[[ -f ../handleVcpkg.sh ]] && ../handleVcpkg.sh "$logFile"
 
 
 HAVE_PKG=$( find $PR_ROOT/ -maxdepth 1 -iname '*'"$PKG_EXT" -type f -print | wc -l)
