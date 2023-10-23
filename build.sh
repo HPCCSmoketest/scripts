@@ -220,8 +220,18 @@ fi
 WritePlainLog "BUILD_ROOT:$BUILD_ROOT" "$resultFile"
 
 
-[[ -f ../handleVcpkg.sh ]] && ../handleVcpkg.sh "$logFile"
-
+if [[ -f ../handleVcpkg.sh ]] 
+then
+    WritePlainLog "The handleVcpkg.sh found, execute it. (pwd:$(pwd))" "$logFile"
+    WritePlainLog " $(cp -v ../handleVcpkg.sh . 2>&1)" "$logFile"
+    res=$( ./handleVcpkg.sh "$logFile" 2>&1 )
+    ret=$?
+    WritePlainLog "ret: $ret" "$logFile"
+    WritePlainLog "res: '$res'" "$logFile"
+    WritePlainLog "  Done." "$logFile"
+else
+    WritePlainLog "The handleVcpkg.sh not found." "$logFile"
+fi
 
 HAVE_PKG=$( find $PR_ROOT/ -maxdepth 1 -iname '*'"$PKG_EXT" -type f -print | wc -l)
 #CAN NOT BE USED in real Smoketest envireonment! Set it and export into the environment
