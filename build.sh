@@ -224,6 +224,8 @@ if [[ -f ../handleVcpkg.sh ]]
 then
     WritePlainLog "The handleVcpkg.sh found, execute it. (pwd:$(pwd))" "$logFile"
     WritePlainLog " $(cp -v ../handleVcpkg.sh . 2>&1)" "$logFile"
+    chmod +x ./handleVcpkg.sh
+
     res=$( ./handleVcpkg.sh "$logFile" 2>&1 )
     ret=$?
     WritePlainLog "ret: $ret" "$logFile"
@@ -660,8 +662,8 @@ then
     # Generate a new vcpkg_downloads.zip
     # see manageInstances.sh to try to download it at the end of the session
     rm -rf vcpkg_downloads/tools vcpkg_downloads/temp
-    #zip -r ~/vcpkg_downloads.zip vcpkg_installed/ vcpkg_downloads/
-    WritePlainLog "  Skip its." "$logFile"
+    zip -r ~/vcpkg_downloads.zip vcpkg_installed/ vcpkg_downloads/
+    #WritePlainLog "  Skip its." "$logFile"
 fi
 
 

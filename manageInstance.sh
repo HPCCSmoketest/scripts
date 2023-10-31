@@ -604,7 +604,7 @@ then
                 fi
             fi
         else
-            WriteLog "Smoketest is $( [[ $smoketestIsRunning -eq 1 ]] && echo 'running.' || echo 'finished.')"  "$LOG_FILE"
+            WriteLog "Smoketest is $( [[ $smoketestIsRunning -eq 1 ]] && echo 'running.' || echo 'finished.') (Check count: $checkCount)"  "$LOG_FILE"
             
             checkCount=$(( $checkCount + 1 ))
             
@@ -618,6 +618,16 @@ then
                 CompressAndDownload "emergency"
             fi
 
+        fi
+        # It is possible the ProcessPullRequests.py is too busy (lots of PRs, etc) and the build.sh doesn't run yet.
+        # Give it some time with checking the value of checkCount.
+        if [[ ($smoketestIsRunning -eq 0 ) && ($checkCount -le 5) ]]
+        then
+            procList=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ps aux | egrep '[s]moketest.sh|ProcessPullReq|build.sh'"  2>&1 )
+            WriteLog "Proclist:"  "$LOG_FILE"
+            WriteLog "$procList"  "$LOG_FILE"
+            smoketestIsRunning=1
+            
         fi
         
         if [[ $smoketestIsRunning -eq 1 ]]
