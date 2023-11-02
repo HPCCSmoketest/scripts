@@ -537,7 +537,7 @@ BREAK_TIME=$(( ${GUILLOTINE} * 8 / 10 ))
 PROCESS_TO_KILL="build.sh"  #"ecl-test"
 ( crontab -l; echo ""; echo "# Send Ctrl - C to Regression Test Engine after ${BREAK_TIME} minutes"; echo $( date -d "+${BREAK_TIME} minutes" "+%M %H %d %m") " * REGRESSION_TEST_ENGINE_PID=\$( pgrep -f $PROCESS_TO_KILL ); while [[ -z \"\$REGRESSION_TEST_ENGINE_PID\" ]] ; do date; sleep 10; REGRESSION_TEST_ENGINE_PID=\$( pgrep -f $PROCESS_TO_KILL ); done; echo \"Regression test engine PID(s): \$REGRESSION_TEST_ENGINE_PID\"; sudo kill -SIGINT -- \${REGRESSION_TEST_ENGINE_PID}; sleep 10; sudo kill -SIGINT -- \${REGRESSION_TEST_ENGINE_PID}; " ) | crontab
 
-myEcho "crontab:"
+myEcho "crontab at $(date +%Y.%m%d\ %H:%M:%S)"
 myEcho "$( crontab -l )"
 myEcho "---------------------------------------------------------------------------------- "
 

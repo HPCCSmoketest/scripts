@@ -53,6 +53,7 @@ MyExit()
         WriteLog "MyExit(): Terminate in instance result:\n ${terminate}" "$LOG_FILE"
     else
         WriteLog "MyExit(): Running instance ID not found." "$LOG_FILE"
+        WriteLog "End." "$LOG_FILE"
     fi
 
     (echo "At $(date "+%Y.%m.%d %H:%M:%S") session (instance ID: ${runningInstanceID} on IP: ${publicIP}) exited with error code: $errorCode."; echo "${errorMsg}"; echo "${terminate}" ) | mailx -s "Abnormal end of session $instanceName ($commitId) on ${publicIP}" attila.vamos@gmail.com,attila.vamos@lexisnexisrisk.com
@@ -578,9 +579,11 @@ then
         else
             smoketestIsRunning=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "pgrep build.sh | wc -l"  2>&1 )
         fi
-        if [[ $? -ne 0 ]]
+        retCode=$?
+        if [[ $retCode -ne 0 ]]
         then
             # Something is wrong, try to find out what
+            WriteLog "retCode: $retCode, smoketestIsRunning:'$smoketestIsRunning'"
             timeOut=$( echo "$smoketestIsRunning" | egrep 'timed out' | wc -l);
             if [[ $timeOut -eq 0 ]]
             then
