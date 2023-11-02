@@ -569,12 +569,12 @@ then
     emergencyLogDownloadThreshold=$( echo " 60 * $AVERAGE_SESSION_TIME * 4 / 3" | bc ) # 60  # minutes
     WriteLog "emergencyLogDownloadThreshold: $emergencyLogDownloadThreshold minutes"  "$LOG_FILE"
     
-    while [[ $smoketestIsRunning -eq 1 ]]
+    while [[ $smoketestIsRunning -ne 0 ]]
     do
         # Should use BASE_TEST to check smoketest or build.sh
         if [[ -z "$BASE_TEST" ]]
         then
-            smoketestIsRunning=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "pgrep smoketest | wc -l"  2>&1 )
+            smoketestIsRunning=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ps aux | egrep -c '[s]moketest.sh|[P]rocessPullReq|[b]uild.sh'"  2>&1 )
         else
             smoketestIsRunning=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "pgrep build.sh | wc -l"  2>&1 )
         fi
@@ -604,7 +604,7 @@ then
                 fi
             fi
         else
-            WriteLog "Smoketest is $( [[ $smoketestIsRunning -eq 1 ]] && echo 'running.' || echo 'finished.') (Check count: $checkCount)"  "$LOG_FILE"
+            WriteLog "Smoketest is $( [[ $smoketestIsRunning -ne 0 ]] && echo 'running.' || echo 'finished.') (Check count: $checkCount)"  "$LOG_FILE"
             
             checkCount=$(( $checkCount + 1 ))
             
@@ -630,7 +630,7 @@ then
             
         fi
         
-        if [[ $smoketestIsRunning -eq 1 ]]
+        if [[ $smoketestIsRunning -ne 0 ]]
         then
             sleep ${LOOP_WAIT}
         fi
