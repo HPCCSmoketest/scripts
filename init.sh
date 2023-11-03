@@ -549,9 +549,11 @@ myEcho "Python3 version: $( python3 --version )"
 
 myEcho "Before fix Pyhon3"
 myEcho "$(ls -l /usr/bin/python3*)"
-sudo python2 /usr/bin/yum reinstall -y python3 python3-libs
-sudo rm -v /usr/bin/python3
-sudo ln -s /usr/local/bin/python3.6 /usr/bin/python3
+
+# Is this really necessary for Bokeh?
+#sudo python2 /usr/bin/yum reinstall -y python3 python3-libs
+#sudo rm -v /usr/bin/python3
+#sudo ln -s /usr/local/bin/python3.6 /usr/bin/python3
 myEcho "After fix Pyhon3"
 myEcho "$(ls -l /usr/bin/python3*)"
 

@@ -51,6 +51,7 @@ MyExit()
     then
         terminate=$( aws ec2 terminate-instances --instance-ids ${runningInstanceID} 2>&1 )
         WriteLog "MyExit(): Terminate in instance result:\n ${terminate}" "$LOG_FILE"
+        WriteLog "End." "$LOG_FILE"
     else
         WriteLog "MyExit(): Running instance ID not found." "$LOG_FILE"
         WriteLog "End." "$LOG_FILE"
@@ -568,7 +569,7 @@ then
     smoketestIsRunning=1
     checkCount=0
     emergencyLogDownloadThreshold=$( echo " 60 * $AVERAGE_SESSION_TIME * 4 / 3" | bc ) # 60  # minutes
-    WriteLog "emergencyLogDownloadThreshold: $emergencyLogDownloadThreshold minutes"  "$LOG_FILE"
+    WriteLog "emergencyLogDownloadThreshold: $emergencyLogDownloadThreshold minutes" "$LOG_FILE"
     
     while [[ $smoketestIsRunning -ne 0 ]]
     do
@@ -580,10 +581,10 @@ then
             smoketestIsRunning=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "pgrep build.sh | wc -l"  2>&1 )
         fi
         retCode=$?
-        if [[ $retCode -ne 0 ]]
+        if [[ $retcode -gt 1 ]]
         then
             # Something is wrong, try to find out what
-            WriteLog "retCode: $retCode, smoketestIsRunning:'$smoketestIsRunning'"
+            WriteLog "retCode: $retCode, smoketestIsRunning:'$smoketestIsRunning'" "$LOG_FILE"
             timeOut=$( echo "$smoketestIsRunning" | egrep 'timed out' | wc -l);
             if [[ $timeOut -eq 0 ]]
             then
@@ -592,6 +593,7 @@ then
             else
                 WriteLog "Ssh timed out, chek if the instance is still running" "$LOG_FILE"
                 isTerminated=$( aws ec2 describe-instances --instance-ids ${instanceId} --filters "Name=tag:PR,Values=${INSTANCE_NAME}" --query "Reservations[].Instances[].State[].Name" | egrep -c 'terminated|stopped'  )
+                WriteLog "isTerminated: $isTerminated" "$LOG_FILE"
                 if [[ $isTerminated -ne 0 ]]
                 then
                     WriteLog "Instance is terminated, exit" "$LOG_FILE"
