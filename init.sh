@@ -174,6 +174,21 @@ sudo yum install -y \
 sudo yum install -y centos-release-scl
 sudo yum install -y devtoolset-9
 sudo yum install -y devtoolset-11
+
+myEcho "Update Pyhon3"
+myEcho "Python version: $( python --version 2>&1 )"
+myEcho "Python2 version: $( python2 --version 2>&1 )"
+myEcho "Python3 version: $( python3 --version )"
+
+myEcho "Before fix Pyhon3"
+myEcho "$(ls -l /usr/bin/python3*)"
+
+sudo python2 /usr/bin/yum reinstall -y python3 python3-libs
+sudo rm -v /usr/bin/python3
+sudo ln -s /usr/local/bin/python3.6 /usr/bin/python3
+myEcho "After fix Pyhon3"
+myEcho "$(ls -l /usr/bin/python3*)"
+
 myEcho "Done"
 myEcho "-------------------------------------"
 
@@ -540,22 +555,6 @@ PROCESS_TO_KILL="build.sh"  #"ecl-test"
 myEcho "crontab at $(date +%Y.%m%d\ %H:%M:%S)"
 myEcho "$( crontab -l )"
 myEcho "---------------------------------------------------------------------------------- "
-
-myEcho "Update Pyhon3"
-# Install, prepare and start Bokeh
-myEcho "Python version: $( python --version 2>&1 )"
-myEcho "Python2 version: $( python2 --version 2>&1 )"
-myEcho "Python3 version: $( python3 --version )"
-
-myEcho "Before fix Pyhon3"
-myEcho "$(ls -l /usr/bin/python3*)"
-
-# Is this really necessary for Bokeh?
-#sudo python2 /usr/bin/yum reinstall -y python3 python3-libs
-#sudo rm -v /usr/bin/python3
-#sudo ln -s /usr/local/bin/python3.6 /usr/bin/python3
-myEcho "After fix Pyhon3"
-myEcho "$(ls -l /usr/bin/python3*)"
 
 myEcho "Install Bokeh"
 p3=$(which "pip3")
