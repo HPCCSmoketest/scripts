@@ -16,7 +16,7 @@ myEcho()
 export PATH=$PATH:/usr/local/sbin:/usr/sbin:
 myEcho "path: $PATH"
 
-PUBLIC_IP=$( curl http://checkip.amazonaws.com )
+PUBLIC_IP=$( curl -q http://checkip.amazonaws.com )
 myEcho "PUBLIC_IP: '$PUBLIC_IP'"
 
 PUBLIC_HOSTNAME=$( wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname )
@@ -147,20 +147,29 @@ PACKAGES_TO_INSTALL="expect mailx bc psmisc"
 
 #if [ $DOCS_BUILD -eq 1 ]
 #then
-    wget http://mirror.centos.org/centos/7/os/x86_64/Packages/fop-1.1-6.el7.noarch.rpm
+    wget -q http://mirror.centos.org/centos/7/os/x86_64/Packages/fop-1.1-6.el7.noarch.rpm
     PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL fop-1.1"
 #fi
 
 # This related to Bokeh installation, but should be here because it removes perl-IPC-Cmd 
 # (needs to build OpenSSL) as well.
 myEcho "Remove pyparsing"
-sudo yum remove -y pyparsing
+res=$( sudo yum remove -y pyparsing 2>&1 )
+[[ $? -ne 0 ]] && echo "Res: $res"
+myEcho "  Done"
 
 myEcho "Packages to install: ${PACKAGES_TO_INSTALL}"
-sudo yum install -y ${PACKAGES_TO_INSTALL}
+res=$( sudo yum install -y ${PACKAGES_TO_INSTALL} 2>&1 )
+[[ $? -ne 0 ]] && echo "Res: $res"
+myEcho "  Done"
 
-sudo yum install -y git zip unzip wget python3 libtool
-sudo yum install -y \
+myEcho "Install git zip unzip wget python3 libtool."
+res=$( sudo yum install -y git zip unzip wget python3 libtool 2>&1 )
+[[ $? -ne 0 ]] && echo "Res: $res"
+myEcho "  Done"
+
+myEcho "Install ncurses-devel libmemcached-devel numactl-devel heimdal-devel java-11-openjdk-devel libuv-devel python3-devel kernel-devel perl-IPC-Cmd."
+res=$(sudo yum install -y \
     ncurses-devel \
     libmemcached-devel \
     numactl-devel \
@@ -169,11 +178,24 @@ sudo yum install -y \
     libuv-devel \
     python3-devel \
     kernel-devel \
-    perl-IPC-Cmd 
+    perl-IPC-Cmd   2>&1 )
+[[ $? -ne 0 ]] && echo "Res: $res"
+myEcho "  Done"
 
-sudo yum install -y centos-release-scl
-sudo yum install -y devtoolset-9
-sudo yum install -y devtoolset-11
+myEcho "Install centos-release-scl."
+res=$( sudo yum install -y centos-release-scl 2>&1 )
+[[ $? -ne 0 ]] && echo "Res: $res"
+myEcho "  Done"
+
+myEcho "Install devtoolset-9."
+res=$(sudo yum install -y devtoolset-9 2>&1 )
+[[ $? -ne 0 ]] && echo "Res: $res"
+myEcho "  Done"
+
+myEcho "Install devtoolset-11."
+res=$sudo yum install -y devtoolset-11 2>&1 )
+[[ $? -ne 0 ]] && echo "Res: $res"
+myEcho "  Done"
 
 myEcho "Update Pyhon3"
 myEcho "Python version: $( python --version 2>&1 )"
@@ -183,9 +205,21 @@ myEcho "Python3 version: $( python3 --version )"
 myEcho "Before fix Pyhon3"
 myEcho "$(ls -l /usr/bin/python3*)"
 
-sudo python2 /usr/bin/yum reinstall -y python3 python3-libs
-sudo rm -v /usr/bin/python3
-sudo ln -s /usr/local/bin/python3.6 /usr/bin/python3
+myEcho "sudo python2 /usr/bin/yum reinstall -y python3 python3-libs"
+res=$(sudo python2 /usr/bin/yum reinstall -y python3 python3-libs 2>&1)
+[[ $? -ne 0 ]] && echo "Res: $res"
+myEcho "  Done"
+
+myEcho "sudo rm -v /usr/bin/python3"
+res=$(sudo rm -v /usr/bin/python3 2>&1 )
+[[ $? -ne 0 ]] && echo "Res: $res"
+myEcho "  Done"
+
+myEcho "sudo ln -s /usr/local/bin/python3.6 /usr/bin/python3"
+res=$(sudo ln -s /usr/local/bin/python3.6 /usr/bin/python3 2>&1 )
+[[ $? -ne 0 ]] && echo "Res: $res"
+myEcho "  Done"
+
 myEcho "After fix Pyhon3"
 myEcho "$(ls -l /usr/bin/python3*)"
 
@@ -193,30 +227,33 @@ myEcho "Done"
 myEcho "-------------------------------------"
 
 # Install  CPPUNIT 1.15.1
-pushd ~/
-myEcho "Update CPPUINT to 1.15.1."
-sudo yum remove -y  cppunit
-wget --no-check-certificate http://dev-www.libreoffice.org/src/cppunit-1.15.1.tar.gz
-tar xvf cppunit-1.15.1.tar.gz
-cd cppunit-1.15.1
-./autogen.sh
-./configure
-make
-make check # optional
-sudo make install
-myEcho "   Done"
-myEcho "-------------------------------------"
-popd
+#pushd ~/
+#myEcho "Update CPPUINT to 1.15.1."
+#sudo yum remove -y  cppunit
+#wget --no-check-certificate http://dev-www.libreoffice.org/src/cppunit-1.15.1.tar.gz
+#tar xvf cppunit-1.15.1.tar.gz
+#cd cppunit-1.15.1
+#./autogen.sh
+#./configure
+#make
+#make check # optional
+#sudo make install
+#myEcho "   Done"
+#myEcho "-------------------------------------"
+#popd
 
 
 GUILLOTINE=$( echo " 2 * $AVERAGE_SESSION_TIME * 60" | bc |  xargs printf "%.0f" ) # minutes ( 2 x AVERAGE_SESSION_TIME)
-printf "AVERAGE_SESSION_TIME = %f hours, GUILLOTINE = %d minutes\n" "$AVERAGE_SESSION_TIME" "$GUILLOTINE"
+myEcho "$( printf 'AVERAGE_SESSION_TIME = %f hours, GUILLOTINE = %d minutes\n' $AVERAGE_SESSION_TIME $GUILLOTINE )"
 
 [ ! -d smoketest ] && mkdir smoketest
 
 cd smoketest
 
-git clone https://github.com/HPCCSmoketest/scripts.git
+myEcho "Clone smoketest"
+res=$(git clone https://github.com/HPCCSmoketest/scripts.git 2>&1)
+[[ $? -ne 0 ]] && echo "Res: $res"
+myEcho "  Done"
 
 # check scripts dir
 
@@ -379,29 +416,30 @@ else
     sudo yum install -y mono-complete 
 fi
 myEcho "Dependencies and versions:"
-which pkg-config
-pkg-config --version | head -n 1
-rpm -q pkg-config
+myEcho "$(which pkg-config 2>&1 )"
+myEcho "$(pkg-config --version | head -n 1 2>&1 )"
+myEcho "$(rpm -q pkg-config 2>&1 )"
 
-which autoconf
-autoconf --version | head -n 1
-rpm -q autoconf
+myEcho "$(which autoconf 2>&1 )"
+myEcho "$(autoconf --version | head -n 1 2>&1 )"
+myEcho "$(rpm -q autoconf 2>&1 )"
 
-which automake
-automake --version | head -n 1
-rpm -q automake
+myEcho "$(which automake 2>&1 )"
+myEcho "$(automake --version | head -n 1 2>&1 )"
+myEcho "$(rpm -q automake 2>&1 )"
 
-which libtool
-libtool --version | head -n 1
-rpm -q libtool
+myEcho "$(which libtool 2>&1 )"
+myEcho "$(libtool --version | head -n 1 2>&1 )"
+myEcho "$(rpm -q libtool 2>&1 )"
 
-which mono
-mono --version | head -n 1
-rpm -q mono
+myEcho "$(which mono 2>&1 )"
+myEcho "$(mono --version | head -n 1 2>&1 )"
+myEcho "$(rpm -q mono 2>&1 )"
 
 
-myEcho "Content of /usr/local/share/aclocal/ "
-ls -l  /usr/local/share/aclocal/ 
+#myEcho "Content of /usr/local/share/aclocal/ "
+#ls -l  /usr/local/share/aclocal/ 
+myEcho "Number of files in '/usr/local/share/aclocal/' is $(find /usr/local/share/aclocal/ -maxdepth 1 -type f | wc -l ) "
 
 echo -e "\n#=====================================================" >> ~/.bashrc
 echo "# For VCPKG stuff " >> ~/.bashrc
@@ -449,7 +487,7 @@ then
     myEcho "  Done."
 fi
 
-if [[ $BASE_TEST  -eq 1 ]]
+if [[ $BASE_TEST -eq 1 ]]
 then
     myEcho "Because build.sh will be executed instead of ProcessPullRequest.py"
     myEcho "We need:"
@@ -559,13 +597,16 @@ myEcho "------------------------------------------------------------------------
 myEcho "Install Bokeh"
 p3=$(which "pip3")
 myEcho "p3: '$p3'"
-sudo ${p3} install --upgrade pip
+res=$(sudo ${p3} install --upgrade pip 2>&1 )
+[[ $? -ne 0 ]] && echo "Res: $res"
+myEcho "  Done"
+
 p3=$(which "pip3")
 myEcho "p3: '$p3'"
-#myEcho "Remove pyparsing"
-#sudo yum remove -y pyparsing
 myEcho "Install pandas bokeh pyproj"
-sudo ${p3} install pandas bokeh pyproj
+res=$(sudo ${p3} install pandas bokeh pyproj 2>&1 )
+[[ $? -ne 0 ]] && echo "Res: $res"
+myEcho "  Done"
 
 myEcho "LD_LIBRARY_PATH: '$LD_LIBRARY_PATH'"
 export LD_LIBRARY_PATH=/usr/lib:/usr/lib64:$LD_LIBRARY_PATH
