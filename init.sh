@@ -193,7 +193,7 @@ res=$(sudo yum install -y devtoolset-9 2>&1 )
 myEcho "  Done"
 
 myEcho "Install devtoolset-11."
-res=$sudo yum install -y devtoolset-11 2>&1 )
+res=$(sudo yum install -y devtoolset-11 2>&1 )
 [[ $? -ne 0 ]] && echo "Res: $res"
 myEcho "  Done"
 
