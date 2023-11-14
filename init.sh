@@ -315,7 +315,7 @@ myEcho "VCPKG_NEWER_DEPENDENCIES: $VCPKG_NEWER_DEPENDENCIES"
 if [[ ${VCPKG_NEWER_DEPENDENCIES} -eq 1 ]]
 then
     # For 8.12.x and beyond
-    curl -o pkg-config-0.29.2.tar.gz https://pkg-config.freedesktop.org/releases/pkg-config-0.29.2.tar.gz && \
+    curl -q -o pkg-config-0.29.2.tar.gz https://pkg-config.freedesktop.org/releases/pkg-config-0.29.2.tar.gz && \
     tar xvfz pkg-config-0.29.2.tar.gz
     pushd  pkg-config-0.29.2
     ./configure --prefix=/usr/local/pkg_config/0_29_2 --with-internal-glib && \
@@ -327,7 +327,7 @@ then
     [[ ! -d /usr/local/share/aclocal ]] &&  sudo mkdir /usr/local/share/aclocal
     sudo ln -s /usr/local/pkg_config/0_29_2/share/aclocal/pkg.m4 /usr/local/share/aclocal/
 
-    curl -o autoconf-2.71.tar.gz http://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz && \
+    curl -q -o autoconf-2.71.tar.gz http://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz && \
     gunzip autoconf-2.71.tar.gz && \
     tar xvf autoconf-2.71.tar && \
     pushd autoconf-2.71 && \
@@ -336,7 +336,7 @@ then
     sudo make install
     popd
 
-    curl -o autoconf-archive-2021.02.19.tar.xz http://ftp.gnu.org/gnu/autoconf-archive/autoconf-archive-2021.02.19.tar.xz && \
+    curl -q -o autoconf-archive-2021.02.19.tar.xz http://ftp.gnu.org/gnu/autoconf-archive/autoconf-archive-2021.02.19.tar.xz && \
     xz -d -v autoconf-archive-2021.02.19.tar.xz && \
     tar xvf autoconf-archive-2021.02.19.tar && \
     pushd autoconf-archive-2021.02.19 && \
@@ -345,7 +345,7 @@ then
     sudo make install
     popd
 
-    curl -o automake-1.16.5.tar.gz http://ftp.gnu.org/gnu/automake/automake-1.16.5.tar.gz && \
+    curl -q -o automake-1.16.5.tar.gz http://ftp.gnu.org/gnu/automake/automake-1.16.5.tar.gz && \
     tar xvzf automake-1.16.5.tar.gz && \
     pushd automake-1.16.5 && \
     ./configure && \
@@ -353,7 +353,7 @@ then
     sudo make install
     popd
 
-    curl -o libtool-2.4.6.tar.gz http://ftp.jaist.ac.jp/pub/GNU/libtool/libtool-2.4.6.tar.gz && \
+    curl -q -o libtool-2.4.6.tar.gz http://ftp.jaist.ac.jp/pub/GNU/libtool/libtool-2.4.6.tar.gz && \
     tar xvfz libtool-2.4.6.tar.gz && \
     pushd libtool-2.4.6 && \
     ./configure --prefix=/usr/local/libtool/2_4_6 && \
