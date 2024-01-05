@@ -126,15 +126,15 @@ myEcho "-------------------------------------"
 
 # Commented out when the latest CentOS 7 AMI has this version of nodejs
 myEcho "Node version: $(node --version)"
-if [[ "$(node --version)" != "v16.13.1" ]]
+if [[ "$(node --version)" != "v18.13.1" ]]
 then
-    myEcho "Wrong version, remove and install 16.13.1"
+    myEcho "Wrong version, remove and install 18.13.1"
     sudo yum remove -y nodejs
     sudo yum --enablerepo=nodesource clean metadata
 
     # This approach works
-    wget https://rpm.nodesource.com/pub_16.x/el/7/x86_64/nodejs-16.13.0-1nodesource.x86_64.rpm
-    sudo rpm -i nodejs-16.13.0-1nodesource.x86_64.rpm
+    wget https://rpm.nodesource.com/pub_18.x/el/7/x86_64/nodejs-18.13.0-1nodesource.x86_64.rpm
+    sudo rpm -i nodejs-18.13.0-1nodesource.x86_64.rpm
     myEcho "Node version: $(node --version)"
 else
     myEcho "Good version, keep it"
