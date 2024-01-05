@@ -120,6 +120,10 @@ exitWhenLongWait = False
 if ('exitWhenLongWait' in os.environ) and (os.environ['exitWhenLongWait'] == '1'):
     exitWhenLongWait = True
 
+disableFailIfCoreFound = False
+if ('disableFailIfCoreFound' in os.environ) and (os.environ['disableFailIfCoreFound'] == '1'):
+    disableFailIfCoreFound = True
+
 verbose = False
 # Do not update PR source code - means use last PR code (Do not get new commit)
 # It has sense if and only if there is a previously updated HPCC platform code with merged PR code
@@ -1945,6 +1949,9 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
         msg +=  '\n' + buildErrorStr + '\n'
     
     # add core report if there is any
+    if disableFailIfCoreFound:
+       coreGenerated = False
+       
     if coreGenerated:
         if not isCoreFlesReported:
             try:

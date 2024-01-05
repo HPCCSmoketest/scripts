@@ -116,6 +116,10 @@ enableVcpkgBuild = False
 if ('enableVcpkgBuild' in os.environ) and (os.environ['enableVcpkgBuild'] == '1'):
     enableVcpkgBuild = True
 
+disableFailIfCoreFound = False
+if ('disableFailIfCoreFound' in os.environ) and (os.environ['disableFailIfCoreFound'] == '1'):
+    disableFailIfCoreFound = True
+
 verbose = False
 # Do not update PR source code - means use last PR code (Do not get new commit)
 # It has sense if and only if there is a previously updated HPCC platform code with merged PR code
@@ -1974,6 +1978,9 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
         msg +=  '\n' + buildErrorStr + '\n'
     
     # add core report if there is any
+    if disableFailIfCoreFound:
+       coreGenerated = False
+       
     if coreGenerated:
         if not isCoreFlesReported:
             try:
@@ -1990,7 +1997,7 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
                 if 'token' in str(e):
                     coreMsg = str(e) + '\n'
                     coreMsg += str(sys.exc_info()[0]) + " (line: " + str(inspect.stack()[0][2]) + ")\n" 
-            
+
         msg += coreMsg + '\n' 
             
     
