@@ -1950,8 +1950,8 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
         msg +=  '\n' + buildErrorStr + '\n'
     
     # add core report if there is any
-    if disableFailIfCoreFound:
-       coreGenerated = False
+#    if disableFailIfCoreFound:
+#       coreGenerated = False
        
     if coreGenerated:
         if not isCoreFlesReported:
