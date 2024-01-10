@@ -637,7 +637,9 @@ fi
 
 # -- Current release version is hpccsystems-platform_community-5.1.0-trunk0Debugquantal_amd64
 
-UninstallHpcc "$logFile"
+# Uninstall HPCC Platfrom if it is already installed
+# (It doesn't happen in On-Demand Smoketest, but it can render the tet session as failed. )
+[ -f /opt/HPCCSystems/sbin/complete-uninstall.sh ] && UninstallHpcc "$logFile"
 
 hpccpackage="hpccsystems-platform_community-4.1.0-trunk1Debugquantal_amd64.deb"
 hpccpackage="hpccsystems-platform*"
