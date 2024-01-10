@@ -1916,7 +1916,8 @@ def processResult(result,  msg,  resultFile,  buildFailed=False,  testFailed=Fal
             else:
                 npmTestResult += result 
         elif result.startswith('Number of core'):
-            allPassed = False
+            if not disableFailIfCoreFound:
+                allPassed = False
             coreGenerated = True
             coreMsg = result.strip()
             continue
