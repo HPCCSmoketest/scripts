@@ -1,4 +1,14 @@
 
+# To calculate histogram with N (10) buckets
+# numOfBuckets = N
+# step = (max - min ) / numberOfBuckets
+# bucketStarts= [min + i * step for i in range(numOfBuckets)]
+# buckets=[0 for i in range(numOfBuckets)]
+# for value in results:
+#   bucket = int ((value - min) / step)
+#   buckets[bucket]++
+
+
 usage()
 {
     echo "Tool to list execution time statistic of passed test case(s)."

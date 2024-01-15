@@ -66,16 +66,16 @@ TEST_1=( "schedule1.ecl" "90" )
 TEST_2=( "workflow_9c.ecl" "90" )
 TEST_3=( "workflow_contingency_8.ecl" "20" )
 TEST_4=( "schedule2.ecl" "150" )
-TEST_5=( "key.ecl" "200" )
-TEST_6=( "keydiff1.ecl" "200" )
+#TEST_5=( "key.ecl" "600" )
+#TEST_6=( "keydiff1.ecl" "600" )
 
 TIMEOUTS=( 
     TEST_1[@] 
     TEST_2[@] 
     TEST_3[@] 
     TEST_4[@]
-    TEST_5[@]
-    TEST_6[@]
+#    TEST_5[@]
+#    TEST_6[@]
     )
 
 TARGET=all
