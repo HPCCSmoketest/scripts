@@ -2204,7 +2204,7 @@ def ProcessOpenPulls(prs,  numOfPrToTest):
                 buildSummaryFileName = 'build.summary'
                 buildSummaryFile = open(buildSummaryFileName,  "w")
                 buildSummaryFile.write(noBuildReason+'\n')
-                buildSummaryFile.write(result)
+                buildSummaryFile.write(result['msg'])
                 buildSummaryFile.close()
                 msg = "In PR-%s , label: %s : %s" % (str(prid), prs[prid]['label'], noBuildReason) 
                 print(msg)
