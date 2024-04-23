@@ -468,6 +468,31 @@ WritePlainLog "Forceing standard core to be generated in same directory" "$logFi
 res=$(echo 'core_%e.%p' | sudo tee /proc/sys/kernel/core_pattern)
 WritePlainLog "res:${res}" "$logFile"
 WritePlainLog "Current core generation is: $(cat /proc/sys/kernel/core_pattern)" "$logFile"
+
+#-------------------------------------------------
+#
+# Set transparent huge memory handling to "madvise"
+#
+if [ -f /sys/kernel/mm/transparent_hugepage/enabled ]
+then
+  WritePlainLog "Current settings of transparent huge memory enabled is $(cat /sys/kernel/mm/transparent_hugepage/enabled)" "$logFile"
+  res=$(echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/enabled)
+  WritePlainLog "res:${res}" "$logFile"
+  WritePlainLog "New value of transparent huge memory enabled is $(cat /sys/kernel/mm/transparent_hugepage/enabled)" "$logFile"
+else
+  WritePlainLog "The transparent huge memory is not enabled." "$logFile"
+fi
+
+if [ -f /sys/kernel/mm/transparent_hugepage/defrag ] ; then
+  WritePlainLog "Current settings of transparent huge memory defrag is $(cat /sys/kernel/mm/transparent_hugepage/defrag)" "$logFile"
+  res=$(echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/defrag)
+  WritePlainLog "res:${res}" "$logFile"
+  WritePlainLog "Current settings of transparent huge memory defrag is $(cat /sys/kernel/mm/transparent_hugepage/defrag)" "$logFile"
+else
+  WritePlainLog "The transparent huge memory defrag is not enabled." "$logFile"
+fi
+
+
 #-------------------------------------------------
 #
 # Patch system/jlib/jthread.hpp to build in c++11 
