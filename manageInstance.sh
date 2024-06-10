@@ -127,6 +127,7 @@ TIME_STAMPT=$( date "+%y-%m-%d_%H-%M-%S" )
 APP_ID=$(hostname)
 BASE_TEST=''
 BASE='master'
+DAY_STAMPT=$( date "+%y-%m-%d" )
 
 while [ $# -gt 0 ]
 do
@@ -275,6 +276,9 @@ WriteLog "Instance: $instance" "$LOG_FILE"
 instanceId=$( echo "$instance" | egrep 'InstanceId' | tr -d '", ' | cut -d : -f 2 )
 WriteLog "Instance ID: $instanceId" "$LOG_FILE"
 
+# At the end/begin of the day we can check all instances are terminated
+echo "instanceName=${INSTANCE_NAME},commitId=${C_ID},InstanceId=${instanceId}" >> Instances-$DAY_STAMPT.log
+
 if [[ -z "$instanceId" ]]
 then
     WriteLog "Instance creation failed, exit" "$LOG_FILE"
@@ -290,6 +294,19 @@ fi
 
 instanceInfo=$( aws ec2 describe-instances --instance-ids ${instanceId} 2>&1 | egrep -i 'instan|status|publicip|privateip|volume' )
 WriteLog "Instance info: $instanceInfo" "$LOG_FILE"
+
+tryCount=5
+delay=10 # sec
+# Give it some time to become accesible if "InvalidInstanceID.NotFound" error found
+while [[ $instanceInfo =~ "InvalidInstanceID.NotFound" ]]
+do
+    tryCount=$(( $tryCount - 1 ))
+    [[ $tryCount -eq 0 ]] && break;
+    sleep ${delay}
+    
+    instanceInfo=$( aws ec2 describe-instances --instance-ids ${instanceId} 2>&1 | egrep -i 'instan|status|publicip|privateip|volume' )
+    WriteLog "Instance info (in $tryCount try): $instanceInfo" "$LOG_FILE"
+done
 
 if [[ $instanceInfo =~ "InvalidInstanceID.NotFound" ]]
 then
