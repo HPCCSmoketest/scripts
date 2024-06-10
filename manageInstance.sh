@@ -277,7 +277,7 @@ instanceId=$( echo "$instance" | egrep 'InstanceId' | tr -d '", ' | cut -d : -f 
 WriteLog "Instance ID: $instanceId" "$LOG_FILE"
 
 # At the end/begin of the day we can check all instances are terminated
-echo "instanceName=${INSTANCE_NAME},commitId=${C_ID},InstanceId=${instanceId}" >> Instances-$DAY_STAMPT.log
+echo "instanceName=${INSTANCE_NAME},Jira=${JIRA},InstanceId=${instanceId}" >> Instances-$DAY_STAMPT.log
 
 if [[ -z "$instanceId" ]]
 then
