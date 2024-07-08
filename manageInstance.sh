@@ -67,35 +67,35 @@ CompressAndDownload()
     param=$1
     
     WriteLog "Compress and download HPCCSystems logs..." "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "[ -d /var/log/HPCCSystems ] && ( zip -u /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-$(date '+%y-%m-%d_%H-%M-%S') -r /var/log/HPCCSystems/* > /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1 ) || echo \"There is no /var/log/HPCCSystems/ directory.\" " 2>&1 )
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "[ -d /var/log/HPCCSystems ] && ( zip -u /home/$SSH_USER/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-$(date '+%y-%m-%d_%H-%M-%S') -r /var/log/HPCCSystems/* > /home/$SSH_USER/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1 ) || echo \"There is no /var/log/HPCCSystems/ directory.\" " 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
 
-    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/${INSTANCE_NAME}/HPCCSystems-logs-* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
     
     if [[ -z "$param" ]]
     then
         WriteLog "Compress and download pullRequests*.json file(s)..." "$LOG_FILE"
-        res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "zip -u /home/centos/smoketest/pullRequests-$(date '+%y-%m-%d_%H-%M-%S') /home/centos/smoketest/pullRequests*.json > /home/centos/smoketest/pullRequests-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1 " 2>&1 )
+        res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "zip -u /home/$SSH_USER/smoketest/pullRequests-$(date '+%y-%m-%d_%H-%M-%S') /home/$SSH_USER/smoketest/pullRequests*.json > /home/$SSH_USER/smoketest/pullRequests-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1 " 2>&1 )
         WriteLog "Res: $res" "$LOG_FILE"
 
-        res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/pullRequests-* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
+        res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/pullRequests-* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
         WriteLog "Res: $res" "$LOG_FILE"
     else
         WriteLog "Compress and download HPCCSystems-regression/log and zap directories ..." "$LOG_FILE"
         timeStamp="$(date '+%y-%m-%d_%H-%M-%S')"
-        res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "zip -u /home/centos/smoketest/HPCCSystems-regression-$timeStamp /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression/log/*  > /home/centos/smoketest/HPCCSystems-regression-$timeStamp.log 2>&1 " 2>&1 )
+        res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "zip -u /home/$SSH_USER/smoketest/HPCCSystems-regression-$timeStamp /home/$SSH_USER/smoketest/${INSTANCE_NAME}/HPCCSystems-regression/log/*  > /home/$SSH_USER/smoketest/HPCCSystems-regression-$timeStamp.log 2>&1 " 2>&1 )
         WriteLog "Res: $res" "$LOG_FILE"
-        res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "zip -u /home/centos/smoketest/HPCCSystems-regression-$timeStamp /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression/zap/*  > /home/centos/smoketest/HPCCSystems-regression-$timeStamp.log 2>&1 " 2>&1 )
+        res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "zip -u /home/$SSH_USER/smoketest/HPCCSystems-regression-$timeStamp /home/$SSH_USER/smoketest/${INSTANCE_NAME}/HPCCSystems-regression/zap/*  > /home/$SSH_USER/smoketest/HPCCSystems-regression-$timeStamp.log 2>&1 " 2>&1 )
         WriteLog "Res: $res" "$LOG_FILE"
 
-        res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/HPCCSystems-regression-$timeStamp* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
+        res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/HPCCSystems-regression-$timeStamp* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
         WriteLog "Res: $res" "$LOG_FILE"
     
     fi
     
     WriteLog "Check and download email from Cron..." "$LOG_FILE"
-    res=$(  rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/var/mail/centos ${SMOKETEST_HOME}/${INSTANCE_NAME}/centos-$(date '+%y-%m-%d_%H-%M-%S').mail 2>&1 )
+    res=$(  rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" $SSH_USER@${instancePublicIp}:/var/mail/$SSH_USER ${SMOKETEST_HOME}/${INSTANCE_NAME}/$SSH_USER-$(date '+%y-%m-%d_%H-%M-%S').mail 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
 }
 
