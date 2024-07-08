@@ -127,7 +127,7 @@ printf "AVERAGE_SESSION_TIME = %f hours, GUILLOTINE = %d minutes\n" "$AVERAGE_SE
 [ ! -d smoketest ] && mkdir smoketest
 
 cd smoketest
-
+rm -rf scripts
 git clone https://github.com/HPCCSmoketest/scripts.git
 
 # check scripts dir
