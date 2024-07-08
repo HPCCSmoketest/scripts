@@ -6,7 +6,7 @@ PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 . ./timestampLogger.sh
 
 TIME_STAMPT=$( date "+%y-%m-%d_%H-%M-%S" )
-LOG_FILE="/home/centos/init-${TIME_STAMPT}.log"
+LOG_FILE="/home/$USER/init-${TIME_STAMPT}.log"
 myEcho()
 {
     msg=$1

@@ -252,11 +252,14 @@ AMI_ID=$( aws ec2 describe-images --owners 446598291512 --filters "Name=name,Val
 #[ -z ${AMI_ID} ] && AMI_ID="ami-0c464387e25013b1f"
 WriteLog "AMI_ID: ${AMI_ID}, new AMI: ${NEW_AMI}" "$LOG_FILE"
 
+SSH_USER="centos"
 if [[ $REGION =~ 'us-east-1' ]]
 then
-    AMI_ID="ami-00e1c66ba91987906"
+    #AMI_ID="ami-00e1c66ba91987906"    # CentOS 7
+    AMI_ID="ami-05a2bf1b49fda2414"    # Rocky-8
     SECURITY_GROUP_ID="sg-0f8acde8c1dc008f1"
     SUBNET_ID="subnet-00c6da41f8516f57d"
+    SSH_USER="rocky"
 else
     SECURITY_GROUP_ID="sg-08a92c3135ec19aea"
     SUBNET_ID="subnet-0f5274ec85eec91da"
@@ -400,7 +403,7 @@ instanceIsUp=0
 while [[ $tryCount -ne 0 ]] 
 do
     WriteLog "Check user directory ($tryCount)" "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l" 2>&1 )
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "ls -l" 2>&1 )
     retCode=$?
     WriteLog "Return code: $retCode, res: $res" "$LOG_FILE"
 
@@ -430,20 +433,20 @@ if [[ $instanceIsUp -eq 1 ]]
 then
     WriteLog "Instance is up and accessible via ssh." "$LOG_FILE"
     WriteLog "Upload token.dat files into smoketest directory" "$LOG_FILE"
-    res=$( rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/token.dat centos@${instancePublicIp}:/home/centos/smoketest/ 2>&1 )
+    res=$( rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/token.dat $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/ 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
 
     if [ -d ${SMOKETEST_HOME}/${INSTANCE_NAME} ]
     then
 
         WriteLog "Upload *.dat files" "$LOG_FILE"
-        res=$( rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/*.dat centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/ 2>&1 )
+        res=$( rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/*.dat $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/${INSTANCE_NAME}/ 2>&1 )
         WriteLog "Res: $res" "$LOG_FILE"
          
         if [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/environment.xml ]]
         then
             WriteLog "Upload environment.xml file" "$LOG_FILE"
-            res=$( rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/environment.xml centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/ 2>&1)
+            res=$( rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/environment.xml $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/${INSTANCE_NAME}/ 2>&1)
             WriteLog "Res: $res" "$LOG_FILE"
         fi
         
@@ -451,7 +454,7 @@ then
         if [[ -f ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.new ]]
         then
             WriteLog "Upload build.new file into instance ~/smoketest directory" "$LOG_FILE"
-            res=$( rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.new centos@${instancePublicIp}:/home/centos/smoketest/ 2>&1)
+            res=$( rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/build.new $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/ 2>&1)
             WriteLog "Res: $res" "$LOG_FILE"
         fi
         
@@ -459,7 +462,7 @@ then
         if [[ -d ${SMOKETEST_HOME}/${INSTANCE_NAME}/eclwatch ]]
         then
             WriteLog "Upload eclwatch directory into instance ~/smoketest directory" "$LOG_FILE"
-            res=$( rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/eclwatch centos@${instancePublicIp}:/home/centos/smoketest/ 2>&1)
+            res=$( rsync -var --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/${INSTANCE_NAME}/eclwatch $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/ 2>&1)
             WriteLog "Res: $res" "$LOG_FILE"
         fi
     fi
@@ -475,7 +478,7 @@ then
     if [[ (-n "$BOOST_PKG") &&  (${VCPKG_INSTALLS_NEWER_VERSION} -eq 0) ]]
     then
         WriteLog "Upload boost_1_71_0.tar.gz" "$LOG_FILE"
-        res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${BOOST_PKG} centos@${instancePublicIp}:/home/centos/ 2>&1 )
+        res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${BOOST_PKG} $SSH_USER@${instancePublicIp}:/home/$SSH_USER/ 2>&1 )
         WriteLog "Res: $res" "$LOG_FILE"
     else
         WriteLog "The boost_1_71_0.tar.gz not found." "$LOG_FILE"
@@ -487,7 +490,7 @@ then
         if [[ -n "$CMAKE_VER" ]]
         then
             WriteLog "Upload $CMAKE_VER" "$LOG_FILE"
-            res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${CMAKE_VER} centos@${instancePublicIp}:/home/centos/ 2>&1 )
+            res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${CMAKE_VER} $SSH_USER@${instancePublicIp}:/home/$SSH_USER/ 2>&1 )
             WriteLog "Res: $res" "$LOG_FILE"
         else
             WriteLog "The cmake install package not found." "$LOG_FILE"
@@ -502,7 +505,7 @@ then
         if [[ -n "$CURL_7_67" ]]
         then
             WriteLog "Upload $CURL_7_67" "$LOG_FILE"
-            res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${CURL_7_67} centos@${instancePublicIp}:/home/centos/ 2>&1 )
+            res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${CURL_7_67} $SSH_USER@${instancePublicIp}:/home/$SSH_USER/ 2>&1 )
             WriteLog "Res: $res" "$LOG_FILE"
         else
             WriteLog "The curl 7.67.0 not found." "$LOG_FILE"
@@ -518,7 +521,7 @@ then
     if [[ -f  $VCPKG_DOWNLOAD_ARCHIVE ]]
     then
         WriteLog "Upload $VCPKG_DOWNLOAD_ARCHIVE as vcpkg_donwloads.zip" "$LOG_FILE"
-        res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${VCPKG_DOWNLOAD_ARCHIVE} centos@${instancePublicIp}:/home/centos/vcpkg_downloads.zip 2>&1 )
+        res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${VCPKG_DOWNLOAD_ARCHIVE} $SSH_USER@${instancePublicIp}:/home/$SSH_USER/vcpkg_downloads.zip 2>&1 )
         WriteLog "Res: $res" "$LOG_FILE"
     else
         WriteLog "The $VCPKG_DOWNLOAD_ARCHIVE not found." "$LOG_FILE"
@@ -526,50 +529,52 @@ then
     
     WriteLog "Upload init.sh" "$LOG_FILE"
     # CentOS 7
-    res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init.sh ${SMOKETEST_HOME}/timestampLogger.sh centos@${instancePublicIp}:/home/centos/ 2>&1 )
+    #res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init.sh ${SMOKETEST_HOME}/timestampLogger.sh $SSH_USER@${instancePublicIp}:/home/$SSH_USER/ 2>&1 )
     # CentOS 8
-    #res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init-cos8.sh centos@${instancePublicIp}:/home/centos/init.sh 2>&1 )
+    #res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init-cos8.sh $SSH_USER@${instancePublicIp}:/home/$SSH_USER/init.sh 2>&1 )
+    # Rocky 8
+    res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init-rocky8.sh $SSH_USER@${instancePublicIp}:/home/$SSH_USER/init.sh 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
 
 #    WriteLog "Set it to executable" "$LOG_FILE"
-#    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "chmod +x init.sh" 2>&1 )
+#    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "chmod +x init.sh" 2>&1 )
 #    WriteLog "Res: $res" "$LOG_FILE"
 
     WriteLog "Check user directory" "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l" 2>&1 )
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "ls -l" 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
 
     WriteLog "Execute init.sh" "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT} ${COMMIT_ID} ${DRY_RUN} -sessionTime=${AVERAGE_SESSION_TIME} ${BASE_TEST} -base=$BASE" 2>&1 )
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "~/init.sh -instanceName=${INSTANCE_NAME} ${DOCS_BUILD} ${ADD_GIT_COMMENT} ${COMMIT_ID} ${DRY_RUN} -sessionTime=${AVERAGE_SESSION_TIME} ${BASE_TEST} -base=$BASE" 2>&1 )
     WriteLog "Res:\n$res" "$LOG_FILE"
 
     # Donwload init<-timestamp>.log file
-    WriteLog "Download /home/centos/init-<timestamp>.log file" "$LOG_FILE"
-    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/init-*.log ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
+    WriteLog "Download /home/$SSH_USER/init-<timestamp>.log file" "$LOG_FILE"
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" $SSH_USER@${instancePublicIp}:/home/$SSH_USER/init-*.log ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
     
     WriteLog "Check user directory" "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l" 2>&1 )
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "ls -l" 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
 
     if [[ ${DOCS_BUILD} -ne 0 ]]
     then
         WriteLog "Check fop" "$LOG_FILE"
-        res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "/usr/bin/fop -version" 2>&1 )
+        res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "/usr/bin/fop -version" 2>&1 )
         WriteLog "Res: $res" "$LOG_FILE"
     fi
     
     # Donwload Bokeh URL file
-    WriteLog "Download /home/centos/smoketest/bokeh.url file" "$LOG_FILE"
-    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/bokeh.url ${SMOKETEST_HOME}/${INSTANCE_NAME}/bokeh.url 2>&1 )
+    WriteLog "Download /home/$SSH_USER/smoketest/bokeh.url file" "$LOG_FILE"
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/bokeh.url ${SMOKETEST_HOME}/${INSTANCE_NAME}/bokeh.url 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
     
     #WriteLog "Check Smoketest" "$LOG_FILE"
-    #res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l ~/smoketest/" 2>&1 )
+    #res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "ls -l ~/smoketest/" 2>&1 )
     #WriteLog "Res: $res" "$LOG_FILE"
 
     WriteLog "Check crontab" "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "crontab -l" 2>&1 )
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "crontab -l" 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
 
     if [[ -z $DRY_RUN ]]
@@ -593,9 +598,9 @@ then
         # Should use BASE_TEST to check smoketest or build.sh
         if [[ -z "$BASE_TEST" ]]
         then
-            smoketestIsRunning=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ps aux | egrep -c '[s]moketest.sh|[P]rocessPullReq|[b]uild.sh'"  2>&1 )
+            smoketestIsRunning=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "ps aux | egrep -c '[s]moketest.sh|[P]rocessPullReq|[b]uild.sh'"  2>&1 )
         else
-            smoketestIsRunning=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "pgrep build.sh | wc -l"  2>&1 )
+            smoketestIsRunning=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "pgrep build.sh | wc -l"  2>&1 )
         fi
         retCode=$?
         if [[ $retcode -gt 1 ]]
@@ -634,7 +639,7 @@ then
             if [[ ( $checkCount -ge $emergencyLogDownloadThreshold ) && ( $(( $checkCount % 2 )) -eq 0) ]]
             then
                 WriteLog "This instance is running in $checkCount minutes (> $emergencyLogDownloadThreshold). Download its logs." "$LOG_FILE"
-                res=$( rsync -va --timeout=60 --exclude=*.rpm --exclude=*.sh --exclude=*.py --exclude=*.txt --exclude=HPCCSystems-regression --exclude=OBT --exclude=rte --exclude=*.xml --exclude=build --exclude=HPCC-Platform -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
+                res=$( rsync -va --timeout=60 --exclude=*.rpm --exclude=*.sh --exclude=*.py --exclude=*.txt --exclude=HPCCSystems-regression --exclude=OBT --exclude=rte --exclude=*.xml --exclude=build --exclude=HPCC-Platform -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/${INSTANCE_NAME}/* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
                 WriteLog "Res: $res" "$LOG_FILE"
                 
                 CompressAndDownload "emergency"
@@ -645,7 +650,7 @@ then
         # Give it some time with checking the value of checkCount.
         if [[ ($smoketestIsRunning -eq 0 ) && ($checkCount -le 5) ]]
         then
-            procList=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ps aux | egrep '[s]moketest.sh|ProcessPullReq|build.sh'"  2>&1 )
+            procList=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "ps aux | egrep '[s]moketest.sh|ProcessPullReq|build.sh'"  2>&1 )
             WriteLog "Proclist:"  "$LOG_FILE"
             WriteLog "$procList"  "$LOG_FILE"
             smoketestIsRunning=1
@@ -659,7 +664,7 @@ then
     done
 
     WriteLog "Check Smoketest" "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "ls -l ~/smoketest/${INSTANCE_NAME}" 2>&1 )
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "ls -l ~/smoketest/${INSTANCE_NAME}" 2>&1 )
     retCode=$?
     WriteLog "Res: $res \n(retcode:$retCode)" "$LOG_FILE"
     if [[ $retCode -ne 0 ]]
@@ -679,46 +684,50 @@ then
     WriteLog "Res: $res" "$LOG_FILE"
     
     WriteLog "Compress and download result" "$LOG_FILE"
-    WriteLog "/home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression/ directory" "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "zip -m /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S') -r /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression/* > /home/centos/smoketest/${INSTANCE_NAME}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1" 2>&1 )
+    WriteLog "/home/$SSH_USER/smoketest/${INSTANCE_NAME}/HPCCSystems-regression/ directory" "$LOG_FILE"
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "zip -m /home/$SSH_USER/smoketest/${INSTANCE_NAME}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S') -r /home/$SSH_USER/smoketest/${INSTANCE_NAME}/HPCCSystems-regression/* > /home/$SSH_USER/smoketest/${INSTANCE_NAME}/HPCCSystems-regression-$(date '+%y-%m-%d_%H-%M-%S').log 2>&1" 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
     
-    WriteLog "Find and compress log files from /home/centos/smoketest/${INSTANCE_NAME}/build/vcpkg_buildtrees/ directory" "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "find /home/centos/smoketest/${INSTANCE_NAME}/build/vcpkg_buildtrees/ -iname '*.log' -type f | zip /home/centos/smoketest/${INSTANCE_NAME}/vcpkg_buildtrees_log-$(date '+%y-%m-%d_%H-%M-%S') -@ "  2>&1 )
-   #res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/build/vcpkg_buildtrees/*/*.log ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
-    WriteLog "Res: $res" "$LOG_FILE"
-    
-    WriteLog "Remove /home/centos/smoketest/${INSTANCE_NAME}/HPCC-Platform /home/centos/smoketest/${INSTANCE_NAME}/build directory" "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "rm -rf /home/centos/smoketest/${INSTANCE_NAME}/HPCC-Platform /home/centos/smoketest/${INSTANCE_NAME}/build" 2>&1 )
-    WriteLog "Res: $res" "$LOG_FILE"
-    
-    WriteLog "Check if there is any core files in /home/centos/smoketest/${INSTANCE_NAME} and make them readable for everyone" "$LOG_FILE"
-    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} centos@${instancePublicIp} "find /home/centos/smoketest/${INSTANCE_NAME}/ -iname 'core*' -type f -print -exec sudo chmod 0755 '{}' \;" 2>&1 )
-    WriteLog "Res: $res" "$LOG_FILE"
-    
-    WriteLog "Download files from /home/centos/smoketest/${INSTANCE_NAME} directory" "$LOG_FILE"
-    res=$( rsync -va --timeout=60 --exclude=*.rpm --exclude=*.sh --exclude=*.py --exclude=*.txt --exclude=HPCCSystems-regression --exclude=OBT --exclude=rte -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
-    WriteLog "Res: $res" "$LOG_FILE"
-    
-    WriteLog "Download /home/centos/smoketest/SmoketestInfo.csv file" "$LOG_FILE"
-    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/SmoketestInfo.csv ${SMOKETEST_HOME}/${INSTANCE_NAME}/SmoketestInfo-${INSTANCE_NAME}-$(date '+%y-%m-%d_%H-%M-%S').csv 2>&1 )
-    WriteLog "Res: $res" "$LOG_FILE"
-    
-    WriteLog "Download /home/centos/smoketest/prp-$(date '+%Y-%m-%d').log file" "$LOG_FILE"
-    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/prp-$(date '+%Y-%m-%d').log ${SMOKETEST_HOME}/${INSTANCE_NAME}/prp-$(date '+%Y-%m-%d')-${INSTANCE_NAME}-${instancePublicIp}.log 2>&1 )
+    WriteLog "Find and compress log files from /home/$SSH_USER/smoketest/${INSTANCE_NAME}/build/vcpkg_buildtrees/ directory" "$LOG_FILE"
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "find /home/$SSH_USER/smoketest/${INSTANCE_NAME}/build/vcpkg_buildtrees/ -iname '*.log' -type f | zip /home/$SSH_USER/smoketest/${INSTANCE_NAME}/vcpkg_buildtrees_log-$(date '+%y-%m-%d_%H-%M-%S') -@ "  2>&1 )
+   #res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/${INSTANCE_NAME}/build/vcpkg_buildtrees/*/*.log ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
 
-    WriteLog "Download /home/centos/smoketest/eclwatch/eclWatchUiTest.log file" "$LOG_FILE"
-    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/eclwatch/eclWatchUiTest.log ${SMOKETEST_HOME}/${INSTANCE_NAME}/eclWatchUiTest-${C_ID}-$(date '+%Y-%m-%d').log 2>&1 )
+    WriteLog "Download /home/$SSH_USER/smoketest//${INSTANCE_NAME}/build/vcpkg-manifest-install.log" "$LOG_FILE"
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest//${INSTANCE_NAME}/build/vcpkg-manifest-install.log ${SMOKETEST_HOME}/${INSTANCE_NAME}/vcpkg-manifest-install-$(date '+%y-%m-%d_%H-%M-%S').csv 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+    
+    WriteLog "Remove /home/$SSH_USER/smoketest/${INSTANCE_NAME}/HPCC-Platform /home/$SSH_USER/smoketest/${INSTANCE_NAME}/build directory" "$LOG_FILE"
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "rm -rf /home/$SSH_USER/smoketest/${INSTANCE_NAME}/HPCC-Platform /home/$SSH_USER/smoketest/${INSTANCE_NAME}/build" 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+    
+    WriteLog "Check if there is any core files in /home/$SSH_USER/smoketest/${INSTANCE_NAME} and make them readable for everyone" "$LOG_FILE"
+    res=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "find /home/$SSH_USER/smoketest/${INSTANCE_NAME}/ -iname 'core*' -type f -print -exec sudo chmod 0755 '{}' \;" 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+    
+    WriteLog "Download files from /home/$SSH_USER/smoketest/${INSTANCE_NAME} directory" "$LOG_FILE"
+    res=$( rsync -va --timeout=60 --exclude=*.rpm --exclude=*.sh --exclude=*.py --exclude=*.txt --exclude=HPCCSystems-regression --exclude=OBT --exclude=rte -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/${INSTANCE_NAME}/* ${SMOKETEST_HOME}/${INSTANCE_NAME}/ 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+    
+    WriteLog "Download /home/$SSH_USER/smoketest/SmoketestInfo.csv file" "$LOG_FILE"
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/SmoketestInfo.csv ${SMOKETEST_HOME}/${INSTANCE_NAME}/SmoketestInfo-${INSTANCE_NAME}-$(date '+%y-%m-%d_%H-%M-%S').csv 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
 
-    WriteLog "Download /home/centos/smoketest/${INSTANCE_NAME}/rte/ecl-test.json file" "$LOG_FILE"
-    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/smoketest/${INSTANCE_NAME}/rte/ecl-test.json ${SMOKETEST_HOME}/${INSTANCE_NAME}/ecl-test-${C_ID}-$(date '+%Y-%m-%d').json 2>&1 )
+    WriteLog "Download /home/$SSH_USER/smoketest/prp-$(date '+%Y-%m-%d').log file" "$LOG_FILE"
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/prp-$(date '+%Y-%m-%d').log ${SMOKETEST_HOME}/${INSTANCE_NAME}/prp-$(date '+%Y-%m-%d')-${INSTANCE_NAME}-${instancePublicIp}.log 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+
+    WriteLog "Download /home/$SSH_USER/smoketest/eclwatch/eclWatchUiTest.log file" "$LOG_FILE"
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/eclwatch/eclWatchUiTest.log ${SMOKETEST_HOME}/${INSTANCE_NAME}/eclWatchUiTest-${C_ID}-$(date '+%Y-%m-%d').log 2>&1 )
+    WriteLog "Res: $res" "$LOG_FILE"
+
+    WriteLog "Download /home/$SSH_USER/smoketest/${INSTANCE_NAME}/rte/ecl-test.json file" "$LOG_FILE"
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" $SSH_USER@${instancePublicIp}:/home/$SSH_USER/smoketest/${INSTANCE_NAME}/rte/ecl-test.json ${SMOKETEST_HOME}/${INSTANCE_NAME}/ecl-test-${C_ID}-$(date '+%Y-%m-%d').json 2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
    
-    WriteLog "Try to download /home/centos/vcpkg_downloads.zip" "$LOG_FILE"
+    WriteLog "Try to download /home/$SSH_USER/vcpkg_downloads.zip" "$LOG_FILE"
     # See build.sh to build it if CMake takes too long
-    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" centos@${instancePublicIp}:/home/centos/vcpkg_downloads.zip ${SMOKETEST_HOME}/${INSTANCE_NAME}/vcpkg_downloads-${BASE_VERSION}.zip  2>&1 )
+    res=$( rsync -va --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" $SSH_USER@${instancePublicIp}:/home/$SSH_USER/vcpkg_downloads.zip ${SMOKETEST_HOME}/${INSTANCE_NAME}/vcpkg_downloads-${BASE_VERSION}.zip  2>&1 )
     WriteLog "Res: $res" "$LOG_FILE"
    
     CompressAndDownload
