@@ -95,17 +95,17 @@ do
     shift
 done
 
-cat << DATASTAX_ENTRIES | sudo tee /etc/yum.repos.d/datastax.repo
-[datastax]
-name = DataStax Repo for Apache Cassandra
-baseurl = http://rpm.datastax.com/community
-enabled = 1
-gpgcheck = 0
-DATASTAX_ENTRIES
+#cat << DATASTAX_ENTRIES | sudo tee /etc/yum.repos.d/datastax.repo
+#[datastax]
+#name = DataStax Repo for Apache Cassandra
+#baseurl = http://rpm.datastax.com/community
+#enabled = 1
+#gpgcheck = 0
+#DATASTAX_ENTRIES
 
-sudo yum remove -y nodejs
+#sudo yum remove -y nodejs
 
-curl --silent --location https://rpm.nodesource.com/setup_14.x | sudo bash -
+#curl --silent --location https://rpm.nodesource.com/setup_14.x | sudo bash -
 
 PACKAGES_TO_INSTALL="expect mailx bc psmisc"
 #if [ $DOCS_BUILD -eq 1 ]
@@ -119,7 +119,7 @@ sudo yum install -y ${PACKAGES_TO_INSTALL}
 
 myEcho "Node version: $(node --version)"
 
-sudo yum install gcc-toolset-12
+#sudo yum install -y gcc-toolset-12
 
 GUILLOTINE=$( echo " 2 * $AVERAGE_SESSION_TIME * 60" | bc |  xargs printf "%.0f" ) # minutes ( 2 x AVERAGE_SESSION_TIME)
 printf "AVERAGE_SESSION_TIME = %f hours, GUILLOTINE = %d minutes\n" "$AVERAGE_SESSION_TIME" "$GUILLOTINE"
