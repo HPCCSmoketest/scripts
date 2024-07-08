@@ -159,6 +159,22 @@ cp scripts/*.py .
 cd $INSTANCE_NAME
 myEcho "Execute Smoketest on $INSTANCE_NAME" > test.log
 
+if [[ -f ~/vcpkg_downloads.zip ]]
+then
+    myEcho "vcpkg_downloads.zip found, extract it."
+    [[ ! -d build ]] && mkdir build
+    pushd build
+    res=$( unzip ~/vcpkg_downloads.zip 2>&1 )
+    [[ $? -ne 0 ]] && myEcho "$res"
+    popd
+    myEcho "  Done."
+    
+    myEcho "Delete vcpkg_downloads.zip."
+    myEcho "$(rm -v ~/vcpkg_downloads.zip)"
+    myEcho "  Done."
+fi
+
+
 if [[ $BASE_TEST  -eq 1 ]]
 then
     myEcho "Because build.sh will be executed instead of ProcessPullRequest.py"
