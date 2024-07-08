@@ -2,9 +2,18 @@
 
 PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
+. ./timestampLogger.sh
+
+TIME_STAMPT=$( date "+%y-%m-%d_%H-%M-%S" )
+LOG_FILE="/home/$USER/init-${TIME_STAMPT}.log"
+myEcho()
+{
+    msg=$1
+    WriteLog "$msg" "$LOG_FILE"
+}
 
 #export PATH=$PATH:/usr/local/bin:/bin:/usr/local/sbin:/sbin:/usr/sbin:
-echo "path: $PATH"
+myEcho "path: $PATH"
 
 PUBLIC_IP=$( curl http://checkip.amazonaws.com )
 PUBLIC_HOSTNAME=$( wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname )
@@ -32,46 +41,46 @@ while [ $# -gt 0 ]
 do
     param=$1
     param=${param#-}
-    echo "Param: ${param}"
+    myEcho "Param: ${param}"
     case $param in
     
         instance*)  INSTANCE_NAME=${param//instanceName=/}
                 INSTANCE_NAME=${INSTANCE_NAME//\"/}
                 #INSTANCE_NAME=${INSTANCE_NAME//PR/PR-}
-                echo "Instance name: '${INSTANCE_NAME}'"
+                myEcho "Instance name: '${INSTANCE_NAME}'"
                 ;;
                 
         docs*)  DOCS_BUILD_STR=param
                 DOCS_BUILD=${param//docs=True/1}
                 DOCS_BUILD=${DOCS_BUILD//docs=False/0}
-                echo "Build docs: '${DOCS_BUILD}'"
+                myEcho "Build docs: '${DOCS_BUILD}'"
                 ;;
                
         addGitC*) ADD_GIT_COMMENT=${param//addGitComment=True/1}
                 ADD_GIT_COMMENT=${ADD_GIT_COMMENT//addGitComment=False/0}
-                echo "Add git comment: ${ADD_GIT_COMMENT}"
+                myEcho "Add git comment: ${ADD_GIT_COMMENT}"
                 ;;
                 
         commit*) COMMIT_ID=${param//commitId=/}
                 COMMIT_ID=${COMMIT_ID//\"/}
-                echo "Commit ID: ${COMMIT_ID}"
+                myEcho "Commit ID: ${COMMIT_ID}"
                 ;;
                 
         dryRun) DRY_RUN=1
-                echo "Dry run."
+                myEcho "Dry run."
                 ;;
                 
         sessionTime*)  AVERAGE_SESSION_TIME=${param//sessionTime=/}
-                echo "Average session time: ${AVERAGE_SESSION_TIME}"
+                myEcho "Average session time: ${AVERAGE_SESSION_TIME}"
                 ;;
                 
         baseTest*) BASE_TEST=1
 #                BASE_TAG=${param//baseTest=/}
 #                BASE_TAG=${BASE_TAG//\"/}
-#                echo "Execute base test with tag: ${BASE_TAG}"
+#                myEcho "Execute base test with tag: ${BASE_TAG}"
                 ;;
                 
-        *)  echo "Unknown parameter: ${param}."
+        *)  myEcho "Unknown parameter: ${param}."
                 ;;
     esac
     shift
@@ -96,10 +105,10 @@ PACKAGES_TO_INSTALL="expect mailx bc psmisc"
     #PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL fop-1.1-6.el7"
 #fi
 
-echo "Packages to install: ${PACKAGES_TO_INSTALL}"
+myEcho "Packages to install: ${PACKAGES_TO_INSTALL}"
 sudo yum install -y ${PACKAGES_TO_INSTALL}
 
-echo "Node version: $(node --version)"
+myEcho "Node version: $(node --version)"
 
 GUILLOTINE=$( echo " 2 * $AVERAGE_SESSION_TIME * 60" | bc |  xargs printf "%.0f" ) # minutes ( 2 x AVERAGE_SESSION_TIME)
 printf "AVERAGE_SESSION_TIME = %f hours, GUILLOTINE = %d minutes\n" "$AVERAGE_SESSION_TIME" "$GUILLOTINE"
@@ -115,11 +124,11 @@ git clone https://github.com/HPCCSmoketest/scripts.git
 cp scripts/*.sh .
 cp scripts/*.py .
 
-#echo "Check and install CMake 3.18.0"
+#myEcho "Check and install CMake 3.18.0"
 #CMAKE_3_18=$( find ~/ -iname 'cmake-3.18.0.tar.gz' -type f -size +1M -print | head -n 1 )
 #if [[ -n "$CMAKE_3_18" ]]
 #then
-#    echo "$CMAKE_3_18 found, unzip and install it"
+#    myEcho "$CMAKE_3_18 found, unzip and install it"
 #    tar -xzvf  ${CMAKE_3_18} > cmake.log
 #    pushd cmake-3.18.0
 #    ./bootstrap
@@ -129,7 +138,7 @@ cp scripts/*.py .
 #    type "cmake"
 #    cmake --version;
 #else
-#    echo "$CMAKE_3_18 not found."
+#    myEcho "$CMAKE_3_18 not found."
 #fi
 
 [[ -f ./build.new ]] && cp -v ./build.new build.sh
@@ -137,44 +146,44 @@ cp scripts/*.py .
 [ ! -d $INSTANCE_NAME ] && mkdir $INSTANCE_NAME
 
 cd $INSTANCE_NAME
-echo "Execute Smoketest on $INSTANCE_NAME" > test.log
+myEcho "Execute Smoketest on $INSTANCE_NAME" > test.log
 
 if [[ $BASE_TEST  -eq 1 ]]
 then
-    echo "Because build.sh will be executed instead of ProcessPullRequest.py"
-    echo "We need:"
-    echo "   Clone HPCC-Platform"
+    myEcho "Because build.sh will be executed instead of ProcessPullRequest.py"
+    myEcho "We need:"
+    myEcho "   Clone HPCC-Platform"
     res=$( git clone https://github.com/HPCC-Systems/HPCC-Platform.git 2>&1 )
-    echo "     Res: ${res}"
+    myEcho "     Res: ${res}"
     pushd HPCC-Platform
     # Should get RTE from master
     COMMON_RTE_DIR=~/smoketest/rte
     [[ ! -d $COMMON_RTE_DIR ]] && mkdir $COMMON_RTE_DIR
-    echo "   Checkout master"
+    myEcho "   Checkout master"
     res=( git checkout master )
-    echo "     Res: ${res}"
-    echo "   Copy Regression Test Engine to $COMMON_RTE_DIR"
+    myEcho "     Res: ${res}"
+    myEcho "   Copy Regression Test Engine to $COMMON_RTE_DIR"
     res=$(  cp -v testing/regress/ecl-test* $COMMON_RTE_DIR/  2>&1) 
-    echo "     Res: ${res}"
+    myEcho "     Res: ${res}"
     res=$(  cp -v -r testing/regress/hpcc $COMMON_RTE_DIR/hpcc  2>&1) 
-    echo "     Res: ${res}"
-    echo "   Checkout latest Git tag: ${INSTANCE_NAME} to build and test"
+    myEcho "     Res: ${res}"
+    myEcho "   Checkout latest Git tag: ${INSTANCE_NAME} to build and test"
     res=$( git checkout ${INSTANCE_NAME} -b latest )
-    echo "     Res: ${res}"
-    echo "   Check where we are"
+    myEcho "     Res: ${res}"
+    myEcho "   Check where we are"
     res=$( git log -1 )
-    echo "     Res: ${res}"
-    echo "   Submodule update"
+    myEcho "     Res: ${res}"
+    myEcho "   Submodule update"
     res=$( git submodule update --init --recursive )
-    echo "     Res: ${res}"
-    echo "   Check branch status"
+    myEcho "     Res: ${res}"
+    myEcho "   Check branch status"
     res=$( git status )
-    echo "     Res: ${res}"
+    myEcho "     Res: ${res}"
     popd
     cp -v ../build.sh .
-    #echo "Update PATH..."
+    #myEcho "Update PATH..."
     #export PATH=$PATH:/usr/local/bin:/bin:/usr/local/sbin:/sbin:/usr/sbin:
-    echo "path: $PATH"
+    myEcho "path: $PATH"
     type "cmake"
     cmake --version;
     type "git"
@@ -183,7 +192,7 @@ fi
 
 cd .. 
 
-echo "Add items for crontab"
+myEcho "Add items for crontab"
 
 prId=${INSTANCE_NAME//PR-/}
 INSTANCE_ID=$( wget -q -t1 -T1 -O - http://169.254.169.254/latest/meta-data/instance-id )
@@ -237,32 +246,44 @@ PROCESS_TO_KILL="build.sh"  #"ecl-test"
 ( crontab -l; echo ""; echo "# Send Ctrl - C to Regression Test Engine after ${BREAK_TIME} minutes"; echo $( date -d " + ${BREAK_TIME} minutes" "+%M %H %d %m") " * REGRESSION_TEST_ENGINE_PID=\$( pgrep -f $PROCESS_TO_KILL ); while [[ -z \"\$REGRESSION_TEST_ENGINE_PID\" ]] ; do date; sleep 10; REGRESSION_TEST_ENGINE_PID=\$( pgrep -f $PROCESS_TO_KILL ); done; echo \"Regression test engine PID(s): \$REGRESSION_TEST_ENGINE_PID\"; sudo kill -SIGINT -- \${REGRESSION_TEST_ENGINE_PID}; sleep 10; sudo kill -SIGINT -- \${REGRESSION_TEST_ENGINE_PID}; " ) | crontab
 
 # Install, prepare and start Bokeh
-echo install Bokeh
+myEcho install Bokeh
 p3=$(which "pip3")
-echo "p3: '$p3'"
+myEcho "p3: '$p3'"
 sudo ${p3} install --upgrade pip
 sudo yum remove -y pyparsing
 p3=$(which "pip3")
-echo "p3: '$p3'"
+myEcho "p3: '$p3'"
 sudo ${p3} install pandas bokeh pyproj
 
 bk=$(which 'bokeh')
-echo "bokeh: $bk"
+myEcho "bokeh: $bk"
 
-echo "Prepare Bokeh"
+myEcho "Prepare Bokeh"
 cd ~/smoketest
 # Don't use Public IP, out network may refuse to connect to it
 #sed -e 's/origin=\(ec2.*\)/origin='"$PUBLIC_IP"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
-#echo "Bokeh address: $PUBLIC_IP:5006"
+#myEcho "Bokeh address: $PUBLIC_IP:5006"
 
-# Use Public hostname isntead
-sed -e 's/origin=\(ec2.*\)/origin='"$PUBLIC_HOSTNAME"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
-echo "Bokeh address: $PUBLIC_HOSTNAME:5006"
-echo "http://$PUBLIC_HOSTNAME:5006" > bokeh.url
+if [[ -n $PUBLIC_HOSTNAME ]]
+then
+    myEcho "Use Public hostname: '$PUBLIC_HOSTNAME'"
+    sed -e 's/origin=\(10.*\):5006/origin='"$PUBLIC_HOSTNAME"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
+    myEcho "Bokeh IP address: $PUBLIC_HOSTNAME:5006"
+    # To keep listTests3.py happy
+    myEcho "Bokeh address: $PUBLIC_HOSTNAME:5006"
+    echo "http://$PUBLIC_HOSTNAME:5006/showStatus" > bokeh.url
+else
+    myEcho "Perhaps we are in us-east-1 use Local IP: '$LOCAL_IP'"
+    sed -e 's/origin=\(10.*\):5006/origin='"$LOCAL_IP"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
+    myEcho "Bokeh IP address: $LOCAL_IP:5006"
+    # To keep listTests3.py happy
+    myEcho "Bokeh address: $LOCAL_IP:5006"
+    echo "http://$LOCAL_IP:5006/showStatus" > bokeh.url
 
-echo "Start Bokeh"
+fi
+myEcho "Start Bokeh"
 chmod +x ./startBokeh.sh
 ./startBokeh.sh &
-echo "Bokeh pid: $!"
+myEcho "Bokeh pid: $!"
 
-echo "End of init.sh"
+myEcho "End of init.sh"
