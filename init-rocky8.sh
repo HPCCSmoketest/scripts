@@ -300,14 +300,14 @@ then
     sed -e 's/origin=\(10.*\):5006/origin='"$PUBLIC_HOSTNAME"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
     myEcho "Bokeh IP address: $PUBLIC_HOSTNAME:5006"
     # To keep listTests3.py happy
-    myEcho "Bokeh address: $PUBLIC_HOSTNAME:5006"
+    echo "Bokeh address: $PUBLIC_HOSTNAME:5006"
     echo "http://$PUBLIC_HOSTNAME:5006/showStatus" > bokeh.url
 else
     myEcho "Perhaps we are in us-east-1 use Local IP: '$LOCAL_IP'"
     sed -e 's/origin=\(10.*\):5006/origin='"$LOCAL_IP"':5006/g' ./startBokeh_templ.sh>  ./startBokeh.sh
     myEcho "Bokeh IP address: $LOCAL_IP:5006"
     # To keep listTests3.py happy
-    myEcho "Bokeh address: $LOCAL_IP:5006"
+    echo "Bokeh address: $LOCAL_IP:5006"
     echo "http://$LOCAL_IP:5006/showStatus" > bokeh.url
 
 fi
