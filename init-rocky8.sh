@@ -15,8 +15,17 @@ myEcho()
 #export PATH=$PATH:/usr/local/bin:/bin:/usr/local/sbin:/sbin:/usr/sbin:
 myEcho "path: $PATH"
 
-PUBLIC_IP=$( curl http://checkip.amazonaws.com )
+PUBLIC_IP=$( curl -q http://checkip.amazonaws.com )
+myEcho "PUBLIC_IP: '$PUBLIC_IP'"
+
 PUBLIC_HOSTNAME=$( wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname )
+myEcho "PUBLIC_HOSTNAME: '$PUBLIC_HOSTNAME'"
+
+IP_FULL_PATH=$( which "ip" )
+myEcho "IP_FULL_PATH: '$IP_FULL_PATH'"
+LOCAL_IP=$($IP_FULL_PATH -4 addr | egrep '10\.' | awk '{ print $2 }' | cut -d / -f1)
+myEcho "LOCAL_IP: '$LOCAL_IP'"
+
 INSTANCE_NAME="PR-12701"
 DOCS_BUILD=0
 DOCS_BUILD_STR=''
