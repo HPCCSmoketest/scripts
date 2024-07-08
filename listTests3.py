@@ -519,15 +519,15 @@ phase = 0;
 def update_status():
     global phase
     if phase == 0:
-        divCurrentState.style = {"color":statusColor,"font-style":"bold", "font-weight":"bold"}
+        divCurrentState.styles = {"color":statusColor,"font-style":"bold", "font-weight":"bold"}
         if divRunningTestCount.text != '0':
-            divRunningTestCount.style = {"font-style":"bold", "font-weight":"bold", "font-size":"125%"}
+            divRunningTestCount.styles = {"font-style":"bold", "font-weight":"bold", "font-size":"125%"}
         if divFailedTestCount .text != '0':
-            divFailedTestCount.style = {"color":"red", "font-style":"bold", "font-weight":"bold", "font-size":"125%"}
+            divFailedTestCount.styles = {"color":"red", "font-style":"bold", "font-weight":"bold", "font-size":"125%"}
     else:
-        divCurrentState.style = {"color":statusColor}
-        divRunningTestCount.style = {}
-        divFailedTestCount.style = {"color":"black"}
+        divCurrentState.styles = {"color":statusColor}
+        divRunningTestCount.styles = {}
+        divFailedTestCount.styles = {"color":"black"}
     phase = (phase + 1) % 2 
 #headerRow = row(divTimeHeader, divUpdateHeader, divCurrentStateHeader)
 staRow1 = row(divCurrentDayHeader, divCurrentDay, divTimeHeader, divTime, divUpdateHeader, divUpdate, divCurrentStateHeader, divCurrentState)
