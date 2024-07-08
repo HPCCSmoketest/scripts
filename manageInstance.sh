@@ -534,6 +534,7 @@ then
     #res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init-cos8.sh $SSH_USER@${instancePublicIp}:/home/$SSH_USER/init.sh 2>&1 )
     # Rocky 8
     res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init-rocky8.sh $SSH_USER@${instancePublicIp}:/home/$SSH_USER/init.sh 2>&1 )
+    DOCS_BUILD=''  # Should figure out
     WriteLog "Res: $res" "$LOG_FILE"
 
 #    WriteLog "Set it to executable" "$LOG_FILE"
