@@ -56,7 +56,8 @@ do
         instance*)  INSTANCE_NAME=${param//instanceName=/}
                 INSTANCE_NAME=${INSTANCE_NAME//\"/}
                 #INSTANCE_NAME=${INSTANCE_NAME//PR/PR-}
-                myEcho "Instance name: '${INSTANCE_NAME}'"
+                # To keep listTests3.py happy
+                echo "Instance name: '${INSTANCE_NAME}'"
                 ;;
                 
         docs*)  DOCS_BUILD_STR=param
@@ -72,7 +73,8 @@ do
                 
         commit*) COMMIT_ID=${param//commitId=/}
                 COMMIT_ID=${COMMIT_ID//\"/}
-                myEcho "Commit ID: ${COMMIT_ID}"
+                # To keep listTests3.py happy
+                echo "Commit ID: ${COMMIT_ID}"
                 ;;
                 
         dryRun) DRY_RUN=1
