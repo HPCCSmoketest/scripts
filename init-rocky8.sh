@@ -109,7 +109,7 @@ done
 
 #curl --silent --location https://rpm.nodesource.com/setup_14.x | sudo bash -
 
-PACKAGES_TO_INSTALL="expect mailx bc psmisc"
+PACKAGES_TO_INSTALL="expect bc"
 #if [ $DOCS_BUILD -eq 1 ]
 #then
 #    wget http://mirror.centos.org/centos/7/os/x86_64/Packages/fop-1.1-6.el7.noarch.rpm
@@ -123,14 +123,14 @@ myEcho "Node version: $(node --version)"
 
 #sudo yum install -y gcc-toolset-12
 
-curl -q -o autoconf-archive-2021.02.19.tar.xz http://ftp.gnu.org/gnu/autoconf-archive/autoconf-archive-2021.02.19.tar.xz && \
-xz -d -v autoconf-archive-2021.02.19.tar.xz && \
-tar xvf autoconf-archive-2021.02.19.tar && \
-pushd autoconf-archive-2021.02.19 && \
-./configure && \
-make && \
-sudo make install
-popd
+#curl -q -o autoconf-archive-2021.02.19.tar.xz http://ftp.gnu.org/gnu/autoconf-archive/autoconf-archive-2021.02.19.tar.xz && \
+#xz -d -v autoconf-archive-2021.02.19.tar.xz && \
+#tar xvf autoconf-archive-2021.02.19.tar && \
+#pushd autoconf-archive-2021.02.19 && \
+#./configure && \
+#make && \
+#sudo make install
+#popd
 
 
 
@@ -289,14 +289,14 @@ PROCESS_TO_KILL="build.sh"  #"ecl-test"
 ( crontab -l; echo ""; echo "# Send Ctrl - C to Regression Test Engine after ${BREAK_TIME} minutes"; echo $( date -d " + ${BREAK_TIME} minutes" "+%M %H %d %m") " * REGRESSION_TEST_ENGINE_PID=\$( pgrep -f $PROCESS_TO_KILL ); while [[ -z \"\$REGRESSION_TEST_ENGINE_PID\" ]] ; do date; sleep 10; REGRESSION_TEST_ENGINE_PID=\$( pgrep -f $PROCESS_TO_KILL ); done; echo \"Regression test engine PID(s): \$REGRESSION_TEST_ENGINE_PID\"; sudo kill -SIGINT -- \${REGRESSION_TEST_ENGINE_PID}; sleep 10; sudo kill -SIGINT -- \${REGRESSION_TEST_ENGINE_PID}; " ) | crontab
 
 # Install, prepare and start Bokeh
-myEcho install Bokeh
-p3=$(which "pip3")
-myEcho "p3: '$p3'"
-sudo ${p3} install --upgrade pip
-sudo yum remove -y pyparsing
-p3=$(which "pip3")
-myEcho "p3: '$p3'"
-sudo ${p3} install pandas bokeh pyproj
+#myEcho install Bokeh
+#p3=$(which "pip3")
+#myEcho "p3: '$p3'"
+#sudo ${p3} install --upgrade pip
+#sudo yum remove -y pyparsing
+#p3=$(which "pip3")
+#myEcho "p3: '$p3'"
+#sudo ${p3} install pandas bokeh pyproj
 
 bk=$(which 'bokeh')
 myEcho "bokeh: $bk"
