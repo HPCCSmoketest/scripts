@@ -123,6 +123,17 @@ myEcho "Node version: $(node --version)"
 
 #sudo yum install -y gcc-toolset-12
 
+curl -q -o autoconf-archive-2021.02.19.tar.xz http://ftp.gnu.org/gnu/autoconf-archive/autoconf-archive-2021.02.19.tar.xz && \
+xz -d -v autoconf-archive-2021.02.19.tar.xz && \
+tar xvf autoconf-archive-2021.02.19.tar && \
+pushd autoconf-archive-2021.02.19 && \
+./configure && \
+make && \
+sudo make install
+popd
+
+
+
 GUILLOTINE=$( echo " 2 * $AVERAGE_SESSION_TIME * 60" | bc |  xargs printf "%.0f" ) # minutes ( 2 x AVERAGE_SESSION_TIME)
 printf "AVERAGE_SESSION_TIME = %f hours, GUILLOTINE = %d minutes\n" "$AVERAGE_SESSION_TIME" "$GUILLOTINE"
 
