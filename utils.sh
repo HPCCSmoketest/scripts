@@ -85,7 +85,7 @@ GLOBAL_EXCLUSION="-e 3rdparty"
 GLOBAL_EXCLUSION="-e=embedded,3rdparty"
 #GLOBAL_EXCLUSION="--ef pipefail.ecl,layouttrans_disabled.ecl -e=embedded,3rdparty"
 #GLOBAL_EXCLUSION="--ef pipefail.ecl,prefetch4.ecl,loopthor2.ecl,genjoin2.ecl,genjoin3.ecl,key.ecl,keydiff1.ecl -e=embedded,3rdparty,stress,spray"
-GLOBAL_EXCLUSION="--ef pipefail.ecl,prefetch4.ecl,loopthor2.ecl,genjoin2.ecl,genjoin3.ecl,key.ecl,keydiff1.ecl -e=embedded-r,embedded-js,3rdpartyservice,mongodb"
+GLOBAL_EXCLUSION="--ef pipefail.ecl,prefetch4.ecl,loopthor2.ecl,genjoin2.ecl,genjoin3.ecl,key.ecl,keydiff1.ecl,teststdlibrary.ecl -e=embedded-r,embedded-js,3rdpartyservice,mongodb"
 PYTHON_PLUGIN=''
 
 # Patch/hack some CMakeLists.txt to enable parallel build for them
