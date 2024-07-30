@@ -89,14 +89,15 @@ def update():
     bases = []
     jiras = []
     urls = []
+    vols = []
 
     if len(files) > 0:
         index = 0
         for f in files:
             if len(f) > 0:
                 print("File:%s" % (f))
-                #myProcA = subprocess.Popen(["cat " + f + " | egrep -i 'Instance name|instanceName= |Commit Id|commitId= |Instance Id|base= |jira= ' | cut -d' ' -f5 | tr -d \\' | paste -d, -s - | cut -d',' -f1,2,3 --output ',' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
-                myProcA = subprocess.Popen(["cat " + f + " | egrep -i 'Instance name|instanceName= |Commit Id|commitId= |Instance Id|base= |jira= |Bokeh address:' | cut -d' ' -f5 | tr -d \\' | paste -d, -s - "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                #myProcA = subprocess.Popen(["cat " + f + " | egrep -i 'Instance name|instanceName= |Commit Id|commitId= |Instance Id|base= |jira= |Volume ID' | cut -d' ' -f5 | tr -d \\' | paste -d, -s - | cut -d',' -f1,2,3 --output ',' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                myProcA = subprocess.Popen(["cat " + f + " | egrep -i 'Instance name|instanceName= |Commit Id|commitId= |Instance Id|base= |jira= |Bokeh address:|Volume ID' | cut -d' ' -f5 | tr -d \\' | paste -d, -s - "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
 
                 resultA = myProcA.stdout.read() + myProcA.stderr.read()
                 items = resultA.decode("utf-8").strip().split(',')
@@ -113,6 +114,7 @@ def update():
                 base = 'N/A'
                 jira = 'N/A'
                 url = 'N/A'
+                vol = 'N/A'
 
                 for item in items:
                     item = item.strip()
@@ -131,6 +133,8 @@ def update():
                             prId = pr.replace('PR-','')
                     elif item.startswith('i-'):
                         instance = item
+                    elif item.startswith('vol-'):
+                        vol = item
                     elif item.upper().startswith('HPCC') or item.startswith('JIRA-'):
                         jira = item
                         if item.startswith('JIRA-'):
@@ -221,6 +225,7 @@ def update():
                 bases.append(base)
                 jiras.append(jira)
                 urls.append(url)
+                vols.append(vol)
     
         # get the results
         myProcRes = subprocess.Popen(["find OldPrs/PR-*/ PR-*/ -iname 'result-'" + testDay + "'*.log' -type f  -print | sort "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
@@ -361,7 +366,7 @@ def update():
             try:
                 outFile = open("smoketestReport-" + testDay + ".log", "w")
                 for i in range(len(prs)):
-                    outFile.write("%d,%s,%s,%s,%s,%s,%s,tested as %s\n" % (i+1, prs[i], scheduledCommits[i], instances[i], statuses[i], results[i], ellapses[i].split()[0], testedCommits[i]))
+                    outFile.write("%d,%s,%s,%s,%s,%s,%s,tested as %s,%s\n" % (i+1, prs[i], scheduledCommits[i], instances[i], statuses[i], results[i], ellapses[i].split()[0], testedCommits[i], vols[i]))
                 outFile.close()
             finally:
                 print("\tDone")

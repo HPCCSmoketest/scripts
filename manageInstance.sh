@@ -373,7 +373,7 @@ WriteLog "Res: ${res}\n" "$LOG_FILE"
 
 
 #volumeId=$( aws ec2 describe-instances --instance-ids ${instanceId} 2>&1 | egrep 'VolumeId' | tr -d '", ' | cut -d : -f 2 )
-volumeId=$( echo $instanceInfo | egrep 'VolumeId' | tr -d '", ' | cut -d : -f 2 )
+volumeId=$( echo "$instanceInfo" | egrep 'VolumeId' | tr -d '", ' | cut -d : -f 2 )
 WriteLog "Volume ID: $volumeId" "$LOG_FILE"
 
 tag=$( aws ec2 create-tags --resources ${instanceId} ${volumeId} \
