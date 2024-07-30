@@ -301,7 +301,7 @@ WriteLog "Instance info: $instanceInfo" "$LOG_FILE"
 tryCount=5
 delay=10 # sec
 # Give it some time to become accesible if "InvalidInstanceID.NotFound" error found
-while [[ $instanceInfo =~ "InvalidInstanceID.NotFound" ]]
+while [[ ($instanceInfo =~ "InvalidInstanceID.NotFound")  || ( $(echo $InstanceInfo | egrep -i -c 'volume') -eq 0) ]]
 do
     tryCount=$(( $tryCount - 1 ))
     [[ $tryCount -eq 0 ]] && break;
@@ -372,7 +372,8 @@ res=$( ssh-keygen -R ${instancePublicIp} -f ~/.ssh/known_hosts 2>&1 )
 WriteLog "Res: ${res}\n" "$LOG_FILE"
 
 
-volumeId=$( echo "$instanceInfo" | egrep 'VolumeId' | tr -d '", ' | cut -d : -f 2 )
+#volumeId=$( aws ec2 describe-instances --instance-ids ${instanceId} 2>&1 | egrep 'VolumeId' | tr -d '", ' | cut -d : -f 2 )
+volumeId=$( echo $instanceInfo | egrep 'VolumeId' | tr -d '", ' | cut -d : -f 2 )
 WriteLog "Volume ID: $volumeId" "$LOG_FILE"
 
 tag=$( aws ec2 create-tags --resources ${instanceId} ${volumeId} \
