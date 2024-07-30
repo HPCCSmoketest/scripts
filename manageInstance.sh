@@ -301,7 +301,7 @@ WriteLog "Instance info: $instanceInfo" "$LOG_FILE"
 tryCount=5
 delay=10 # sec
 # Give it some time to become accesible if "InvalidInstanceID.NotFound" error found
-while [[ ($instanceInfo =~ "InvalidInstanceID.NotFound")  || ( $(echo $InstanceInfo | egrep -i -c 'volume') -eq 0) ]]
+while [[ ($instanceInfo =~ "InvalidInstanceID.NotFound")  || ( $(echo $instanceInfo | egrep -i -c 'volume') -eq 0) ]]
 do
     tryCount=$(( $tryCount - 1 ))
     [[ $tryCount -eq 0 ]] && break;
