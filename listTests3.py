@@ -366,7 +366,9 @@ def update():
             try:
                 outFile = open("smoketestReport-" + testDay + ".log", "w")
                 for i in range(len(prs)):
-                    outFile.write("%d,%s,%s,%s,%s,%s,%s,tested as %s,%s\n" % (i+1, prs[i], scheduledCommits[i], instances[i], statuses[i], results[i], ellapses[i].split()[0], testedCommits[i], vols[i]))
+                    #outFile.write("%d,%s,%s,%s,%s,%s,%s,tested as %s,%s\n" % (i+1, prs[i], scheduledCommits[i], instances[i], statuses[i], results[i], ellapses[i].split()[0], testedCommits[i], vols[i]))
+                    # Write out tested commit instead of scheduled one and Volume info instead of tested commit, so keep the number of fileds to 8
+                    outFile.write("%d,%s,%s,%s,%s,%s,%s,%s\n" % (i+1, prs[i], testedCommits[i], instances[i], statuses[i], results[i], ellapses[i].split()[0], vols[i]))
                 outFile.close()
             finally:
                 print("\tDone")
