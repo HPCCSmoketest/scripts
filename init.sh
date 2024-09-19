@@ -142,7 +142,7 @@ fi
 myEcho "-------------------------------------"
 
 #PACKAGES_TO_INSTALL="expect mailx dsc30 cassandra30 cassandra30-tools bc psmisc"
-#PACKAGES_TO_INSTALL="expect mailx dsc cassandra cassandra-tools bc psmisc git ncurses-devel"
+#PACKAGES_TO_INSTALL="expect mailx dsc cassandra cassandra-tools bc psmisc git ncurses-devel gdb"
 PACKAGES_TO_INSTALL="expect mailx bc psmisc"
 
 #if [ $DOCS_BUILD -eq 1 ]
