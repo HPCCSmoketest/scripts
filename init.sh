@@ -381,13 +381,22 @@ then
     echo /usr/local/lib | sudo tee /etc/ld.so.conf.d/usr_local_lib.conf
 
     # Build Tools - Mono  ---
-    sudo yum-config-manager --add-repo http://download.mono-project.com/repo/centos/
-    sudo yum clean all
-    sudo yum makecache
-    sudo rpm --import "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
-
-    sudo yum install -y mono-complete 
-
+    myEcho "Install mono-complete..."
+    res=$(sudo yum-config-manager --add-repo http://download.mono-project.com/repo/centos/ 2>&1)
+    myEcho "Res: $res"
+    
+    res=$(sudo yum clean all 2>&1)
+    myEcho "Res: $res"
+    
+    res=$(sudo yum makecache 2>&1)
+    myEcho "Res: $res"
+        
+    res=$(sudo rpm --import "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF" 2>&1)
+    myEcho "Res: $res"
+    
+    res=$(sudo yum install -y mono-complete 2>&1)
+    myEcho "Res: $res"    
+    myEcho "  done."
 else
     # For 8.8x and 8.10.x
     sudo yum install -y  autoconf automake autoconf-archive 

@@ -255,11 +255,15 @@ WriteLog "AMI_ID: ${AMI_ID}, new AMI: ${NEW_AMI}" "$LOG_FILE"
 SSH_USER="centos"
 if [[ $REGION =~ 'us-east-1' ]]
 then
-    #AMI_ID="ami-00e1c66ba91987906"    # CentOS 7
-    AMI_ID="ami-05a2bf1b49fda2414"    # Rocky-8
+    if [[ "$BASE" == "candidate-9.2.x" ]]
+    then
+        AMI_ID="ami-00e1c66ba91987906"    # CentOS 7
+    else
+        AMI_ID="ami-05a2bf1b49fda2414"    # Rocky-8
+        SSH_USER="rocky"
+    fi
     SECURITY_GROUP_ID="sg-0f8acde8c1dc008f1"
     SUBNET_ID="subnet-00c6da41f8516f57d"
-    SSH_USER="rocky"
 else
     SECURITY_GROUP_ID="sg-08a92c3135ec19aea"
     SUBNET_ID="subnet-0f5274ec85eec91da"
@@ -529,12 +533,16 @@ then
     fi
     
     WriteLog "Upload init.sh" "$LOG_FILE"
-    # CentOS 7
-    #res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init.sh ${SMOKETEST_HOME}/timestampLogger.sh $SSH_USER@${instancePublicIp}:/home/$SSH_USER/ 2>&1 )
-    # CentOS 8
-    #res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init-cos8.sh $SSH_USER@${instancePublicIp}:/home/$SSH_USER/init.sh 2>&1 )
-    # Rocky 8
-    res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init-rocky8.sh $SSH_USER@${instancePublicIp}:/home/$SSH_USER/init.sh 2>&1 )
+    if [[ "$BASE" == "candidate-9.2.x" ]]
+    then
+        # CentOS 7
+        res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init.sh ${SMOKETEST_HOME}/timestampLogger.sh $SSH_USER@${instancePublicIp}:/home/$SSH_USER/ 2>&1 )
+        # CentOS 8
+        #res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init-cos8.sh $SSH_USER@${instancePublicIp}:/home/$SSH_USER/init.sh 2>&1 )
+    else
+        # Rocky 8
+        res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init-rocky8.sh $SSH_USER@${instancePublicIp}:/home/$SSH_USER/init.sh 2>&1 )
+    fi
     DOCS_BUILD=''  # Should figure out
     WriteLog "Res: $res" "$LOG_FILE"
 
