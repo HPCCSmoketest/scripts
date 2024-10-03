@@ -109,7 +109,7 @@ done
 
 #curl --silent --location https://rpm.nodesource.com/setup_14.x | sudo bash -
 
-PACKAGES_TO_INSTALL="expect bc"
+PACKAGES_TO_INSTALL="expect bc gdb"
 #if [ $DOCS_BUILD -eq 1 ]
 #then
 #    wget http://mirror.centos.org/centos/7/os/x86_64/Packages/fop-1.1-6.el7.noarch.rpm
