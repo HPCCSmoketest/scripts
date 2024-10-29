@@ -255,7 +255,7 @@ WriteLog "AMI_ID: ${AMI_ID}, new AMI: ${NEW_AMI}" "$LOG_FILE"
 SSH_USER="centos"
 if [[ $REGION =~ 'us-east-1' ]]
 then
-    if [[ "$BASE" == "candidate-9.2.x" ]]
+    if [[ "$BASE" == "candidate-9.2.x" || "$BASE" == "candidate-9.4.x" ]]
     then
         AMI_ID="ami-00e1c66ba91987906"    # CentOS 7
     else
@@ -533,7 +533,7 @@ then
     fi
     
     WriteLog "Upload init.sh" "$LOG_FILE"
-    if [[ "$BASE" == "candidate-9.2.x" ]]
+    if [[ "$BASE" == "candidate-9.2.x" || "$BASE" == "candidate-9.4.x" ]]
     then
         # CentOS 7
         res=$( rsync -vapE --timeout=60 -e "ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS}" ${SMOKETEST_HOME}/init.sh ${SMOKETEST_HOME}/timestampLogger.sh $SSH_USER@${instancePublicIp}:/home/$SSH_USER/ 2>&1 )
