@@ -1363,7 +1363,7 @@ then
         components=()
         for core in ${cores[@]:0:$numberOfCoresTobeArchive}
         do 
-            coreSize=$( ls -l $core | awk '{ print $5}' )
+            coreSize=$( ls -lh $core | awk '{ print $5}' )
             WritePlainLog "Add $core (${coreSize} bytes) to archive" "$logFile"
 
             WritePlainLog "Generate backtrace for $core." "$logFile"
@@ -1372,7 +1372,7 @@ then
             #comp=${lastSubdir##my}
             corename=${core##*/}; 
             comp=$( echo $corename | tr '_.' ' ' | awk '{print $2 }' ); 
-            compnamepart=$( find /opt/HPCCSystems/bin/ -iname "$comp*" -type f -print | head -n 1);
+            compnamepart=$( find /opt/HPCCSystems/bin/ -iname "$comp*" -type f -print | head -n 1); 
             compname=${compnamepart##*/}
             WritePlainLog "corename: ${corename}, comp: ${comp}, compnamepart: ${compnamepart}, component name: ${compname}" "$logFile"
             components+=compname
