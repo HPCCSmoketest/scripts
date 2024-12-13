@@ -101,7 +101,7 @@ skipDraftPr=True
 if ('skipDraftPr' in os.environ) and (os.environ['skipDraftPr'] == '0'):
     skipDraftPr = False
 
-averageSessionTime=1.5
+averageSessionTime=0.75
 if ('AVERAGE_SESSION_TIME' in os.environ):
     averageSessionTime = float(os.environ['AVERAGE_SESSION_TIME'])
 
@@ -1111,6 +1111,19 @@ def GetOpenPulls(knownPullRequests):
                     pass
                 elif (len(baseVersion) == 1) and ('master' == baseVersion[0]):
                     prs[prid]['runWutoolTests'] = True
+
+		# Check base version to exclude 9.2.x and 9.4.x based test related to stalled on on 'npm exec playwright test'
+                playWRrightExclusionVersion={'major':9, 'minor':4,  'release':6}
+                baseVersion = prs[prid]['code_base'].split('-')
+                if len(baseVersion) >= 2:
+                    baseVersionItems == baseVersion[1].split('.')
+                    if len(baseVersionItems) >= 3:
+                        if int(baseVersionItems[0]) == playWRrightExclusionVersion['major']:
+                            if (int(baseVersionItems[1]) <= playWRrightExclusionVersion['minor']) and ('x' == baseVersionItems[2]):
+                                prs[prid]['excludeFromTest'] = True
+                            pass
+                        pass
+                    pass
                 
                 if prid == 9166:
                     prs[prid]['testfiles'].append('testing/regress/ecl/teststdlibrary.ecl')
