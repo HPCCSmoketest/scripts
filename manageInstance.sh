@@ -654,6 +654,23 @@ then
                 
                 CompressAndDownload "emergency"
             fi
+            
+            # Check the stuck 'npm exec playwright test'
+            playwrightPid=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "ps aux | egrep '[n]pm exec playwright' | awk '{ print $2 }'"  2>&1 )
+            if [[ -n "$playwrightPid" ]]
+            then
+                WriteLog "The playwright test is running, kill it." "$LOG_FILE"
+            	killPlaywright=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "sudo kill -TERM ${playwrightPid}"  2>&1 )
+            	sleep 1
+                playwrightPid=$( ssh -i ${SSH_KEYFILE} ${SSH_OPTIONS} $SSH_USER@${instancePublicIp} "ps aux | egrep '[n]pm exec playwright' | awk '{ print $2 }'"  2>&1 )
+                if [[ -n "$playwrightPid" ]]
+                then
+                    WriteLog "The playwright test is still running." "$LOG_FILE"
+                else
+                    WriteLog "The playwright test killed." "$LOG_FILE"
+                fi
+            
+            fi
 
         fi
         # It is possible the ProcessPullRequests.py is too busy (lots of PRs, etc) and the build.sh doesn't run yet.
