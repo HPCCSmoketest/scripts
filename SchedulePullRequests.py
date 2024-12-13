@@ -1113,7 +1113,7 @@ def GetOpenPulls(knownPullRequests):
                     prs[prid]['runWutoolTests'] = True
 
 		# Check base version to exclude 9.2.x and 9.4.x based test related to stalled on on 'npm exec playwright test'
-                playWRrightExclusionVersion={'major':9, 'minor':4,  'release':6}
+                playWRrightExclusionVersion={'major':9, 'minor':0,  'release':0}
                 baseVersion = prs[prid]['code_base'].split('-')
                 if len(baseVersion) >= 2:
                     baseVersionItems == baseVersion[1].split('.')
