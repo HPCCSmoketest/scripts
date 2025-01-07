@@ -120,6 +120,20 @@ myEcho "Packages to install: ${PACKAGES_TO_INSTALL}"
 sudo yum install -y ${PACKAGES_TO_INSTALL}
 
 myEcho "Node version: $(node --version)"
+sudo yum remove -y nodejs
+sudo yum --enablerepo=nodesource clean metadata
+
+# Download and install nvm:
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+
+# Download and install Node.js:
+nvm install 22
+
+# Verify the Node.js version:
+myEcho "Node version: $(node -v )"    # Should print "v22.12.0".
+myEcho "nvm current : $(nvm current)" # Should print "v22.12.0".
+myEcho "npm version : $(npm -v )"     # Should print "10.9.0".
+
 
 #sudo yum install -y gcc-toolset-12
 
