@@ -1072,9 +1072,10 @@ then
                         WritePlainLog "res: ${res}" "$logFile"
                         
                         # Always use RTE config from PR source
-                        WritePlainLog "Copy '$TEST_DIR/ecl-test.json' into '$RTE_DIR'" "$logFile"
-                        res=$( cp -v $TEST_DIR/ecl-test.json $RTE_DIR/ 2>&1)
-                        WritePlainLog "res: ${res}" "$logFile"
+                        # Commented out until the new RTE published, based on ecl-test.json has been changed
+                        #WritePlainLog "Copy '$TEST_DIR/ecl-test.json' into '$RTE_DIR'" "$logFile"
+                        #res=$( cp -v $TEST_DIR/ecl-test.json $RTE_DIR/ 2>&1)
+                        #WritePlainLog "res: ${res}" "$logFile"
                     fi
                 else
                     WritePlainLog "RTE changed (in this PR) get it from local source tree" "$logFile"
