@@ -191,8 +191,8 @@ do
     fi
     
     #result=$( sudo unbuffer ${UNITTEST_BIN} ${UNITTEST_EXEC_PARAMS} $unittest 2>&1 )
-    result=$( ${UNITTEST_BIN_PATH}/${UNITTEST_BIN} ${UNITTEST_EXEC_PARAMS} $unittest 2>&1 )
-    retCode=$( echo $?)
+    result=$( timeout  -s 15 --preserve-status 1.0m ${UNITTEST_BIN_PATH}/${UNITTEST_BIN} ${UNITTEST_EXEC_PARAMS} $unittest 2>&1 )
+    retCode=$?
     signal=0
     if [[ $retCode > 128 ]] 
     then
