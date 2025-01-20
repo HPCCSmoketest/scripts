@@ -1371,14 +1371,14 @@ then
             #base=$( dirname $core )
             #lastSubdir=${base##*/}
             #comp=${lastSubdir##my}
-            corename=${core##*/}; 
-            comp=$( echo $corename | tr '_.' ' ' | awk '{print $2 }' ); 
-            compnamepart=$( find /opt/HPCCSystems/bin/ -iname "$comp*" -type f -print | head -n 1); 
-            compname=${compnamepart##*/}
-            WritePlainLog "corename: ${corename}, comp: ${comp}, compnamepart: ${compnamepart}, component name: ${compname}" "$logFile"
-            components+=compname
-            WritePlainLog "componenet:/opt/HPCCSystems/bin/${compname} core: $core" "$logFile"
-            res=$( sudo gdb --batch --quiet -ex "set interactive-mode off" -ex "echo \nBacktrace for all threads\n==========================" -ex "thread apply all bt" -ex "echo \n Registers:\n==========================\n" -ex "info reg" -ex "echo \n Disas:\n==========================\n" -ex "disas" -ex "quit" "/opt/HPCCSystems/bin/${compname}" $core | sudo tee $core.trace 2>&1 )
+            coreName=${core##*/}
+            component=$( echo $coreName | tr '_.' ' ' | awk '{print $2 }' )
+            compNamePart=$( find /opt/HPCCSystems/bin/ -iname "$component*" -type f -print | head -n 1)
+            compName=${compNamePart##*/}
+            WritePlainLog "corename: ${coreName}, component: ${component}, compNamePart: ${compNamePart}, component name: ${compName}" "$logFile"
+            components+=compName
+            WritePlainLog "component: /opt/HPCCSystems/bin/${compName} core: $core" "$logFile"
+            res=$( sudo gdb --batch --quiet -ex "set interactive-mode off" -ex "echo \nBacktrace for all threads\n==========================" -ex "thread apply all bt" -ex "echo \n Registers:\n==========================\n" -ex "info reg" -ex "echo \n Disas:\n==========================\n" -ex "disas" -ex "quit" "/opt/HPCCSystems/bin/${compName}" $core | sudo tee $core.trace 2>&1 )
             WritePlainLog "Res: $res" "$logFile"
 
             sudo chmod 0777 $core*
