@@ -119,6 +119,28 @@ PACKAGES_TO_INSTALL="expect bc gdb"
 myEcho "Packages to install: ${PACKAGES_TO_INSTALL}"
 sudo yum install -y ${PACKAGES_TO_INSTALL}
 
+
+# Configure and start TinyProxy
+#
+myEcho "Generate TinyProxy config"
+echo "Port 8888"    > tinyproxy.conf
+echo "Timeout 600" >> tinyproxy.conf
+echo "StartServers 5" >> tinyproxy.conf
+echo "MaxClients 5" >> tinyproxy.conf
+echo "DisableViaHeader yes" >> tinyproxy.conf
+myEcho "  Done"
+myEcho "Start TinyProxy..."
+res=$( sudo tinyproxy -c tinyproxy.conf 2>&1)
+retCode=$?
+if [[ $retCode -ne 0 ]]
+then
+    myEcho "Error at start: $retCode"
+    myEcho "res:$res"
+fi
+myEcho "TinyProxy pid(s): $(pgrep tinyproxy)"
+myEcho "  Done"
+
+
 myEcho "Node version: $(node --version)"
 sudo yum remove -y nodejs
 sudo yum --enablerepo=nodesource clean metadata
