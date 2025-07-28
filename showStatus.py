@@ -84,7 +84,7 @@ def update():
                         if logFileTime >= startTime:
                             print("PR logfile:%s, " % (logfiles[0])),
                             
-                            myProc2a = subprocess.Popen(["cat "+ logfiles[0] + " | egrep -i 'milestone' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
+                            myProc2a = subprocess.Popen(["cat "+ logfiles[0] + " | egrep -i 'milestone|Elaps ' "],  shell=True,  bufsize=8192,  stdout=subprocess.PIPE,  stderr=subprocess.PIPE)
                             result2a = (myProc2a.stdout.read() + myProc2a.stderr.read()).decode("utf-8").strip().split('\n')
                             #print(result2a)
                             for item in result2a:
