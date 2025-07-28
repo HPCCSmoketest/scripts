@@ -680,6 +680,7 @@ fi
 
 PREP_TIME=$(( $(date +%s) - $TIME_STAMP ))
 WritePlainLog "Makefiles created ($(date +%Y-%m-%d_%H-%M-%S) $PREP_TIME sec )" "$logFile"
+WriteElapsTime "$PREP_TIME sec." "$logFile"
 
 if [[ $PREP_TIME -gt 300 ]]
 then
@@ -752,24 +753,27 @@ BUILD_SUCCESS=true
 #make -j 16 -d package >> $logFile 2>&1
 CMD="make -j ${NUMBER_OF_BUILD_THREADS}"
 
+retCode=0
 TIME_STAMP=$(date +%s)
 #${CMD} 2>&1 | tee -a $logFile
 if [[ ($HAVE_PKG -eq 0) || ($SKIP_BUILD = 0) ]]
 then
     WritePlainLog "cmd: ${CMD}  ($(date +%Y-%m-%d_%H-%M-%S))" "$logFile"
     ${CMD} >> $logFile 2>&1
+    retCode=$?
 else
     WritePlainLog "We have a package and want to skip build -> not build use existing one" "$logFile"
     WritePlainLog "!!!! This feature only for testing Smoketest engine and CAN NOT BE USED in real Smoketest envireonment !!!!" "$logFile"
 fi
  
+BUILD_TIME=$(( $(date +%s) - $TIME_STAMP ))
+WriteElapsTime "$BUILD_TIME sec." "$logFile"
 
-if [ $? -ne 0 ]
+if [ $retCode -ne 0 ]
 then
     WritePlainLog "res: $res" "$logFile"
     #cat $logFile
     WritePlainLog "Build failed" > ../build.summary
-    BUILD_TIME=$(( $(date +%s) - $TIME_STAMP ))
 #    CheckResult "$logFile"
 #    
 #    WritePlainLog "ReportTimes." "$logFile"
@@ -844,6 +848,8 @@ fi
 
 PACKAGE_TIME=$(( $(date +%s) - $TIME_STAMP ))
 WritePlainLog "Package end ($(date +%Y-%m-%d_%H-%M-%S)  $PACKAGE_TIME sec )" "$logFile"
+WriteElapsTime "$PACKAGE_TIME sec." "$logFile"
+
 TIME_STAMP=$(date +%s)
 
 WritePlainLog "packageExt: '$PKG_EXT', installCMD: '$PKG_INST_CMD'." "$logFile"
@@ -899,6 +905,7 @@ then
 
     INSTALL_TIME=$(( $(date +%s) - $TIME_STAMP ))
     WritePlainLog "Installed ($(date +%Y-%m-%d_%H-%M-%S) $INSTALL_TIME sec )" "$logFile"
+    WriteElapsTime "$INSTALL_TIME sec." "$logFile"
      
     CheckCMakeResult "$logFile"
     
@@ -1013,6 +1020,7 @@ then
             WritePlainLog "${res}" "$logFile"
         fi
         START_TIME=$(( $(date +%s) - $TIME_STAMP ))
+        WriteElapsTime "$START_TIME sec." "$logFile"
         
         if [[ HPCC_STARTED -eq 1 ]]
         then
@@ -1021,7 +1029,7 @@ then
             then
                 WritePlainLog "pushd ${PR_ROOT}" "$logFile"
                 pushd ${PR_ROOT}
-                
+                UNITTEST_START=$(date +%s)
                 cp -vf ../unittest.sh .
 
                 cmd="./unittest.sh"
@@ -1032,6 +1040,8 @@ then
                 #${cmd} 2>&1 | tee -a $logFile
                 ${cmd} >> $logFile 2>&1
                 
+                UNITTEST_TIME=$(( $(date +%s) - $UNITTEST_START ))
+                WriteElapsTime "$UNITTEST_TIME sec." "$logFile"
                 popd
             fi
             
@@ -1039,6 +1049,7 @@ then
             then
                 WritePlainLog "pushd ${PR_ROOT}" "$logFile"
                 pushd ${PR_ROOT}
+                WUTOOLTEST_START=$(date +%s)
                 cp -vf ../wutoolTest.sh .
                 
                 cmd="./wutoolTest.sh"
@@ -1048,6 +1059,8 @@ then
                 #${cmd} 2>&1  | tee -a $logFile
                 ${cmd} >> $logFile 2>&1
                 
+                WUTOOLTEST_TIME=$(( $(date +%s) - $WUTOOLTEST_START ))
+                WriteElapsTime "$WUTOOLTEST_TIME sec." "$logFile"
                 popd
             fi
             
@@ -1055,7 +1068,7 @@ then
             then
                 #WritePlainLog "pushd ${TEST_DIR}" "$logFile"
                 #pushd ${TEST_DIR}
-                
+                PREPARE_REGRESSION_START=$(date +%s)
                 # Clean -up rte dir if exists
                 [[ -d $RTE_DIR ]] && rm -rf $RTE_DIR
                     
@@ -1149,10 +1162,13 @@ then
                     done
                 fi
                 
+                PREPARE_REGRESSION_TIME=$(( $(date +%s) - $PREPARE_REGRESSION_START ))
+                WriteElapsTime "$PREPARE_REGRESSION_TIME sec." "$logFile"
                 #popd
                 #WritePlainLog "pushd ${RTE_DIR}" "$logFile"
                 #pushd ${RTE_DIR}
                 # Setup should run first
+                REGRESSION_SETUP_START=$(date +%s)
                 #cmd="./ecl-test setup -t all --suiteDir $TEST_DIR --config $TEST_DIR/ecl-test.json --loglevel ${LOGLEVEL} --timeout ${SETUP_TIMEOUT} --pq ${PARALLEL_QUERIES} ${ENABLE_STACK_TRACE}"
                 cmd="./ecl-test setup -t all --suiteDir $TEST_DIR --loglevel ${LOGLEVEL} --timeout ${SETUP_TIMEOUT} --pq ${PARALLEL_QUERIES} ${ENABLE_STACK_TRACE}"
                 WriteMilestone "Regression setup" "$logFile"
@@ -1165,6 +1181,9 @@ then
                 ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "setup_hthor" "$logFile"
                 ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "setup_thor" "$logFile"
                 ProcessLog "${PR_ROOT}/HPCCSystems-regression/log/" "setup_roxie" "$logFile"
+                
+                REGRESSION_SETUP_TIME=$(( $(date +%s) - $REGRESSION_SETUP_START ))
+                WriteElapsTime "$REGRESSION_SETUP_TIME sec." "$logFile"
 
                 setupPassed=1
                 # Check if there is no error in Setup phase
@@ -1177,7 +1196,8 @@ then
                         WritePlainLog "Setup failed on $(( 3 - $numberOfNotFailedEngines )) engines." "$logFile"
                         inSuiteErrorLog=$( cat $logFile | sed -n "/\[Error\]/,/Suite destructor./p" )
                         WritePlainLog "${inSuiteErrorLog}" "$logFile"
-                    else            
+                    else        
+                        REGRESSION_SUITE_START=$(date +%s)    
                         retVal=0
                         WriteMilestone "Regression test" "$logFile"
                         WritePlainLog "Regression Suite test case(s): '${REGRESSION_TEST}'" "$logFile"
@@ -1252,6 +1272,8 @@ then
                             inSuiteErrorLog=$( cat $logFile | sed -n "/\[Error\]/,/Suite destructor./p" | egrep -v 'HPCC-Platform/docs/|docbookx.dtd' )
                             WritePlainLog "${inSuiteErrorLog}" "$logFile"
                         fi
+                        REGRESSION_SUITE_TIME=$(( $(date +%s) - $REGRESSION_SUITE_START ))
+                        WriteElapsTime "$REGRESSION_SUITE_TIME sec." "$logFile"
                     fi
                 fi
                 # Get tests stat
@@ -1306,6 +1328,7 @@ then
     #        set +x
             
             TEST_TIME=$(( $(date +%s) - $TIME_STAMP ))
+            WriteElapsTime "$TEST_TIME sec." "$logFile"
 
             TIME_STAMP=$(date +%s)
             WriteMilestone "Stop HPCC" "$logFile"
@@ -1330,6 +1353,7 @@ then
                 WritePlainLog "HPCC Stop: OK" "$logFile"
             fi
             STOP_TIME=$(( $(date +%s) - $TIME_STAMP ))
+            WriteElapsTime "$STOP_TIME sec." "$logFile"
         fi
     else
         WritePlainLog "Temporarily there is not attempts to start, execute test and stop the platform build for containerized environment." "$logFile"

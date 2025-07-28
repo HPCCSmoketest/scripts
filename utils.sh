@@ -498,6 +498,13 @@ WriteMilestone()
     fi
 }
 
+WriteElapsTime()
+{
+    if [[ $# -eq 2 ]]
+    then
+        WritePlainLog "Elaps time:$1" "$2"
+    fi
+}
 
 StartCheckDiskSpace()
 {
