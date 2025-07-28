@@ -1068,6 +1068,7 @@ then
             then
                 #WritePlainLog "pushd ${TEST_DIR}" "$logFile"
                 #pushd ${TEST_DIR}
+                WriteMilestone "Prepare regression testing" "$logFile"
                 PREPARE_REGRESSION_START=$(date +%s)
                 # Clean -up rte dir if exists
                 [[ -d $RTE_DIR ]] && rm -rf $RTE_DIR
