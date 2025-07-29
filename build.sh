@@ -773,7 +773,7 @@ if [ $retCode -ne 0 ]
 then
     WritePlainLog "res: $res" "$logFile"
     #cat $logFile
-    WritePlainLog "Build failed" > ../build.summary
+    WritePlainLog "Build failed" "$logFile" > ../build.summary
 #    CheckResult "$logFile"
 #    
 #    WritePlainLog "ReportTimes." "$logFile"
