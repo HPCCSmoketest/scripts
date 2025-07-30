@@ -727,7 +727,19 @@ then
         WritePlainLog "res:${res}" "$logFile"
         WritePlainLog "npm install end." "$logFile"
 
-        cmd="npm run test"
+        cmd="npm audit fix --force"
+        echo "$cmd" 
+        res=$( ${cmd} 2>&1 )
+        echo "res:${res}"
+        echo "npm audit fix end." 
+            
+        cmd="npx playwright install --with-deps"
+        echo "$cmd" 
+        res=$( ${cmd} 2>&1 )
+        echo "res:${res}"
+
+        #cmd="npm run test"
+        cmd="npm run test-ci"
         WritePlainLog "$cmd" "$logFile"
         res=$( ${cmd} 2>&1 )
 
