@@ -173,8 +173,8 @@ myEcho "res: $res"
 
 #sudo yum install -y gcc-toolset-12
 
-myEcho "sudo dnf install perl-Time-Piece"
-res=$(sudo dnf install perl-Time-Piece 2>&1)
+myEcho "sudo dnf install -y perl-Time-Piece"
+res=$(sudo dnf install -y perl-Time-Piece 2>&1)
 retCode=$?
 myEcho "  retCode: $retCode"
 myEcho "  res: $res"
