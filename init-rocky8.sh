@@ -173,6 +173,14 @@ myEcho "res: $res"
 
 #sudo yum install -y gcc-toolset-12
 
+myEcho "sudo dnf install perl-Time-Piece"
+res=$(sudo dnf install perl-Time-Piece 2>&1)
+retCode=$?
+myEcho "  retCode: $retCode"
+myEcho "  res: $res"
+myEcho "Done."
+
+
 #curl -q -o autoconf-archive-2021.02.19.tar.xz http://ftp.gnu.org/gnu/autoconf-archive/autoconf-archive-2021.02.19.tar.xz && \
 #xz -d -v autoconf-archive-2021.02.19.tar.xz && \
 #tar xvf autoconf-archive-2021.02.19.tar && \
