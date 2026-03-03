@@ -268,8 +268,10 @@ TIMEOUT=0
 summary_log=''
 target=''
 elaps=''
+unset UNIT_TOTAL
+
 IFS=$'\n'
-results=($( cat ${WUTOOLTEST_LAST_RESULT_FILE} | egrep  'OK|Run:|target:|test:|assertion|expression|Error|Elaps' ))
+results=($( cat ${WUTOOLTEST_LAST_RESULT_FILE} | egrep  'OK|Run:|target:|test:|assertion|expression|Error|Elaps:' ))
 for res in ${results[@]}
 #cat ${WUTOOLTEST_RESULT_FILE} | egrep -i 'ok|Run:' | while read res
 do
@@ -295,8 +297,6 @@ do
         continue
     fi
     
-    unset UNIT_TOTAL
-
     IS_PASS=$( echo $res | grep -c 'OK (' )
     if [[ $IS_PASS -eq 1 ]]
     then
@@ -347,7 +347,7 @@ done
 TEST_TIME=$(( $(date +%s) - $TIME_STAMP ))
 
 WriteLog "TestResult:wutoolTest:total:${TOTAL} passed:${PASSED} failed:${FAILED} errors:${ERRORS} timeout:${TIMEOUT} elaps:${TEST_TIME}"  "$WUTOOLTEST_EXECUTION_LOG_FILE"    
-echo "TestResult:wutoolTest:total:${TOTAL} passed:${PASSED} failed:${FAILED} errors:${ERRORS} timeout:${TIMEOUT}" >> $WUTOOLTEST_SUMMARY_FILE
+#echo "TestResult:wutoolTest:total:${TOTAL} passed:${PASSED} failed:${FAILED} errors:${ERRORS} timeout:${TIMEOUT}" >> $WUTOOLTEST_SUMMARY_FILE
 WriteLog "${summary_log}" "$WUTOOLTEST_EXECUTION_LOG_FILE"
 echo -e "${summary_log}" >> $WUTOOLTEST_SUMMARY_FILE
 #set +x
