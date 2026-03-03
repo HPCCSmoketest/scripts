@@ -347,7 +347,7 @@ done
 TEST_TIME=$(( $(date +%s) - $TIME_STAMP ))
 
 WriteLog "TestResult:wutoolTest:total:${TOTAL} passed:${PASSED} failed:${FAILED} errors:${ERRORS} timeout:${TIMEOUT} elaps:${TEST_TIME}"  "$WUTOOLTEST_EXECUTION_LOG_FILE"    
-#echo "TestResult:wutoolTest:total:${TOTAL} passed:${PASSED} failed:${FAILED} errors:${ERRORS} timeout:${TIMEOUT}" > $WUTOOLTEST_SUMMARY_FILE
+echo "TestResult:wutoolTest:total:${TOTAL} passed:${PASSED} failed:${FAILED} errors:${ERRORS} timeout:${TIMEOUT}" >> $WUTOOLTEST_SUMMARY_FILE
 WriteLog "${summary_log}" "$WUTOOLTEST_EXECUTION_LOG_FILE"
 echo -e "${summary_log}" >> $WUTOOLTEST_SUMMARY_FILE
 #set +x
