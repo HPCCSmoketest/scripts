@@ -286,11 +286,17 @@ do
     then
         elaps=$( echo $res | sed -rn "s/^Elaps\:[[:space:]]*(.*)$/\1/p" )
         echo "<<$elaps>>"
-        WriteLog "TestResult:wutoolTest(${target}):total:${UNIT_TOTAL} passed:${UNIT_PASSED} failed:${UNIT_FAILED} errors:${UNIT_ERRORS} timeout:${UNIT_TIMEOUT} elaps:${elaps}"  "$WUTOOLTEST_EXECUTION_LOG_FILE"    
-        echo "TestResult:wutoolTest(${target}):total:${UNIT_TOTAL} passed:${UNIT_PASSED} failed:${UNIT_FAILED} errors:${UNIT_ERRORS} timeout:${UNIT_TIMEOUT} elaps:${elaps}" >> $WUTOOLTEST_SUMMARY_FILE    
+        # Avoid to write out empty reults
+        if [[ -n "$UNIT_TOTAL" ]]
+        then
+            WriteLog "TestResult:wutoolTest(${target}):total:${UNIT_TOTAL} passed:${UNIT_PASSED} failed:${UNIT_FAILED} errors:${UNIT_ERRORS} timeout:${UNIT_TIMEOUT} elaps:${elaps}" "$WUTOOLTEST_EXECUTION_LOG_FILE"
+            echo "TestResult:wutoolTest(${target}):total:${UNIT_TOTAL} passed:${UNIT_PASSED} failed:${UNIT_FAILED} errors:${UNIT_ERRORS} timeout:${UNIT_TIMEOUT} elaps:${elaps}" >> $WUTOOLTEST_SUMMARY_FILE
+        fi
         continue
     fi
     
+    unset UNIT_TOTAL
+
     IS_PASS=$( echo $res | grep -c 'OK (' )
     if [[ $IS_PASS -eq 1 ]]
     then
